@@ -1,0 +1,11 @@
+resources:
+  apps:
+    pitch_predictor_app:
+      name: "pitch-predictor-app-${bundle.target}"
+      description: "MLB Statcast Tactical Pitch Predictor (Streamlit Interface connected to Serverless Model Serving)"
+      source_code_path: ..
+      resources:
+        - name: "serving-endpoint"
+          serving_endpoint:
+            name: "dev_rhian_souza_pitch_predictor_endpoint_dev"
+            permission: "CAN_QUERY"

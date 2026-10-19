@@ -1,0 +1,60 @@
+bundle:
+  name: pitch_predictor
+
+sync:
+  exclude:
+    - .agents/**
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: "Unity Catalog name for the project"
+    default: "main"
+  schema:
+    description: "Unity Catalog schema name"
+    default: "baseball_ml"
+  volume:
+    description: "Unity Catalog landing volume for Statcast Parquet batches"
+    default: "pitch_data"
+  start_dt:
+    description: "Start date for Statcast data ingestion ('auto' for scheduled daily continuation)"
+    default: "auto"
+  end_dt:
+    description: "End date for Statcast data ingestion ('auto' for scheduled daily continuation)"
+    default: "auto"
+  earliest_season_limit:
+    description: "Earliest MLB regular season for backward historical backfill"
+    default: "2021"
+  model_version:
+    description: "Model version to serve on the serving endpoint"
+    default: "4"
+
+targets:
+  dev:
+    default: true
+    mode: development
+    workspace:
+      profile: dev
+    variables:
+      catalog: main
+      schema: baseball_ml_dev
+      volume: pitch_data
+      start_dt: "auto"
+      end_dt: "auto"
+      earliest_season_limit: "2021"
+      model_version: "4"
+
+  prod:
+    mode: production
+    workspace:
+      profile: prod
+    variables:
+      catalog: main
+      schema: baseball_ml
+      volume: pitch_data
+      start_dt: "auto"
+      end_dt: "auto"
+      earliest_season_limit: "2021"
+      model_version: "4"

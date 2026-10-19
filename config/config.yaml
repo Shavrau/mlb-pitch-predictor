@@ -1,0 +1,19 @@
+# Project Environment Configuration
+databricks:
+  profile: dev
+  catalog: main
+  schema: baseball_ml
+  volume: pitch_data
+
+storage:
+  raw_pitches_table: raw_pitches
+  features_table: pitch_features
+  predictions_table: pitch_predictions
+
+mlflow:
+  experiment_name: /Shared/baseball_ml/pitch_predictor
+  registered_model_name: main.baseball_ml.pitch_predictor
+
+automl:
+  target_col: pitch_type
+  timeout_minutes: 30

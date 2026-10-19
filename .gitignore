@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Databricks Asset Bundles
+.databricks/
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# Testing & Coverage
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local configuration & secrets
+.env
+*.local.yaml
+
+# Data files
+data/
+*.csv
+*.parquet
+*.json
+!resources/*.json
+!sample_inference_request.json

@@ -1,0 +1,16 @@
+resources:
+  pipelines:
+    pitch_predictor_pipeline:
+      name: pitch_predictor_pipeline_${bundle.target}
+      catalog: ${var.catalog}
+      schema: ${var.schema}
+      serverless: true
+      continuous: false
+      edition: ADVANCED
+      channel: PREVIEW
+      development: true
+      configuration:
+        pitch_predictor.landing_path: /Volumes/${var.catalog}/${var.schema}/${var.volume}/statcast_landing
+      libraries:
+        - file:
+            path: ../src/pitch_predictor/pipelines/bronze_pitches.py
