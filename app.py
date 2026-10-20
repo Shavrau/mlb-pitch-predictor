@@ -47,6 +47,13 @@ scout_report_page = st.Page(
     url_path="scout",
 )
 
+vision_lab_page = st.Page(
+    "pages/04_pitch_vision_lab.py",
+    title="Laboratório de Visão (Pitch Tipping)",
+    icon="🔬",
+    url_path="vision-lab",
+)
+
 pg = st.navigation(
     {
         "⚾ Módulos da Aplicação": [
@@ -54,6 +61,7 @@ pg = st.navigation(
             minigame_page,
             live_predictor_page,
             scout_report_page,
+            vision_lab_page,
         ]
     }
 )

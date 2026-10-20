@@ -20,6 +20,10 @@ try:
 except ImportError:
     HAS_VISION_DEPS = False
 
+from pitch_predictor.vision.overlay import (
+    draw_pitcher_skeleton,
+    extract_and_annotate_release_frame,
+)
 from pitch_predictor.vision.pose_extractor import (
     PoseExtractor,
     batch_extract_poses,
@@ -56,6 +60,8 @@ __all__ = [
     "calculate_trunk_tilt",
     "detect_release_frame",
     "download_pitch_clip",
+    "draw_pitcher_skeleton",
+    "extract_and_annotate_release_frame",
     "filter_balanced_pitch_sample",
     "generate_synthetic_biomechanics",
     "resolve_play_id",

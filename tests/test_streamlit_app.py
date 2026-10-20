@@ -537,3 +537,15 @@ def test_minigame_pitch_execution_with_mocked_prediction() -> None:
     assert len(at.session_state["arcade_state"].history) == 1
     assert at.session_state["last_outcome"] is not None
 
+
+def test_app_multipage_switch_to_vision_lab() -> None:
+    """Verify switching from app entrypoint to Vision Lab page renders without exceptions."""
+    at = AppTest.from_file(APP_PATH, default_timeout=30).run()
+    assert not at.exception
+
+    at.switch_page("pages/04_pitch_vision_lab.py").run()
+    assert not at.exception
+    assert len(at.title) >= 1
+    assert "Laborat" in at.title[0].value or "Vis" in at.title[0].value
+
+
