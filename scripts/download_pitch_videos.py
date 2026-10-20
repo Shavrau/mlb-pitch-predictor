@@ -124,7 +124,7 @@ def main() -> int:
     manifest_path = Path(args.manifest_path or (output_dir / "manifest.csv"))
 
     logger.info("=" * 60)
-    logger.info("⚾ MLB PITCH VIDEO INGESTION (INCREMENTAL)")
+    logger.info("[BASEBALL] MLB PITCH VIDEO INGESTION (INCREMENTAL)")
     logger.info("Pitcher ID: %d", pitcher_id)
     logger.info("Query Period: %s to %s", args.start_date, args.end_date)
     logger.info("Samples Per Category: %d", args.samples_per_class)
@@ -255,7 +255,7 @@ def main() -> int:
 
         vol_path = None
         if success:
-            logger.info("✅ Successfully saved locally: %s", target_path.name)
+            logger.info("[OK] Successfully saved locally: %s", target_path.name)
             if args.sync_catalog:
                 vol_path = resolve_volume_video_path(
                     catalog=args.catalog,
@@ -264,7 +264,7 @@ def main() -> int:
                     pitcher_id=pitcher_id,
                     filename=filename,
                 )
-                logger.info("☁️ Syncing to Unity Catalog Volume: %s...", vol_path)
+                logger.info("[SYNC] Syncing to Unity Catalog Volume: %s...", vol_path)
                 upload_to_unity_catalog_volume(target_path, vol_path, profile=args.profile)
 
             new_records.append({
@@ -282,7 +282,7 @@ def main() -> int:
             })
             downloaded += 1
         else:
-            logger.error("❌ Download failed for: %s", filename)
+            logger.error("[ERROR] Download failed for: %s", filename)
             new_records.append({
                 "game_pk": game_pk,
                 "at_bat_number": at_bat_number,
@@ -310,11 +310,11 @@ def main() -> int:
                 pitcher_id=pitcher_id,
                 filename="manifest.csv",
             )
-            logger.info("☁️ Syncing manifest to Unity Catalog Volume: %s...", manifest_vol_path)
+            logger.info("[SYNC] Syncing manifest to Unity Catalog Volume: %s...", manifest_vol_path)
             upload_to_unity_catalog_volume(manifest_path, manifest_vol_path, profile=args.profile)
 
     logger.info("=" * 60)
-    logger.info("🏁 INGESTION RUN FINISHED")
+    logger.info("[FINISHED] INGESTION RUN FINISHED")
     logger.info("Downloaded: %d | Skipped: %d | Failed: %d | Total: %d",
                 downloaded, skipped, failed, len(balanced_df))
     logger.info("=" * 60)
