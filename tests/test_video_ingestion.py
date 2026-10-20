@@ -16,7 +16,9 @@ from pitch_predictor.vision.video_ingestion import (
     filter_balanced_pitch_sample,
     resolve_play_id,
     resolve_savant_video_url,
+    resolve_volume_video_path,
     update_video_manifest,
+    upload_to_unity_catalog_volume,
 )
 
 
@@ -239,3 +241,70 @@ def test_update_video_manifest_idempotency(tmp_path: Path) -> None:
     # Check that record_1 is not duplicated
     assert ((df_second["at_bat_number"] == 1) & (df_second["pitch_number"] == 1)).sum() == 1
     assert ((df_second["at_bat_number"] == 2) & (df_second["pitch_number"] == 1)).sum() == 1
+
+
+def test_resolve_volume_video_path() -> None:
+    """Validates the standard Unity Catalog Volume path construction."""
+    path = resolve_volume_video_path(
+        catalog="pitch_predictor",
+        schema="baseball_ml_dev",
+        volume="pitch_data",
+        pitcher_id=694973,
+        filename="745170_31_4_Fastball.mp4",
+    )
+    assert path == "/Volumes/pitch_predictor/baseball_ml_dev/pitch_data/videos/694973/745170_31_4_Fastball.mp4"
+
+
+def test_upload_to_unity_catalog_volume_direct_posix(tmp_path: Path) -> None:
+    """Validates direct POSIX copy when running on Databricks cluster where volume mount exists."""
+    src_file = tmp_path / "test_clip.mp4"
+    src_file.write_bytes(b"dummy video bytes")
+
+    dest_dir = tmp_path / "Volumes" / "pitch_predictor" / "baseball_ml" / "pitch_data" / "videos" / "694973"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest_file = dest_dir / "test_clip.mp4"
+
+    success = upload_to_unity_catalog_volume(src_file, str(dest_file))
+    assert success is True
+    assert dest_file.exists()
+    assert dest_file.read_bytes() == b"dummy video bytes"
+
+
+def test_upload_to_unity_catalog_volume_sdk(tmp_path: Path) -> None:
+    """Validates SDK-based upload to Unity Catalog Volume when running locally."""
+    src_file = tmp_path / "test_clip.mp4"
+    src_file.write_bytes(b"dummy video content")
+
+    mock_client = MagicMock()
+    target_vol_path = "/Volumes/pitch_predictor/baseball_ml_dev/pitch_data/videos/694973/test_clip.mp4"
+
+    # With non-existent local POSIX target path -> delegates to workspace_client.files.upload
+    success = upload_to_unity_catalog_volume(
+        src_file,
+        target_vol_path,
+        workspace_client=mock_client,
+    )
+
+    assert success is True
+    mock_client.files.upload.assert_called_once()
+    call_args = mock_client.files.upload.call_args
+    assert call_args[0][0] == target_vol_path
+
+
+def test_upload_to_unity_catalog_volume_sdk_error(tmp_path: Path) -> None:
+    """Validates graceful failure when SDK upload raises an exception."""
+    src_file = tmp_path / "test_clip.mp4"
+    src_file.write_bytes(b"dummy content")
+
+    mock_client = MagicMock()
+    mock_client.files.upload.side_effect = RuntimeError("Databricks API 500 error")
+
+    target_vol_path = "/Volumes/pitch_predictor/baseball_ml_dev/pitch_data/videos/694973/test_clip.mp4"
+    success = upload_to_unity_catalog_volume(
+        src_file,
+        target_vol_path,
+        workspace_client=mock_client,
+    )
+
+    assert success is False
+

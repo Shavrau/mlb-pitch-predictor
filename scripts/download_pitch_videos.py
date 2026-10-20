@@ -21,7 +21,9 @@ from pitch_predictor.vision.video_ingestion import (
     filter_balanced_pitch_sample,
     resolve_play_id,
     resolve_savant_video_url,
+    resolve_volume_video_path,
     update_video_manifest,
+    upload_to_unity_catalog_volume,
 )
 
 logging.basicConfig(
@@ -81,6 +83,36 @@ def parse_args() -> argparse.Namespace:
         "--dry-run",
         action="store_true",
         help="Query and display selected pitches without downloading files",
+    )
+    parser.add_argument(
+        "--catalog",
+        type=str,
+        default="pitch_predictor",
+        help="Databricks Unity Catalog name (default: pitch_predictor)",
+    )
+    parser.add_argument(
+        "--schema",
+        type=str,
+        default="baseball_ml_dev",
+        help="Databricks Unity Catalog schema name (default: baseball_ml_dev)",
+    )
+    parser.add_argument(
+        "--volume",
+        type=str,
+        default="pitch_data",
+        help="Databricks Unity Catalog volume name (default: pitch_data)",
+    )
+    parser.add_argument(
+        "--profile",
+        type=str,
+        default="dev",
+        help="Databricks CLI authentication profile (default: dev)",
+    )
+    parser.add_argument(
+        "--sync-catalog",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Synchronize downloaded videos and manifest to Unity Catalog Volume (default: True)",
     )
     return parser.parse_args()
 
@@ -221,8 +253,20 @@ def main() -> int:
         logger.info("Downloading clip to %s...", target_path.name)
         success = download_pitch_clip(video_url, target_path)
 
+        vol_path = None
         if success:
-            logger.info("✅ Successfully saved: %s", target_path.name)
+            logger.info("✅ Successfully saved locally: %s", target_path.name)
+            if args.sync_catalog:
+                vol_path = resolve_volume_video_path(
+                    catalog=args.catalog,
+                    schema=args.schema,
+                    volume=args.volume,
+                    pitcher_id=pitcher_id,
+                    filename=filename,
+                )
+                logger.info("☁️ Syncing to Unity Catalog Volume: %s...", vol_path)
+                upload_to_unity_catalog_volume(target_path, vol_path, profile=args.profile)
+
             new_records.append({
                 "game_pk": game_pk,
                 "at_bat_number": at_bat_number,
@@ -233,6 +277,7 @@ def main() -> int:
                 "play_id": play_id,
                 "video_url": video_url,
                 "video_path": str(target_path).replace("\\", "/"),
+                "volume_path": vol_path,
                 "status": "COMPLETED",
             })
             downloaded += 1
@@ -248,6 +293,7 @@ def main() -> int:
                 "play_id": play_id,
                 "video_url": video_url,
                 "video_path": None,
+                "volume_path": None,
                 "status": "DOWNLOAD_FAILED",
             })
             failed += 1
@@ -256,6 +302,16 @@ def main() -> int:
     if new_records:
         update_video_manifest(manifest_path, new_records)
         logger.info("Manifest updated at %s (total records written: %d)", manifest_path, len(new_records))
+        if args.sync_catalog:
+            manifest_vol_path = resolve_volume_video_path(
+                catalog=args.catalog,
+                schema=args.schema,
+                volume=args.volume,
+                pitcher_id=pitcher_id,
+                filename="manifest.csv",
+            )
+            logger.info("☁️ Syncing manifest to Unity Catalog Volume: %s...", manifest_vol_path)
+            upload_to_unity_catalog_volume(manifest_path, manifest_vol_path, profile=args.profile)
 
     logger.info("=" * 60)
     logger.info("🏁 INGESTION RUN FINISHED")

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -213,6 +214,79 @@ def download_pitch_clip(
         return False
 
 
+def resolve_volume_video_path(
+    catalog: str = "pitch_predictor",
+    schema: str = "baseball_ml",
+    volume: str = "pitch_data",
+    pitcher_id: int | None = None,
+    filename: str = "",
+) -> str:
+    """
+    Constructs the standard Unity Catalog Volume path for a video clip or asset.
+    Example: /Volumes/pitch_predictor/baseball_ml_dev/pitch_data/videos/694973/745170_31_4_Fastball.mp4
+    """
+    base = f"/Volumes/{catalog}/{schema}/{volume}/videos"
+    if pitcher_id is not None:
+        base = f"{base}/{pitcher_id}"
+    if filename:
+        return f"{base}/{filename}"
+    return base
+
+
+def upload_to_unity_catalog_volume(
+    local_file_path: Path | str,
+    target_volume_path: str,
+    profile: str | None = None,
+    workspace_client: Any | None = None,
+) -> bool:
+    """
+    Uploads or copies a local file to a Unity Catalog Volume.
+
+    If running inside a Databricks environment where the target Volume path
+    is directly mounted on the filesystem, copies using standard file I/O.
+    Otherwise (e.g. running locally), streams the file via the Databricks SDK Files API.
+
+    Args:
+        local_file_path: Local source file path.
+        target_volume_path: Target path in Unity Catalog Volume (e.g. /Volumes/...).
+        profile: Optional Databricks CLI profile name for authentication.
+        workspace_client: Optional pre-configured WorkspaceClient instance.
+
+    Returns:
+        True if upload succeeded, False otherwise.
+    """
+    src = Path(local_file_path)
+    if not src.exists():
+        logger.error("Source file does not exist: %s", src)
+        return False
+
+    target_p = Path(target_volume_path)
+    # Check if target directory exists on local POSIX filesystem (e.g., inside Databricks container)
+    if target_p.parent.exists():
+        try:
+            target_p.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, target_p)
+            logger.info("Directly copied %s to Volume path %s", src.name, target_volume_path)
+            return True
+        except OSError as exc:
+            logger.warning("Failed direct copy to %s: %s. Falling back to Databricks SDK.", target_volume_path, exc)
+
+    # Remote Databricks SDK upload
+    try:
+        if workspace_client is None:
+            from pitch_predictor.config import get_workspace_client
+
+            workspace_client = get_workspace_client(profile=profile)
+
+        with open(src, "rb") as f:
+            workspace_client.files.upload(str(target_volume_path), f, overwrite=True)
+        logger.info("Successfully uploaded %s to Unity Catalog Volume at %s", src.name, target_volume_path)
+        return True
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Failed to upload %s to UC Volume %s via Databricks SDK: %s", src.name, target_volume_path, exc)
+        return False
+
+
 def update_video_manifest(
     manifest_path: Path | str,
     new_records: list[dict[str, Any]],
@@ -242,6 +316,7 @@ def update_video_manifest(
         "play_id",
         "video_url",
         "video_path",
+        "volume_path",
         "status",
     ]
 

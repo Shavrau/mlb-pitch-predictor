@@ -34,7 +34,9 @@ from pitch_predictor.vision.video_ingestion import (
     filter_balanced_pitch_sample,
     resolve_play_id,
     resolve_savant_video_url,
+    resolve_volume_video_path,
     update_video_manifest,
+    upload_to_unity_catalog_volume,
 )
 
 __all__ = [
@@ -50,5 +52,7 @@ __all__ = [
     "filter_balanced_pitch_sample",
     "resolve_play_id",
     "resolve_savant_video_url",
+    "resolve_volume_video_path",
     "update_video_manifest",
+    "upload_to_unity_catalog_volume",
 ]

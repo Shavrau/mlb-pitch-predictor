@@ -20,6 +20,10 @@ from pathlib import Path
 import pandas as pd
 
 from pitch_predictor.vision.pose_extractor import PoseExtractor, batch_extract_poses
+from pitch_predictor.vision.video_ingestion import (
+    resolve_volume_video_path,
+    upload_to_unity_catalog_volume,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -55,6 +59,36 @@ def parse_args() -> argparse.Namespace:
         "--mock",
         action="store_true",
         help="Run in synthetic mock mode without processing video files",
+    )
+    parser.add_argument(
+        "--catalog",
+        type=str,
+        default="pitch_predictor",
+        help="Databricks Unity Catalog name (default: pitch_predictor)",
+    )
+    parser.add_argument(
+        "--schema",
+        type=str,
+        default="baseball_ml_dev",
+        help="Databricks Unity Catalog schema name (default: baseball_ml_dev)",
+    )
+    parser.add_argument(
+        "--volume",
+        type=str,
+        default="pitch_data",
+        help="Databricks Unity Catalog volume name (default: pitch_data)",
+    )
+    parser.add_argument(
+        "--profile",
+        type=str,
+        default="dev",
+        help="Databricks CLI authentication profile (default: dev)",
+    )
+    parser.add_argument(
+        "--sync-catalog",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Synchronize extracted features to Unity Catalog Volume (default: True)",
     )
     return parser.parse_args()
 
@@ -103,6 +137,33 @@ def main() -> int:
     print(f"\n[SUCCESS] Extracted features for {len(features_df)} pitches.")
     print(f"Saved Parquet to: {output_path}")
     print(f"Saved CSV to:     {csv_path}")
+
+    # Synchronize to Unity Catalog Volume
+    if args.sync_catalog:
+        pitcher_id = None
+        if "pitcher_id" in features_df.columns and not features_df["pitcher_id"].empty:
+            pitcher_id = int(features_df["pitcher_id"].iloc[0])
+
+        vol_parquet_path = resolve_volume_video_path(
+            catalog=args.catalog,
+            schema=args.schema,
+            volume=args.volume,
+            pitcher_id=pitcher_id,
+            filename="biomechanical_features.parquet",
+        )
+        vol_csv_path = resolve_volume_video_path(
+            catalog=args.catalog,
+            schema=args.schema,
+            volume=args.volume,
+            pitcher_id=pitcher_id,
+            filename="biomechanical_features.csv",
+        )
+
+        print("\n[CATALOG SYNC] Uploading features to Unity Catalog Volume...")
+        upload_to_unity_catalog_volume(output_path, vol_parquet_path, profile=args.profile)
+        upload_to_unity_catalog_volume(csv_path, vol_csv_path, profile=args.profile)
+        print(f"Synced Parquet to: {vol_parquet_path}")
+        print(f"Synced CSV to:     {vol_csv_path}")
 
     # Display preview summary table
     cols_to_show = [
