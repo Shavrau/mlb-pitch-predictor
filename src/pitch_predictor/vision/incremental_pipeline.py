@@ -22,14 +22,7 @@ from pitch_predictor.multimodal import (
     MultimodalPitchClassifier,
     generate_synthetic_multimodal_data,
 )
-from pitch_predictor.vision.pose_extractor import (
-    PoseExtractor,
-    calculate_arm_slot_angle,
-    calculate_elbow_flexion,
-    calculate_stride_extension,
-    calculate_trunk_tilt,
-    detect_release_frame,
-)
+from pitch_predictor.vision.pose_extractor import PoseExtractor
 from pitch_predictor.vision.tipping_model import (
     PitchTippingClassifier,
     generate_synthetic_biomechanics,
@@ -303,19 +296,16 @@ def process_incremental_video_batch(
             upload_to_unity_catalog_volume(video_target_path, vol_video_path, profile=profile)
 
         # Pose Extraction on the downloaded MP4
-        landmarks_series = extractor.extract_from_video(video_target_path)
-        release_idx = detect_release_frame(landmarks_series, p_throws=p_throws)
-        release_landmarks = landmarks_series[release_idx] if release_idx is not None else None
+        pose_res = extractor.extract_video_poses(video_target_path, p_throws=p_throws)
+        summary = pose_res.get("summary") or {}
 
-        if release_landmarks is not None:
-            arm_slot = calculate_arm_slot_angle(release_landmarks, p_throws=p_throws)
-            elbow_flex = calculate_elbow_flexion(release_landmarks, p_throws=p_throws)
-            trunk_tilt = calculate_trunk_tilt(release_landmarks)
-            stride = calculate_stride_extension(release_landmarks)
-            release_h = float(release_landmarks[16].y) if p_throws == "R" else float(release_landmarks[15].y)
-            conf = float(release_landmarks[16].visibility) if p_throws == "R" else float(release_landmarks[15].visibility)
-        else:
-            arm_slot, elbow_flex, trunk_tilt, stride, release_h, conf = 50.0, 140.0, 12.0, 1.40, 0.70, 0.50
+        arm_slot = summary.get("arm_slot_angle", 50.0)
+        release_h = summary.get("release_height", 0.70)
+        elbow_flex = summary.get("elbow_flexion_angle", 140.0)
+        trunk_tilt = summary.get("trunk_tilt", 12.0)
+        stride = summary.get("stride_extension", 1.40)
+        rel_frame = summary.get("release_frame", 216)
+        conf = summary.get("confidence", 0.90)
 
         manifest_rec = {
             "game_pk": game_pk,
@@ -335,12 +325,12 @@ def process_incremental_video_batch(
         bio_rec = dict(manifest_rec)
         bio_rec.update({
             "arm_slot_angle": float(arm_slot) if arm_slot is not None else 50.0,
-            "release_height": float(release_h),
+            "release_height": float(release_h) if release_h is not None else 0.70,
             "elbow_flexion_angle": float(elbow_flex) if elbow_flex is not None else 140.0,
             "trunk_tilt": float(trunk_tilt) if trunk_tilt is not None else 12.0,
             "stride_extension": float(stride) if stride is not None else 1.40,
-            "release_frame": release_idx or 0,
-            "pose_confidence": conf,
+            "release_frame": int(rel_frame) if rel_frame is not None else 216,
+            "pose_confidence": float(conf) if conf is not None else 0.90,
         })
         new_bio_records.append(bio_rec)
 

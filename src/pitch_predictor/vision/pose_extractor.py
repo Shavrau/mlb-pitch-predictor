@@ -444,6 +444,15 @@ class PoseExtractor:
             "total_frames_analyzed": len(frames_data),
         }
 
+    def extract_from_video(
+        self,
+        video_path: str | Path,
+        p_throws: str = "R",
+        sample_step: int = 1,
+    ) -> dict[str, Any]:
+        """Convenience alias for extract_video_poses."""
+        return self.extract_video_poses(video_path, p_throws=p_throws, sample_step=sample_step)
+
 
 # ---------------------------------------------------------------------------
 # Batch Processing Functions

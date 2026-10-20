@@ -16,20 +16,18 @@ import os
 import sys
 from pathlib import Path
 
-# Ensure local package is importable when running in Databricks workspace
-try:
-    from pitch_predictor.vision.incremental_pipeline import process_incremental_video_batch
-except ImportError:
-    candidate_dirs = [
-        Path.cwd().parent / "src",
-        Path.cwd() / "src",
-        Path("/Workspace/Users/rhian.souza@programmers.com.br/.bundle/pitch_predictor/dev/files/src"),
-        Path("/Workspace") / "Shared" / "pitch_predictor" / "src",
-    ]
-    for c_dir in candidate_dirs:
-        if c_dir.exists() and str(c_dir) not in sys.path:
-            sys.path.insert(0, str(c_dir))
-    from pitch_predictor.vision.incremental_pipeline import process_incremental_video_batch
+# Add src to sys.path first to ensure package resolution on Serverless
+candidate_dirs = [
+    Path.cwd().parent / "src",
+    Path.cwd() / "src",
+    Path("/Workspace/Users/rhian.souza@programmers.com.br/.bundle/pitch_predictor/dev/files/src"),
+    Path("/Workspace") / "Shared" / "pitch_predictor" / "src",
+]
+for c_dir in candidate_dirs:
+    if c_dir.exists() and str(c_dir) not in sys.path:
+        sys.path.insert(0, str(c_dir))
+
+from pitch_predictor.vision.incremental_pipeline import process_incremental_video_batch
 
 import pandas as pd
 
