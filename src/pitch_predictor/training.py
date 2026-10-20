@@ -77,7 +77,7 @@ def select_automl_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_automl_params(
-    catalog: str = "main",
+    catalog: str = "pitch_predictor",
     schema: str = "baseball_ml",
     timeout_minutes: int = 30,
 ) -> dict[str, Any]:

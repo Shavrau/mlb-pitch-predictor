@@ -318,6 +318,16 @@ def test_resolve_dual_track_ingestion():
     """Verify dual-track planning for current season forward and historical backward ingestion."""
     from pitch_predictor.ingestion import resolve_dual_track_ingestion
 
+    # Case 0: Initial run (current_min_date=None, current_max_date=None)
+    plan0 = resolve_dual_track_ingestion(
+        current_min_date=None,
+        current_max_date=None,
+        earliest_season_limit=2021,
+    )
+    assert plan0["forward_window"] == ("2024-03-28", "2024-04-03")
+    assert plan0["gap_2024_window"] is None
+    assert plan0["backward_season"] is None
+
     # Case 1: Ingestion starting at 2024-04-01 -> gaps detected and 2023 planned
     plan1 = resolve_dual_track_ingestion(
         current_min_date="2024-04-01",

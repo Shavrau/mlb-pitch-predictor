@@ -339,7 +339,7 @@ def test_automl_parameters_configuration():
     assert TARGET_COL == "pitch_category"
     assert TIME_COL == "game_date"
 
-    params = build_automl_params(catalog="main", schema="baseball_ml_dev", timeout_minutes=40)
+    params = build_automl_params(catalog="pitch_predictor", schema="baseball_ml_dev", timeout_minutes=40)
 
     assert params["target_col"] == "pitch_category"
     assert params["primary_metric"] in ["f1_macro", "f1_score", "f1"]
@@ -364,8 +364,8 @@ def test_unity_catalog_model_naming_and_registration():
 
     assert MODEL_NAME == "pitch_category_predictor"
 
-    model_name_dev = get_uc_model_name("main", "baseball_ml_dev")
-    assert model_name_dev == "main.baseball_ml_dev.pitch_category_predictor"
+    model_name_dev = get_uc_model_name("pitch_predictor", "baseball_ml_dev")
+    assert model_name_dev == "pitch_predictor.baseball_ml_dev.pitch_category_predictor"
     parts = model_name_dev.split(".")
     assert len(parts) == 3, f"Expected 3-level UC namespace 'catalog.schema.model', got '{model_name_dev}'"
 
@@ -377,7 +377,7 @@ def test_unity_catalog_model_naming_and_registration():
     with patch("pitch_predictor.training.mlflow", mock_mlflow):
         register_best_model_to_uc(
             model_uri="runs:/fake_run_123/model",
-            catalog="main",
+            catalog="pitch_predictor",
             schema="baseball_ml_dev",
         )
 
@@ -385,7 +385,7 @@ def test_unity_catalog_model_naming_and_registration():
         mock_mlflow.set_registry_uri.assert_called_once_with("databricks-uc")
         mock_mlflow.register_model.assert_called_once_with(
             model_uri="runs:/fake_run_123/model",
-            name="main.baseball_ml_dev.pitch_category_predictor",
+            name="pitch_predictor.baseball_ml_dev.pitch_category_predictor",
         )
 
 

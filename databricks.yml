@@ -4,6 +4,13 @@ bundle:
 sync:
   exclude:
     - .agents/**
+    - data/**
+    - .git/**
+    - .venv/**
+    - __pycache__/**
+    - .pytest_cache/**
+    - .ruff_cache/**
+    - "*.mp4"
 
 include:
   - resources/*.yml
@@ -11,7 +18,7 @@ include:
 variables:
   catalog:
     description: "Unity Catalog name for the project"
-    default: "main"
+    default: "pitch_predictor"
   schema:
     description: "Unity Catalog schema name"
     default: "baseball_ml"
@@ -29,7 +36,7 @@ variables:
     default: "2021"
   model_version:
     description: "Model version to serve on the serving endpoint"
-    default: "4"
+    default: "1"
 
 targets:
   dev:
@@ -38,23 +45,23 @@ targets:
     workspace:
       profile: dev
     variables:
-      catalog: main
+      catalog: pitch_predictor
       schema: baseball_ml_dev
       volume: pitch_data
       start_dt: "auto"
       end_dt: "auto"
       earliest_season_limit: "2021"
-      model_version: "4"
+      model_version: "1"
 
   prod:
     mode: production
     workspace:
       profile: prod
     variables:
-      catalog: main
+      catalog: pitch_predictor
       schema: baseball_ml
       volume: pitch_data
       start_dt: "auto"
       end_dt: "auto"
       earliest_season_limit: "2021"
-      model_version: "4"
+      model_version: "1"

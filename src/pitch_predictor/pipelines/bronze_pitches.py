@@ -104,7 +104,7 @@ except ImportError:
             .select(cols)
         )
 
-DEFAULT_LANDING_PATH = "/Volumes/main/baseball_ml/pitch_data/statcast_landing"
+DEFAULT_LANDING_PATH = "/Volumes/pitch_predictor/baseball_ml/pitch_data/statcast_landing"
 
 
 def register_bronze_pipeline(

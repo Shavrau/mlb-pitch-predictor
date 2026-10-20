@@ -13,5 +13,5 @@ def test_load_config_values():
     config = load_config()
     assert "databricks" in config
     assert "automl" in config
-    assert config["databricks"]["catalog"] == "main"
+    assert config["databricks"]["catalog"] == "pitch_predictor"
     assert config["automl"]["target_col"] == "pitch_type"

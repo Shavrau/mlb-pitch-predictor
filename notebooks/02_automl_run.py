@@ -73,7 +73,7 @@ import pyspark.sql.functions as F
 
 # COMMAND ----------
 # Parameters
-dbutils.widgets.text("catalog", "main", "Catalog")
+dbutils.widgets.text("catalog", "pitch_predictor", "Catalog")
 dbutils.widgets.text("schema", "baseball_ml_dev", "Schema")
 dbutils.widgets.text("table_name", "silver_pitch_features", "Source Table")
 dbutils.widgets.text("timeout_minutes", "20", "Timeout (Minutes)")

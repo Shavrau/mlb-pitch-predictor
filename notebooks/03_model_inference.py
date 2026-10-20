@@ -29,7 +29,7 @@ import mlflow
 import pyspark.sql.functions as F
 
 # COMMAND ----------
-dbutils.widgets.text("catalog", "main", "Catalog")
+dbutils.widgets.text("catalog", "pitch_predictor", "Catalog")
 dbutils.widgets.text("schema", "baseball_ml_dev", "Schema")
 dbutils.widgets.text("model_alias", "prod", "Model Alias")
 

@@ -8,7 +8,7 @@
 
 # COMMAND ----------
 # Widgets / parameters
-dbutils.widgets.text("catalog", "main", "Catalog")
+dbutils.widgets.text("catalog", "pitch_predictor", "Catalog")
 dbutils.widgets.text("schema", "baseball_ml", "Schema")
 dbutils.widgets.text("volume", "pitch_data", "Volume")
 

@@ -14,12 +14,12 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import time
 import urllib.request
+from pathlib import Path
 
 BRAIN_DIR = Path(
     r"C:\Users\rhian\.gemini\antigravity\brain\f5b0facd-ca75-49fe-bf03-8497799f797f"
@@ -206,7 +206,7 @@ def run_minigame_verification() -> int:
                     if resp.status == 200:
                         healthy = True
                         break
-            except Exception:
+            except (urllib.error.URLError, OSError, TimeoutError):
                 time.sleep(0.5)
 
         if not healthy:
@@ -243,7 +243,7 @@ def run_minigame_verification() -> int:
                             break
                     if ws_url:
                         break
-            except Exception:
+            except (urllib.error.URLError, OSError, TimeoutError, json.JSONDecodeError):
                 continue
 
         if not ws_url:

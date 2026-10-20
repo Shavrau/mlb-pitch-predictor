@@ -1,7 +1,7 @@
 # Project Environment Configuration
 databricks:
   profile: dev
-  catalog: main
+  catalog: pitch_predictor
   schema: baseball_ml
   volume: pitch_data
 
@@ -12,7 +12,7 @@ storage:
 
 mlflow:
   experiment_name: /Shared/baseball_ml/pitch_predictor
-  registered_model_name: main.baseball_ml.pitch_predictor
+  registered_model_name: pitch_predictor.baseball_ml.pitch_predictor
 
 automl:
   target_col: pitch_type

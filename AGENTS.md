@@ -1,18 +1,22 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v1.0.0 Checkpoint  
-> **Escopo:** Baseball ML Pitch Predictor & Statcast Tactical AI  
+> **Versão do Projeto:** v1.1.0 Checkpoint (Passo 2 de Visão Biomecânica Concluído)  
+> **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI & Biomechanical Computer Vision  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit.
 
 Este documento é a referência técnica primária para agentes autônomos de IA e desenvolvedores que operam neste repositório. Ele sintetiza os achados da auditoria da base de código, as regras de arquitetura invioláveis, a estrutura dos componentes e as especificações para o próximo ciclo de desenvolvimento (integração com Visão Computacional).
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v1.0.0)
+## 1. Estado Atual da Base de Código (Checkpoint v1.1.0)
 
 Após análise aprofundada da base de código, o projeto encontra-se em estado funcional, testado e modular:
-- **Suíte de Testes**: **133 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1` em ~60 segundos).
-- **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe`.
+- **Suíte de Testes**: **155 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1` em ~35 segundos).
+- **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python` e `mediapipe` instalados.
+- **Unity Catalog Dedicado**: Catálogo `pitch_predictor` ativo em Dev (`pitch_predictor.baseball_ml_dev`), com pipeline Lakeflow Serverless (`@dp`) operacional e validado (`raw_pitches` com 6.749 linhas, `silver_pitch_features` com 6.720 linhas).
+- **Módulo de Visão Computacional Biomecânica (`pitch_predictor.vision`)**:
+  1. `video_ingestion.py`: Ingestão incremental de clipes de vídeo do Baseball Savant e manutenção de manifesto.
+  2. `pose_extractor.py`: Extração de 33 marcos 3D (MediaPipe Pose), ângulos de braço (*arm slot*), altura de soltura, flexão de cotovelo, inclinação de tronco, extensão de passada e detecção delimitada do frame de soltura (*pitch tipping*).
 - **Camada de Apresentação (Streamlit)**: Arquitetura multipágina moderna com 4 módulos operacionais:
   1. `pages/00_home_apresentacao.py`: Apresentação executiva e amigável para leigos com 4 perfis de arremessador e 3 momentos táticos.
   2. `pages/01_live_predictor.py`: Simulador tático lance a lance com controle de contagem, corredores em base e inferência em tempo real.

@@ -46,7 +46,7 @@ except ImportError:
 default_start = "auto"
 default_end = "auto"
 
-dbutils.widgets.text("catalog", "main", "Catalog")
+dbutils.widgets.text("catalog", "pitch_predictor", "Catalog")
 dbutils.widgets.text("schema", "baseball_ml", "Schema")
 dbutils.widgets.text("volume", "pitch_data", "Landing Volume")
 dbutils.widgets.text("start_dt", default_start, "Start Date (YYYY-MM-DD or auto)")

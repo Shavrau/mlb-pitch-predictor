@@ -24,7 +24,7 @@ def load_config(config_path: str | None = None) -> dict[str, Any]:
         return {
             "databricks": {
                 "profile": os.getenv("DATABRICKS_CONFIG_PROFILE", "dev"),
-                "catalog": "main",
+                "catalog": "pitch_predictor",
                 "schema": "baseball_ml",
             },
             "automl": {

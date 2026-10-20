@@ -35,3 +35,8 @@ data/
 *.json
 !resources/*.json
 !sample_inference_request.json
+
+# Local ML models and databases
+models/
+mlflow.db
+mlruns/

@@ -125,7 +125,7 @@ def ensure_volume(catalog_name: str, schema_name: str, volume_name: str, profile
 def main():
     parser = argparse.ArgumentParser(description="Idempotent Unity Catalog environment setup.")
     parser.add_argument("--profile", default="dev", help="Databricks CLI profile name (default: dev)")
-    parser.add_argument("--catalog", default="main", help="Target catalog name (default: main)")
+    parser.add_argument("--catalog", default="pitch_predictor", help="Target catalog name (default: pitch_predictor)")
     parser.add_argument("--schema", default="baseball_ml", help="Target schema name (default: baseball_ml)")
     parser.add_argument("--volume", default="pitch_data", help="Target volume name (default: pitch_data)")
 

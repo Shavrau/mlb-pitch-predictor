@@ -349,6 +349,16 @@ def resolve_dual_track_ingestion(
             reference_date=reference_date,
         )
         plan["forward_window"] = (s_fwd, e_fwd)
+    else:
+        # Initial run: no records in raw_pitches yet -> ingest opening week batch
+        s_fwd, e_fwd = resolve_ingestion_window(
+            start_dt="auto",
+            end_dt="auto",
+            latest_ingested_date=None,
+            max_days_per_batch=max_days_forward_batch,
+            reference_date=reference_date,
+        )
+        plan["forward_window"] = (s_fwd, e_fwd)
 
     # 2024 Opening Day gap check
     if (
