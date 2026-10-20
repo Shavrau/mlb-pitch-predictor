@@ -11,7 +11,7 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 ## 1. Estado Atual da Base de Código (Checkpoint v1.3.0)
 
 Após análise aprofundada da base de código, o projeto encontra-se em estado funcional, testado e modular:
-- **Suíte de Testes**: **179 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1` em ~42 segundos).
+- **Suíte de Testes**: **183 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1` em ~42 segundos).
 - **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe` e `shap` instalados.
 - **Unity Catalog Dedicado**: Catálogo `pitch_predictor` ativo em Dev (`pitch_predictor.baseball_ml_dev`), com pipeline Lakeflow Serverless (`@dp`) operacional e validado (`raw_pitches` com 6.749 linhas, `silver_pitch_features` com 6.720 linhas).
 - **Módulo de Visão Computacional Biomecânica (`pitch_predictor.vision`)**:
@@ -82,7 +82,8 @@ pitch_predictor/
 │   ├── 00_setup_environment.py   # Setup idempotente do metastore/schema no Unity Catalog
 │   ├── 01_data_ingestion.py      # Download Statcast via PyBaseball e carga Delta Bronze
 │   ├── 02_automl_run.py          # Disparo do Databricks AutoML com split temporal
-│   └── 03_model_inference.py     # Inferência em lote e validação de métricas MLflow
+│   ├── 03_model_inference.py     # Inferência em lote e validação de métricas MLflow
+│   └── 04_video_biomechanics_pipeline.py # Tarefa Lakeflow Job para ingestão incremental de vídeo e pose
 ├── pages/
 │   ├── 00_home_apresentacao.py   # Apresentação descomplicada com perfis de arremessador
 │   ├── 01_live_predictor.py      # Simulador tático pitch-by-pitch com controle de contagem
@@ -119,11 +120,12 @@ pitch_predictor/
 │   ├── utils.py                  # Logging formatado e sessão Spark local
 │   └── vision/                   # Subpacote de Visão Computacional & Biomecânica
 │       ├── __init__.py           # Exports unificados e detecção graciosa de deps
+│       ├── incremental_pipeline.py # Orquestrador de ingestão incremental no Databricks
 │       ├── overlay.py            # Sobreposição esquelética neon Statcast
 │       ├── pose_extractor.py     # Extração de 33 landmarks 3D MediaPipe
 │       ├── tipping_model.py      # PitchTippingClassifier & SHAP TreeExplainer
 │       └── video_ingestion.py    # Ingestão de vídeos Savant & upload UC Volume
-└── tests/                        # 179 testes automatizados (pytest)
+└── tests/                        # 183 testes automatizados (pytest)
 ```
 
 ---

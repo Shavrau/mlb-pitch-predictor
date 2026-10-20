@@ -27,6 +27,10 @@ from pitch_predictor.multimodal import (
     create_multimodal_dataset,
     generate_synthetic_multimodal_data,
 )
+from pitch_predictor.vision.incremental_pipeline import (
+    filter_pending_pitches,
+    process_incremental_video_batch,
+)
 from pitch_predictor.vision.overlay import (
     draw_pitcher_skeleton,
     extract_and_annotate_release_frame,
@@ -74,8 +78,10 @@ __all__ = [
     "draw_pitcher_skeleton",
     "extract_and_annotate_release_frame",
     "filter_balanced_pitch_sample",
+    "filter_pending_pitches",
     "generate_synthetic_biomechanics",
     "generate_synthetic_multimodal_data",
+    "process_incremental_video_batch",
     "resolve_play_id",
     "resolve_savant_video_url",
     "resolve_volume_video_path",
