@@ -10,3 +10,5 @@ command:
 env:
   - name: "SERVING_ENDPOINT_NAME"
     value: "dev_rhian_souza_pitch_predictor_endpoint_dev"
+  - name: "PYTHONPATH"
+    value: "src"

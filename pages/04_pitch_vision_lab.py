@@ -29,7 +29,7 @@ from pitch_predictor.vision.tipping_model import PitchTippingClassifier
 @st.cache_resource
 def get_serving_client() -> PitchServingClient:
     """Carrega o cliente de inferência Databricks Model Serving."""
-    return PitchServingClient(profile="dev")
+    return PitchServingClient(profile="dev", timeout_seconds=3, max_retries=1)
 
 
 @st.cache_resource

@@ -9,6 +9,14 @@ Configures the global Streamlit page layout and routes between:
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure src/ is on sys.path for Databricks Apps and container execution
+SRC_DIR = str(Path(__file__).resolve().parent / "src")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
 import streamlit as st
 
 st.set_page_config(
