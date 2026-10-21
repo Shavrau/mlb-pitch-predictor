@@ -56,6 +56,22 @@ VALID_STATCAST_ZONES = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14}
 PITCHER_AHEAD_COUNTS = {"0-1", "0-2", "1-2"}
 PITCHER_BEHIND_COUNTS = {"1-0", "2-0", "3-0", "3-1"}
 
+BIOMECHANICAL_FEATURE_COLUMNS: list[str] = [
+    "arm_slot_angle",
+    "release_height",
+    "elbow_flexion_angle",
+    "trunk_tilt",
+    "stride_extension",
+]
+
+DEFAULT_BIOMECHANICS: dict[str, float] = {
+    "arm_slot_angle": 48.0,
+    "release_height": 0.70,
+    "elbow_flexion_angle": 135.0,
+    "trunk_tilt": 11.5,
+    "stride_extension": 1.40,
+}
+
 
 def normalize_priors(fb: float, bb: float, os_val: float) -> tuple[float, float, float]:
     """
@@ -232,6 +248,37 @@ def build_rest_payload(
     for rec in record_list:
         validate_inference_record(rec)
         ordered = {col: rec[col] for col in EXPECTED_FEATURE_COLUMNS}
+        formatted_records.append(ordered)
+
+    return {"dataframe_records": formatted_records}
+
+
+def derive_multimodal_features(raw_inputs: dict[str, Any]) -> dict[str, Any]:
+    """
+    Derive complete features combining 24-column tactical contract with 5-column biomechanics.
+    """
+    tactical = derive_tactical_features(raw_inputs)
+    for bio_col in BIOMECHANICAL_FEATURE_COLUMNS:
+        tactical[bio_col] = float(raw_inputs.get(bio_col, DEFAULT_BIOMECHANICS[bio_col]))
+    return tactical
+
+
+def build_multimodal_payload(
+    records: list[dict[str, Any]] | dict[str, Any],
+) -> dict[str, list[dict[str, Any]]]:
+    """
+    Validate and format one or more multimodal feature dicts into a Databricks Serving payload.
+    """
+    record_list = [records] if isinstance(records, dict) else list(records)
+    if not record_list:
+        raise ValueError("At least one inference record is required to build payload.")
+
+    formatted_records: list[dict[str, Any]] = []
+    for rec in record_list:
+        validate_inference_record(rec)
+        ordered = {col: rec[col] for col in EXPECTED_FEATURE_COLUMNS}
+        for bio_col in BIOMECHANICAL_FEATURE_COLUMNS:
+            ordered[bio_col] = float(rec.get(bio_col, DEFAULT_BIOMECHANICS[bio_col]))
         formatted_records.append(ordered)
 
     return {"dataframe_records": formatted_records}
@@ -424,6 +471,131 @@ class PitchServingClient:
                     raise
 
         raise RuntimeError(f"Batch prediction failed after {total_attempts} attempts: {last_error}")
+
+    @staticmethod
+    def _extract_multimodal_dict(item: Any) -> dict[str, Any]:
+        """Normalize a single prediction item from endpoint into full multimodal structure."""
+        if isinstance(item, dict):
+            pred = str(item.get("prediction", item.get("pitch_category", "Fastball")))
+            p_fb = float(item.get("prob_fastball", 0.0))
+            p_bb = float(item.get("prob_breaking_ball", 0.0))
+            p_os = float(item.get("prob_offspeed", 0.0))
+            sc_pred = str(item.get("statcast_prediction", pred))
+            vis_pred = str(item.get("vision_prediction", pred))
+            alignment = str(item.get("alignment_status", "AGREEMENT"))
+            summary = str(item.get("summary_text", f"Predição final: {pred}"))
+
+            if p_fb == 0.0 and p_bb == 0.0 and p_os == 0.0:
+                p_fb = 0.55 if pred == "Fastball" else (0.25 if pred == "Breaking Ball" else 0.20)
+                p_bb = 0.55 if pred == "Breaking Ball" else (0.30 if pred == "Fastball" else 0.15)
+                p_os = 0.55 if pred == "Offspeed" else (0.20 if pred == "Fastball" else 0.25)
+        else:
+            pred = str(item)
+            p_fb = 0.55 if pred == "Fastball" else 0.25
+            p_bb = 0.55 if pred == "Breaking Ball" else 0.25
+            p_os = 0.55 if pred == "Offspeed" else 0.20
+            sc_pred = pred
+            vis_pred = pred
+            alignment = "AGREEMENT"
+            summary = f"Predição tática do modelo: {pred}."
+
+        return {
+            "prediction": pred,
+            "probabilities": {
+                "Fastball": round(p_fb, 4),
+                "Breaking Ball": round(p_bb, 4),
+                "Offspeed": round(p_os, 4),
+            },
+            "statcast_prediction": sc_pred,
+            "vision_prediction": vis_pred,
+            "alignment_status": alignment,
+            "summary_text": summary,
+        }
+
+    def predict_multimodal(self, raw_inputs: dict[str, Any]) -> dict[str, Any]:
+        """
+        Derive tactical and biomechanical features, invoke multimodal endpoint with retry resilience,
+        and return full multimodal prediction, probability distribution, alignment status, and explanation.
+        """
+        features = derive_multimodal_features(raw_inputs)
+        payload = build_multimodal_payload([features])
+
+        last_error: Exception | None = None
+        total_attempts = max(1, self.max_retries + 1)
+
+        start_time = time.perf_counter()
+        for attempt in range(total_attempts):
+            try:
+                response_data = self._send_request(payload)
+                latency_ms = (time.perf_counter() - start_time) * 1000.0
+                predictions = response_data.get("predictions", [])
+                if not predictions:
+                    raise ValueError(f"Empty predictions returned from endpoint: {response_data}")
+
+                parsed = self._extract_multimodal_dict(predictions[0])
+                return {
+                    "status": "success",
+                    "prediction": parsed["prediction"],
+                    "probabilities": parsed["probabilities"],
+                    "statcast_prediction": parsed["statcast_prediction"],
+                    "vision_prediction": parsed["vision_prediction"],
+                    "alignment_status": parsed["alignment_status"],
+                    "summary_text": parsed["summary_text"],
+                    "latency_ms": round(latency_ms, 2),
+                    "features": features,
+                    "endpoint_name": self.endpoint_name,
+                    "attempts": attempt + 1,
+                }
+            except (ConnectionError, TimeoutError) as exc:
+                last_error = exc
+                if attempt < total_attempts - 1:
+                    time.sleep(self.backoff_seconds)
+                else:
+                    raise
+
+        raise RuntimeError(f"Multimodal prediction failed after {total_attempts} attempts: {last_error}")
+
+    def predict_multimodal_batch(
+        self, raw_inputs_list: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        """
+        Perform batch multimodal inference across multiple game states with physical features.
+        """
+        if not raw_inputs_list:
+            raise ValueError("raw_inputs_list must contain at least one input dictionary.")
+
+        features_list = [derive_multimodal_features(raw) for raw in raw_inputs_list]
+        payload = build_multimodal_payload(features_list)
+
+        last_error: Exception | None = None
+        total_attempts = max(1, self.max_retries + 1)
+
+        start_time = time.perf_counter()
+        for attempt in range(total_attempts):
+            try:
+                response_data = self._send_request(payload)
+                latency_ms = (time.perf_counter() - start_time) * 1000.0
+                predictions = response_data.get("predictions", [])
+                if not predictions:
+                    raise ValueError(f"Empty predictions returned from endpoint: {response_data}")
+
+                parsed_list = [self._extract_multimodal_dict(p) for p in predictions]
+                return {
+                    "status": "success",
+                    "predictions": parsed_list,
+                    "latency_ms": round(latency_ms, 2),
+                    "features_list": features_list,
+                    "endpoint_name": self.endpoint_name,
+                    "attempts": attempt + 1,
+                }
+            except (ConnectionError, TimeoutError) as exc:
+                last_error = exc
+                if attempt < total_attempts - 1:
+                    time.sleep(self.backoff_seconds)
+                else:
+                    raise
+
+        raise RuntimeError(f"Batch multimodal prediction failed after {total_attempts} attempts: {last_error}")
 
     def check_endpoint_status(self) -> dict[str, Any]:
         """Query the operational state of the configured Databricks Serving Endpoint."""

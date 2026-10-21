@@ -23,9 +23,12 @@ from unittest.mock import patch
 import pytest
 
 from pitch_predictor.serving_client import (
+    BIOMECHANICAL_FEATURE_COLUMNS,
     EXPECTED_FEATURE_COLUMNS,
     PitchServingClient,
+    build_multimodal_payload,
     build_rest_payload,
+    derive_multimodal_features,
     derive_tactical_features,
     normalize_priors,
     validate_inference_record,
@@ -348,3 +351,125 @@ def test_pitch_serving_client_retries_on_cold_start_connection_error() -> None:
     assert result["status"] == "success"
     assert result["prediction"] == "Breaking Ball"
     assert result["features"]["count_state"] == "3-2"
+
+
+def test_derive_and_build_multimodal_payload() -> None:
+    """Verify derive_multimodal_features and build_multimodal_payload structure and fallbacks."""
+    raw = _sample_raw_inputs(arm_slot_angle=52.5)
+    multi_feats = derive_multimodal_features(raw)
+
+    assert "arm_slot_angle" in multi_feats
+    assert multi_feats["arm_slot_angle"] == 52.5
+    assert "elbow_flexion_angle" in multi_feats
+    assert multi_feats["elbow_flexion_angle"] == 135.0  # default fallback
+
+    payload = build_multimodal_payload([multi_feats])
+    assert "dataframe_records" in payload
+    records = payload["dataframe_records"]
+    assert len(records) == 1
+    assert set(BIOMECHANICAL_FEATURE_COLUMNS).issubset(records[0].keys())
+    assert set(EXPECTED_FEATURE_COLUMNS).issubset(records[0].keys())
+
+
+def test_pitch_serving_client_predict_multimodal_structured_response() -> None:
+    """Verify predict_multimodal returns probabilities, alignment status, and explanation."""
+    client = PitchServingClient(
+        endpoint_name="pitch-predictor-prod",
+        host="https://adb-test.azuredatabricks.net",
+        token="dapi_test_token",
+    )
+    raw = _sample_raw_inputs(balls=0, strikes=2, arm_slot_angle=20.0)
+
+    mock_multimodal_item = {
+        "prediction": "Breaking Ball",
+        "prob_fastball": 0.15,
+        "prob_breaking_ball": 0.75,
+        "prob_offspeed": 0.10,
+        "statcast_prediction": "Fastball",
+        "vision_prediction": "Breaking Ball",
+        "alignment_status": "TIPPING_OVERRIDE",
+        "summary_text": "Pitch tipping detectado no release point.",
+    }
+
+    with patch.object(
+        client, "_send_request", return_value={"predictions": [mock_multimodal_item]}
+    ) as mock_send:
+        result = client.predict_multimodal(raw)
+
+    assert mock_send.call_count == 1
+    assert result["status"] == "success"
+    assert result["prediction"] == "Breaking Ball"
+    assert result["probabilities"]["Breaking Ball"] == 0.75
+    assert result["statcast_prediction"] == "Fastball"
+    assert result["vision_prediction"] == "Breaking Ball"
+    assert result["alignment_status"] == "TIPPING_OVERRIDE"
+    assert "tipping" in result["summary_text"].lower()
+
+
+def test_pitch_serving_client_predict_multimodal_string_response_compatibility() -> None:
+    """Verify predict_multimodal backwards-compatibility if endpoint returns simple strings."""
+    client = PitchServingClient(
+        endpoint_name="pitch-predictor-prod",
+        host="https://adb-test.azuredatabricks.net",
+        token="dapi_test_token",
+    )
+    raw = _sample_raw_inputs(balls=1, strikes=0)
+
+    with patch.object(
+        client, "_send_request", return_value={"predictions": ["Fastball"]}
+    ) as mock_send:
+        result = client.predict_multimodal(raw)
+
+    assert mock_send.call_count == 1
+    assert result["status"] == "success"
+    assert result["prediction"] == "Fastball"
+    assert result["probabilities"]["Fastball"] > 0.5
+    assert result["alignment_status"] == "AGREEMENT"
+
+
+def test_pitch_serving_client_predict_multimodal_batch() -> None:
+    """Verify predict_multimodal_batch across multiple game states."""
+    client = PitchServingClient(
+        endpoint_name="pitch-predictor-prod",
+        host="https://adb-test.azuredatabricks.net",
+        token="dapi_test_token",
+    )
+    inputs = [
+        _sample_raw_inputs(balls=0, strikes=0),
+        _sample_raw_inputs(balls=0, strikes=2),
+    ]
+
+    mock_resp = {
+        "predictions": [
+            {
+                "prediction": "Fastball",
+                "prob_fastball": 0.6,
+                "prob_breaking_ball": 0.3,
+                "prob_offspeed": 0.1,
+                "statcast_prediction": "Fastball",
+                "vision_prediction": "Fastball",
+                "alignment_status": "AGREEMENT",
+                "summary_text": "Alinhado.",
+            },
+            {
+                "prediction": "Breaking Ball",
+                "prob_fastball": 0.2,
+                "prob_breaking_ball": 0.7,
+                "prob_offspeed": 0.1,
+                "statcast_prediction": "Breaking Ball",
+                "vision_prediction": "Breaking Ball",
+                "alignment_status": "AGREEMENT",
+                "summary_text": "Alinhado.",
+            },
+        ]
+    }
+
+    with patch.object(client, "_send_request", return_value=mock_resp) as mock_send:
+        result = client.predict_multimodal_batch(inputs)
+
+    assert mock_send.call_count == 1
+    assert result["status"] == "success"
+    assert len(result["predictions"]) == 2
+    assert result["predictions"][0]["prediction"] == "Fastball"
+    assert result["predictions"][1]["prediction"] == "Breaking Ball"
+

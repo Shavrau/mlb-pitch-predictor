@@ -4,12 +4,12 @@ resources:
       name: pitch_predictor_endpoint_${bundle.target}
       config:
         served_entities:
-          - name: pitch_category_predictor_prod
-            entity_name: ${var.catalog}.${var.schema}.pitch_category_predictor
+          - name: multimodal_pitch_predictor_prod
+            entity_name: ${var.catalog}.${var.schema}.${var.model_name}
             entity_version: "${var.model_version}"
             workload_size: Small
             scale_to_zero_enabled: true
         traffic_config:
           routes:
-            - served_model_name: pitch_category_predictor_prod
+            - served_model_name: multimodal_pitch_predictor_prod
               traffic_percentage: 100

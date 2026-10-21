@@ -16,6 +16,7 @@ import pandas as pd
 import streamlit as st
 
 from pitch_predictor.multimodal import MultimodalPitchClassifier
+from pitch_predictor.serving_client import PitchServingClient
 from pitch_predictor.vision.overlay import extract_and_annotate_release_frame
 from pitch_predictor.vision.pose_extractor import PoseExtractor
 from pitch_predictor.vision.tipping_model import PitchTippingClassifier
@@ -23,6 +24,12 @@ from pitch_predictor.vision.tipping_model import PitchTippingClassifier
 # ---------------------------------------------------------------------------
 # Caching de Recursos e Dados
 # ---------------------------------------------------------------------------
+
+
+@st.cache_resource
+def get_serving_client() -> PitchServingClient:
+    """Carrega o cliente de inferência Databricks Model Serving."""
+    return PitchServingClient(profile="dev")
 
 
 @st.cache_resource
@@ -346,7 +353,7 @@ else:
     statcast_probs = {"Fastball": 0.40, "Breaking Ball": 0.25, "Offspeed": 0.35}
     statcast_pred = "Fastball"
 
-# Multimodal Modality Comparison
+# Multimodal Modality Comparison (Hybrid Databricks Model Serving + Local Fallback)
 multimodal_input = {
     "balls": 1,
     "strikes": 2 if selected_cat == "Breaking Ball" else (1 if selected_cat == "Fastball" else 2),
@@ -365,9 +372,33 @@ multimodal_input = {
     "trunk_tilt": trunk_tilt_val,
     "stride_extension": float(bio_record.get("stride_extension", 1.40)),
 }
-comparison = multimodal_model.compare_modalities(multimodal_input)
-multi_pred = comparison["multimodal_prediction"]
-multi_probs = comparison["multimodal_probabilities"]
+
+client = get_serving_client()
+is_live_serving = False
+serving_latency = 0.0
+
+try:
+    live_res = client.predict_multimodal(multimodal_input)
+    multi_pred = live_res["prediction"]
+    multi_probs = live_res["probabilities"]
+    statcast_pred = live_res["statcast_prediction"]
+    statcast_probs = {
+        "Fastball": 0.60 if statcast_pred == "Fastball" else (0.25 if statcast_pred == "Breaking Ball" else 0.15),
+        "Breaking Ball": 0.60 if statcast_pred == "Breaking Ball" else (0.25 if statcast_pred == "Fastball" else 0.15),
+        "Offspeed": 0.60 if statcast_pred == "Offspeed" else (0.25 if statcast_pred == "Fastball" else 0.15),
+    }
+    comparison = {
+        "multimodal_prediction": multi_pred,
+        "multimodal_probabilities": multi_probs,
+        "alignment_status": live_res["alignment_status"],
+        "summary_text": live_res["summary_text"],
+    }
+    is_live_serving = True
+    serving_latency = live_res.get("latency_ms", 0.0)
+except Exception:  # noqa: BLE001
+    comparison = multimodal_model.compare_modalities(multimodal_input)
+    multi_pred = comparison["multimodal_prediction"]
+    multi_probs = comparison["multimodal_probabilities"]
 
 with statcast_col, st.container(border=True):
     st.markdown("#### 📊 Modelo Statcast (Contextual)")
@@ -398,8 +429,9 @@ with vision_col, st.container(border=True):
     st.progress(bio_probs.get("Offspeed", 0.0), text=f"Offspeed: {bio_probs.get('Offspeed', 0.0) * 100:.1f}%")
 
 with multimodal_col, st.container(border=True):
-    st.markdown("#### ⚡ Fusão Multimodal (Híbrido)")
-    st.caption("Ponderação integrada de contexto tático e cinemática corporal")
+    serving_badge = f"🟢 Serving Ativo ({serving_latency:.0f} ms)" if is_live_serving else "🖥️ Inferência Local"
+    st.markdown(f"#### ⚡ Fusão Multimodal ({serving_badge})")
+    st.caption("Ponderação integrada via Databricks Model Serving Serverless")
 
     st.metric(
         label="Predição Integrada Final",

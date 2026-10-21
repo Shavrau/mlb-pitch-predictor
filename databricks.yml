@@ -34,9 +34,12 @@ variables:
   earliest_season_limit:
     description: "Earliest MLB regular season for backward historical backfill"
     default: "2021"
+  model_name:
+    description: "Registered UC model name to serve on the serving endpoint"
+    default: "multimodal_pitch_predictor"
   model_version:
     description: "Model version to serve on the serving endpoint"
-    default: "1"
+    default: "2"
 
 targets:
   dev:
@@ -51,7 +54,8 @@ targets:
       start_dt: "auto"
       end_dt: "auto"
       earliest_season_limit: "2021"
-      model_version: "1"
+      model_name: "multimodal_pitch_predictor"
+      model_version: "2"
 
   prod:
     mode: production
@@ -64,4 +68,5 @@ targets:
       start_dt: "auto"
       end_dt: "auto"
       earliest_season_limit: "2021"
-      model_version: "1"
+      model_name: "multimodal_pitch_predictor"
+      model_version: "2"

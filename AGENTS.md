@@ -1,19 +1,25 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v1.3.0 Checkpoint (Passos 1 a 5 de Visão Computacional & Fusão Multimodal Concluídos)  
-> **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation & Multimodal Fusion  
+> **Versão do Projeto:** v1.4.0 Checkpoint (Passo 1: Servir Modelo Multimodal em Tempo Real via Databricks Model Serving Concluído)  
+> **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Real-Time Serverless Model Serving  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit.
 
-Este documento é a referência técnica primária para agentes autônomos de IA e desenvolvedores que operam neste repositório. Ele sintetiza os achados da auditoria da base de código, as regras de arquitetura invioláveis, a estrutura dos componentes e as especificações para o próximo ciclo de desenvolvimento (integração com Visão Computacional e Fusão Multimodal).
+Este documento é a referência técnica primária para agentes autônomos de IA e desenvolvedores que operam neste repositório. Ele sintetiza os achados da auditoria da base de código, as regras de arquitetura invioláveis, a estrutura dos componentes e as especificações para o próximo ciclo de desenvolvimento.
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v1.3.0)
+## 1. Estado Atual da Base de Código (Checkpoint v1.4.0)
 
 Após análise aprofundada da base de código, o projeto encontra-se em estado funcional, testado e modular:
-- **Suíte de Testes**: **183 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1` em ~42 segundos).
-- **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe` e `shap` instalados.
-- **Unity Catalog Dedicado**: Catálogo `pitch_predictor` ativo em Dev (`pitch_predictor.baseball_ml_dev`), com pipeline Lakeflow Serverless (`@dp`) operacional e validado (`raw_pitches` com 6.749 linhas, `silver_pitch_features` com 6.720 linhas).
+- **Suíte de Testes**: **192 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1` em ~66 segundos).
+- **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe`, `shap`, `mlflow` e `databricks-sdk` instalados.
+- **Unity Catalog Dedicado**: Catálogo `pitch_predictor` ativo em Dev (`pitch_predictor.baseball_ml_dev`), com pipeline Lakeflow Serverless (`@dp`) operacional e validado (`raw_pitches` com 6.749 linhas, `silver_pitch_features` com 6.720 linhas, `biomechanical_features` com 30 arremessos reais extraídos).
+- **Modelo Multimodal Servido em Tempo Real (Databricks Model Serving Serverless)**:
+  - Modelo registrado no Unity Catalog: `pitch_predictor.baseball_ml_dev.multimodal_pitch_predictor` (Versão 2, Alias `@prod`).
+  - Endpoint ativo e operacional: `dev_rhian_souza_pitch_predictor_endpoint_dev` em estado `READY` / `DEPLOYMENT_READY` com escala para zero e 100% de tráfego.
+  - Empacotamento MLflow Custom PyFunc (`MultimodalServingPyfuncModel` em `src/pitch_predictor/serving_model.py`):
+    - Assinatura com colunas biomecânicas opcionais (`required=False`), garantindo que tanto chamadas puramente táticas quanto chamadas com cinemática corporal completa sejam atendidas com inferência em tempo real.
+    - Saída estruturada retornando `prediction`, `prob_fastball`, `prob_breaking_ball`, `prob_offspeed`, `statcast_prediction`, `vision_prediction`, `alignment_status` e `summary_text`.
 - **Módulo de Visão Computacional Biomecânica (`pitch_predictor.vision`)**:
   1. `video_ingestion.py`: Ingestão incremental de clipes de vídeo do Baseball Savant, upload híbrido (SDK/POSIX) para Unity Catalog Volume e manutenção de manifesto.
   2. `pose_extractor.py`: Extração de 33 marcos 3D (MediaPipe Pose), ângulos de braço (*arm slot*), altura de soltura, flexão de cotovelo, inclinação de tronco, extensão de passada e detecção delimitada do frame de soltura (*pitch tipping*).
@@ -22,23 +28,16 @@ Após análise aprofundada da base de código, o projeto encontra-se em estado f
 - **Módulo de Fusão Multimodal (`pitch_predictor.multimodal`)**:
   - `multimodal.py`: Fusão determinística e livre de vazamento (`(game_pk, at_bat_number, pitch_number)`), unindo features contextuais do Statcast (contagem, corredores, matchup, priors) e features biomecânicas (arm slot, flexão de cotovelo, altura).
   - `MultimodalPitchClassifier`: Classificador híbrido integrando pipelines especializados com estudo de ablação comparativo (*Ablation Study*) calculando o ganho de informação (*Lift*), diagnóstico de alinhamento tático vs tipping override e serialização `joblib`.
-- **Modelos e Artefatos Sincronizados no Unity Catalog Volume**:
-  - Clipes MP4 reais de Paul Skenes (`694973`) em `/Volumes/pitch_predictor/baseball_ml_dev/pitch_data/videos/694973/`
-  - Manifesto com `video_path` e `volume_path`
-  - Features biomecânicas extraídas em Parquet e CSV
-  - Modelo de Pitch Tipping serializado em `/Volumes/pitch_predictor/baseball_ml_dev/pitch_data/models/pitch_tipping_model.joblib`
-  - Modelo Multimodal serializado em `/Volumes/pitch_predictor/baseball_ml_dev/pitch_data/models/multimodal_pitch_model.joblib`
-  - Features multimodais unificadas em `/Volumes/pitch_predictor/baseball_ml_dev/pitch_data/features/multimodal_features.parquet`
 - **Camada de Apresentação (Streamlit)**: Arquitetura multipágina moderna com 5 módulos operacionais:
   1. `pages/00_home_apresentacao.py`: Apresentação executiva e amigável para leigos com 4 perfis de arremessador e 3 momentos táticos.
   2. `pages/01_live_predictor.py`: Simulador tático lance a lance com controle de contagem, corredores em base e inferência em tempo real.
   3. `pages/02_scout_report.py`: Scouting report completo com análise de tendências na matriz 4x3 de 12 contagens e plano de jogo.
   4. `pages/03_minigame.py`: Minigame retrô arcade (8-bit / 16-bit) com máquina de estados, sistema de atributos RPG (100 pontos), sistema de vidas, multiplicador de combo e áudio sintetizado Chiptune.
-  5. `pages/04_pitch_vision_lab.py`: Laboratório biomecânico com player de vídeo, anotação esquelética no frame de soltura, comparador tri-modal (Statcast vs Visão vs Fusão Multimodal) e estudo de ablação interativo.
-- **Camada de Inferência Resiliente**: `PitchServingClient` com suporte duplo:
-  - Chamadas autenticadas ao endpoint Databricks Model Serving via Databricks SDK / REST API.
-  - Modo Mock Offline inteligente (gera probabilidades táticas baseadas nos priors históricos e na contagem caso o endpoint esteja inacessível ou o usuário não possua credenciais ativas).
-- **Componentes Visuais Puros**: Geradores de SVG programáticos em `ui_components.py` para o Campo de Beisebol com corredores dinâmicos e Zona de Strike Statcast 3x3 com zonas periféricas de chase (11 a 14).
+  5. `pages/04_pitch_vision_lab.py`: Laboratório biomecânico com player de vídeo, anotação esquelética no frame de soltura, comparador tri-modal conectado em tempo real ao Databricks Model Serving (com badge de latência em milissegundos e fallback local) e estudo de ablação interativo.
+- **Camada de Inferência Resiliente**: `PitchServingClient` com suporte a:
+  - `predict()`: Inferência retrocompatível para consumo dos módulos táticos e minigame.
+  - `predict_multimodal()` e `predict_multimodal_batch()`: Inferência multimodal completa retornando probabilidades tri-modais, status de alinhamento e explicação textual gerada pelo modelo.
+  - Modo Mock Offline inteligente para continuidade da experiência local caso as credenciais da nuvem não estejam disponíveis.
 
 ---
 
@@ -98,6 +97,7 @@ pitch_predictor/
 ├── scripts/
 │   ├── download_pitch_videos.py  # Download incremental e manifesto de clipes Savant
 │   ├── extract_pitch_poses.py    # Extração de landmarks MediaPipe e métricas cinemáticas
+│   ├── register_multimodal_model.py # Registro do PyFunc Multimodal no Unity Catalog com @prod
 │   ├── setup_unity_catalog.py    # Utilitário CLI para inicialização do Unity Catalog
 │   ├── setup_unity_catalog.sql   # DDL SQL idempotente com tokens de catálogo/esquema
 │   ├── train_multimodal_model.py # Treinamento do modelo híbrido e estudo de ablação (Lift)
@@ -115,6 +115,7 @@ pitch_predictor/
 │   ├── scenarios.py              # Dicionários de cenários e perfis táticos
 │   ├── scout_analytics.py        # Agregações analíticas e cálculo da matriz de contagens
 │   ├── serving_client.py         # Cliente de inferência (Databricks Serving com Mock fallback)
+│   ├── serving_model.py          # MLflow PyFunc Multimodal com fallback de imputação e diagnóstico
 │   ├── training.py               # Orquestração do AutoML e rastreamento de experimentos MLflow
 │   ├── ui_components.py          # Componentes visuais SVG (Campo de Beisebol e Strike Zone)
 │   ├── utils.py                  # Logging formatado e sessão Spark local
@@ -125,7 +126,7 @@ pitch_predictor/
 │       ├── pose_extractor.py     # Extração de 33 landmarks 3D MediaPipe
 │       ├── tipping_model.py      # PitchTippingClassifier & SHAP TreeExplainer
 │       └── video_ingestion.py    # Ingestão de vídeos Savant & upload UC Volume
-└── tests/                        # 183 testes automatizados (pytest)
+└── tests/                        # 192 testes automatizados (pytest)
 ```
 
 ---
