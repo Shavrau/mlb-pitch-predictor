@@ -12,6 +12,8 @@ from typing import Any
 
 import streamlit as st
 
+from pitch_predictor.fallback_engine import predict_tactical_fallback
+from pitch_predictor.scenarios import MLB_PITCHERS
 from pitch_predictor.serving_client import (
     DEFAULT_ENDPOINT_NAME,
     PitchServingClient,
@@ -30,26 +32,40 @@ def get_serving_client(endpoint_name: str = DEFAULT_ENDPOINT_NAME) -> PitchServi
 
 
 FRIENDLY_PITCHER_STYLES: dict[str, dict[str, Any]] = {
-    "🚀 Lança-Chamas (Velocidade Pura - ex: Paul Skenes)": {
-        "p_throws": "R",
-        "pitcher_fb_prior": 0.6400,
-        "pitcher_bb_prior": 0.2800,
-        "pitcher_os_prior": 0.0800,
-        "short_desc": "Bolas rápidas acima de 160 km/h • Força bruta",
+    f"🚀 Paul Skenes ({MLB_PITCHERS['Paul Skenes']['team']})": {
+        "p_throws": MLB_PITCHERS["Paul Skenes"]["p_throws"],
+        "pitcher_fb_prior": MLB_PITCHERS["Paul Skenes"]["pitcher_fb_prior"],
+        "pitcher_bb_prior": MLB_PITCHERS["Paul Skenes"]["pitcher_bb_prior"],
+        "pitcher_os_prior": MLB_PITCHERS["Paul Skenes"]["pitcher_os_prior"],
+        "short_desc": f"102 mph Fastball / Splinker • {MLB_PITCHERS['Paul Skenes']['arm_slot_type']}",
     },
-    "🌪️ Mestre dos Efeitos (Curvas e Sliders - ex: Corbin Burnes)": {
-        "p_throws": "R",
-        "pitcher_fb_prior": 0.4200,
-        "pitcher_bb_prior": 0.4600,
-        "pitcher_os_prior": 0.1200,
-        "short_desc": "Alta rotação • A bola desvia no último segundo",
+    f"🌀 Corbin Burnes ({MLB_PITCHERS['Corbin Burnes']['team']})": {
+        "p_throws": MLB_PITCHERS["Corbin Burnes"]["p_throws"],
+        "pitcher_fb_prior": MLB_PITCHERS["Corbin Burnes"]["pitcher_fb_prior"],
+        "pitcher_bb_prior": MLB_PITCHERS["Corbin Burnes"]["pitcher_bb_prior"],
+        "pitcher_os_prior": MLB_PITCHERS["Corbin Burnes"]["pitcher_os_prior"],
+        "short_desc": f"Cutter / Sweeper Specialist (2800+ RPM) • {MLB_PITCHERS['Corbin Burnes']['arm_slot_type']}",
     },
-    "🛑 Mudança & Tempo (Changeup Master - ex: Logan Webb)": {
-        "p_throws": "R",
-        "pitcher_fb_prior": 0.4600,
-        "pitcher_bb_prior": 0.2200,
-        "pitcher_os_prior": 0.3200,
-        "short_desc": "Mesmo braço da rápida, mas chega devagar",
+    f"🛑 Logan Webb ({MLB_PITCHERS['Logan Webb']['team']})": {
+        "p_throws": MLB_PITCHERS["Logan Webb"]["p_throws"],
+        "pitcher_fb_prior": MLB_PITCHERS["Logan Webb"]["pitcher_fb_prior"],
+        "pitcher_bb_prior": MLB_PITCHERS["Logan Webb"]["pitcher_bb_prior"],
+        "pitcher_os_prior": MLB_PITCHERS["Logan Webb"]["pitcher_os_prior"],
+        "short_desc": f"Sinker / Changeup Master (Groundball King) • {MLB_PITCHERS['Logan Webb']['arm_slot_type']}",
+    },
+    f"🏹 Chris Sale ({MLB_PITCHERS['Chris Sale']['team']})": {
+        "p_throws": MLB_PITCHERS["Chris Sale"]["p_throws"],
+        "pitcher_fb_prior": MLB_PITCHERS["Chris Sale"]["pitcher_fb_prior"],
+        "pitcher_bb_prior": MLB_PITCHERS["Chris Sale"]["pitcher_bb_prior"],
+        "pitcher_os_prior": MLB_PITCHERS["Chris Sale"]["pitcher_os_prior"],
+        "short_desc": f"Lefty Crafty Ace (NL Cy Young '24) • {MLB_PITCHERS['Chris Sale']['arm_slot_type']}",
+    },
+    f"🎌 Yoshinobu Yamamoto ({MLB_PITCHERS['Yoshinobu Yamamoto']['team']})": {
+        "p_throws": MLB_PITCHERS["Yoshinobu Yamamoto"]["p_throws"],
+        "pitcher_fb_prior": MLB_PITCHERS["Yoshinobu Yamamoto"]["pitcher_fb_prior"],
+        "pitcher_bb_prior": MLB_PITCHERS["Yoshinobu Yamamoto"]["pitcher_bb_prior"],
+        "pitcher_os_prior": MLB_PITCHERS["Yoshinobu Yamamoto"]["pitcher_os_prior"],
+        "short_desc": f"Devastating Splitter / Rainbow Curve • {MLB_PITCHERS['Yoshinobu Yamamoto']['arm_slot_type']}",
     },
     "⚖️ Média Geral da MLB (Padrão da Liga)": {
         "p_throws": "R",
@@ -214,9 +230,9 @@ def render_intuitive_result_card_html(
 
 
 # Initialize session state for Quick Demo
-if "home_pitcher_style" not in st.session_state:
+if "home_pitcher_style" not in st.session_state or st.session_state.home_pitcher_style not in FRIENDLY_PITCHER_STYLES:
     st.session_state.home_pitcher_style = next(iter(FRIENDLY_PITCHER_STYLES.keys()))
-if "home_game_moment" not in st.session_state:
+if "home_game_moment" not in st.session_state or st.session_state.home_game_moment not in FRIENDLY_GAME_MOMENTS:
     st.session_state.home_game_moment = next(iter(FRIENDLY_GAME_MOMENTS.keys()))
 if "home_demo_result" not in st.session_state:
     st.session_state.home_demo_result = None
@@ -355,19 +371,25 @@ with st.container(border=True):
         with st.spinner("⏳ Consultando modelo no Databricks Serverless..."):
             try:
                 pred_res = client.predict(demo_raw_inputs)
-                concise_bullet = build_concise_tactical_bullet(
-                    prediction=pred_res["prediction"],
-                    features=pred_res["features"],
-                )
-                st.session_state.home_demo_result = {
-                    "prediction": pred_res["prediction"],
-                    "latency_ms": pred_res["latency_ms"],
-                    "bullet": concise_bullet,
-                    "context_badge": moment_cfg["context_badge"],
-                    "features": pred_res["features"],
-                }
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"⚠️ Erro ao consultar endpoint: {exc}")
+            except Exception:  # noqa: BLE001
+                # Unified baseball fallback engine
+                pred_res = predict_tactical_fallback(demo_raw_inputs)
+
+            concise_bullet = build_concise_tactical_bullet(
+                prediction=pred_res["prediction"],
+                features=pred_res["features"],
+            )
+            context_badge = moment_cfg["context_badge"]
+            if pred_res.get("is_fallback"):
+                context_badge += " • MODO LOCAL"
+
+            st.session_state.home_demo_result = {
+                "prediction": pred_res["prediction"],
+                "latency_ms": pred_res["latency_ms"],
+                "bullet": concise_bullet,
+                "context_badge": context_badge,
+                "features": pred_res["features"],
+            }
 
     if st.session_state.home_demo_result:
         res = st.session_state.home_demo_result
@@ -414,13 +436,13 @@ with nav_c1:
     )
 with nav_c2:
     st.page_link(
-        "pages/01_live_predictor.py",
-        label="⚾ Abrir Simulador Lance a Lance (Diamante) →",
-        icon="⚾",
-    )
-with nav_c3:
-    st.page_link(
         "pages/02_scout_report.py",
         label="📋 Abrir MLB Scouting Report & Matriz →",
         icon="📋",
+    )
+with nav_c3:
+    st.page_link(
+        "pages/04_pitch_vision_lab.py",
+        label="🔬 Abrir Laboratório de Visão & Tipping →",
+        icon="🔬",
     )

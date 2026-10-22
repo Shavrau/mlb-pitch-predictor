@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v1.8.0 Checkpoint (Yoshinobu Yamamoto Ingestion & Minigame Zero-Scroll UI Redesign)  
+> **Versão do Projeto:** v1.9.0 Checkpoint (Sprint 1 Architecture Simplification & Page 01 Deprecation)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit.
 
@@ -8,25 +8,31 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v1.8.0)
+## 1. Estado Atual da Base de Código (Checkpoint v1.9.0)
 
-Após análise aprofundada da base de código, o projeto encontra-se em estado funcional, testado e modular:
-- **Suíte de Testes**: **200 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+Após análise aprofundada da base de código e execução da Sprint 1 de Simplificação Arquitetural:
+- **Suíte de Testes**: **202 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1` em ~64 segundos).
 - **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe`, `shap`, `mlflow` e `databricks-sdk` instalados.
-- **Ingestão Multi-Player & Registro Oficial MLB (5 Estrelas)**:
-  - Ingestão real Statcast via PyBaseball e resolução de clipes Savant para 5 arremessadores de elite:
+- **Centralização em `MLB_PITCHERS` (Single Source of Truth)**:
+  - Registro único estruturado em `src/pitch_predictor/scenarios.py` com priors reais, arsenal, mão de arremesso (R/L) e perfil biomecânico calibrado para os 5 astros:
     1. **Paul Skenes** (`#694973` - Pittsburgh Pirates, RHP, Power Pitcher, 102 mph Fastball / Splinker)
     2. **Corbin Burnes** (`#669203` - Baltimore Orioles, RHP, Breaking Specialist, Cutter / Curveball)
     3. **Logan Webb** (`#657277` - San Francisco Giants, RHP, Offspeed Master, Sinker / Changeup)
     4. **Chris Sale** (`#519242` - Atlanta Braves, LHP, Lefty Crafty Ace, Low 3/4 Slot / Sweeping Slider)
     5. **Yoshinobu Yamamoto** (`#808967` - Los Angeles Dodgers, RHP, Devastating Splitter Ace, Rainbow Curve / 96 mph FF)
-  - Registro estruturado `MLB_PITCHERS` em `src/pitch_predictor/scenarios.py` com priors reais, arsenal, mão de arremesso (R/L) e perfil biomecânico calibrado.
-  - Manifestos, features biomecânicas (`biomechanical_features.csv` e `.parquet`) e 150+ snapshots anotados em neon Statcast individualizados para cada arremessador.
-- **UI Redesign do Minigame Arcade (Zero-Scroll)**:
-  - `pages/03_minigame.py`: Redesenhado completamente para caber em viewport único (above-the-fold, ~620px de altura total).
-  - Eliminação da necessidade de rolagem vertical: o botão de arremesso ("ARREMESSAR CONTRA A IA"), a seleção de categoria/tipo/zona e o card de resultado imediato estão alinhados horizontalmente no topo da tela.
-  - HUD superior com exibição direta da contagem em tempo real (`Bolas - Strikes`), vidas, pontuação e combo.
-  - Presets rápidos com os 5 arremessadores (Skenes, Burnes, Webb, Sale e Yamamoto).
+  - Funções utilitárias canônicas: `get_pitcher_profile()` e `get_pitcher_names()`.
+- **Motor Unificado de Fallback Offline (`src/pitch_predictor/fallback_engine.py`)**:
+  - Eliminação de fallbacks concorrentes e discrepantes:
+    - `predict_tactical_fallback()`: Inferência tática situacional calibrada por contagem, vantagem, platoon e RISP.
+    - `predict_multimodal_fallback()`: Fusão ponderada de Statcast e cinemática corporal com diagnóstico de tipping.
+    - `simulate_12_counts_fallback()`: Geração determinística da matriz de 12 contagens para o Scouting Report.
+- **Simplificação da UI & Remoção da Página 01 (`01_live_predictor.py`)**:
+  - Eliminação da página `pages/01_live_predictor.py` para erradicar sobrecarga cognitiva (18 controles simultâneos) e redundância.
+  - A aplicação passa a ter **4 páginas focadas e de alto valor**:
+    1. `pages/00_home_apresentacao.py`: Visão geral executiva com seleção dos 5 arremessadores oficiais e rodapé com links para os 3 submódulos.
+    2. `pages/03_minigame.py`: Minigame arcade retrô (zero-scroll) com presets oficiais e resolução via fallback unificado.
+    3. `pages/02_scout_report.py`: Scouting report completo com matriz 4x3 de 12 contagens e plano de jogo.
+    4. `pages/04_pitch_vision_lab.py`: Laboratório biomecânico com player de vídeo, anotação esquelética no frame de soltura e estudo de ablação.
 - **Seleção Dinâmica de Arremessador na UI**:
   - `pages/04_pitch_vision_lab.py`: Seletor de arremessador no topo, sincronizando clipes, ângulos anatômicos, esqueleto (com suporte destros/canhotos), relatórios de tipping e estudo de ablação com o jogador selecionado.
   - `pages/01_live_predictor.py`: Seletor de arremessador oficial MLB, aplicando priors e lateralidade (p_throws) ao simulador tático.
@@ -125,8 +131,7 @@ pitch_predictor/
 │   ├── 03_model_inference.py     # Inferência em lote e validação de métricas MLflow
 │   └── 04_video_biomechanics_pipeline.py # Tarefa Lakeflow Job para ingestão incremental de vídeo e pose
 ├── pages/
-│   ├── 00_home_apresentacao.py   # Apresentação descomplicada com perfis de arremessador
-│   ├── 01_live_predictor.py      # Simulador tático pitch-by-pitch com controle de contagem
+│   ├── 00_home_apresentacao.py   # Apresentação executiva com perfis oficiais e predição tática
 │   ├── 02_scout_report.py        # Scouting report detalhado com matriz 4x3 de 12 contagens
 │   ├── 03_minigame.py            # Minigame retrô arcade (Você vs. IA no Montinho)
 │   └── 04_pitch_vision_lab.py    # Laboratório de Visão Computacional, Tipping & Comparador Tri-Modal
@@ -138,6 +143,8 @@ pitch_predictor/
 ├── scripts/
 │   ├── download_pitch_videos.py  # Download incremental e manifesto de clipes Savant
 │   ├── extract_pitch_poses.py    # Extração de landmarks MediaPipe e métricas cinemáticas
+│   ├── generate_all_15_release_frames.py # Geração e calibração de snapshots em neon Statcast
+│   ├── ingest_multiple_pitchers.py # Ingestão incremental dos 5 arremessadores de elite
 │   ├── register_multimodal_model.py # Registro do PyFunc Multimodal no Unity Catalog com @prod
 │   ├── setup_unity_catalog.py    # Utilitário CLI para inicialização do Unity Catalog
 │   ├── setup_unity_catalog.sql   # DDL SQL idempotente com tokens de catálogo/esquema
@@ -148,14 +155,15 @@ pitch_predictor/
 │   └── verify_ui_server.py       # Probe de saúde HTTP da UI
 ├── src/pitch_predictor/
 │   ├── config.py                 # Resolução de variáveis e cliente WorkspaceClient
+│   ├── fallback_engine.py        # Motor unificado de inferência offline & fallback tático/multimodal
 │   ├── features.py               # Colunas Silver, mapeamentos e transformações zero-leakage
 │   ├── ingestion.py              # Download de dados Statcast e sanitização inicial
 │   ├── minigame_engine.py        # Motor de jogo puro (regras, máquina de estados, resolução de duelos)
 │   ├── multimodal.py             # Fusão multimodal determinística, Ablation Study & Lift
 │   ├── pipelines/bronze_pitches.py # Pipeline Lakeflow DLT para camada Bronze
-│   ├── scenarios.py              # Dicionários de cenários e perfis táticos
+│   ├── scenarios.py              # Dicionários de cenários, priors e registro canônico MLB_PITCHERS
 │   ├── scout_analytics.py        # Agregações analíticas e cálculo da matriz de contagens
-│   ├── serving_client.py         # Cliente de inferência (Databricks Serving com Mock fallback)
+│   ├── serving_client.py         # Cliente de inferência (Databricks Serving com retry e backoff)
 │   ├── serving_model.py          # MLflow PyFunc Multimodal com fallback de imputação e diagnóstico
 │   ├── training.py               # Orquestração do AutoML e rastreamento de experimentos MLflow
 │   ├── ui_components.py          # Componentes visuais SVG (Campo de Beisebol e Strike Zone)
@@ -167,7 +175,7 @@ pitch_predictor/
 │       ├── pose_extractor.py     # Extração de 33 landmarks 3D MediaPipe
 │       ├── tipping_model.py      # PitchTippingClassifier & SHAP TreeExplainer
 │       └── video_ingestion.py    # Ingestão de vídeos Savant & upload UC Volume
-└── tests/                        # 192 testes automatizados (pytest)
+└── tests/                        # 202 testes automatizados (pytest)
 ```
 
 ---

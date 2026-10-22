@@ -295,7 +295,7 @@ for _, row in manifest_df.iterrows():
     options_labels.append(f"{cat} ({pt}) — Game {g_pk} | AB #{ab} | Pitch #{pn}")
 
 if not options_labels:
-    options_labels = [f"Fastball (FF) — Game 745170 | AB #31 | Pitch #4"]
+    options_labels = ["Fastball (FF) — Game 745170 | AB #31 | Pitch #4"]
 
 if "vision_pitch_selector" in st.session_state and st.session_state.vision_pitch_selector not in options_labels:
     st.session_state.vision_pitch_selector = options_labels[0]
@@ -607,7 +607,7 @@ else:
 
 with st.expander("📊 Relatório de Impacto & Estudo de Ablação Multimodal (Lift)", expanded=False):
     st.markdown(
-        f"""
+        """
         O estudo de ablação compara o desempenho de 3 pipelines sobre a partição de teste de arremessos de Paul Skenes:
         - **Statcast Isolado**: Prediz baseado apenas em contagem, corredores e histórico.
         - **Visão Isolada**: Prediz baseado apenas nos ângulos corporais no frame de soltura.

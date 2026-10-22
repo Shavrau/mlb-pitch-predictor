@@ -10,13 +10,14 @@ from __future__ import annotations
 
 import streamlit as st
 
+from pitch_predictor.fallback_engine import predict_tactical_fallback
 from pitch_predictor.minigame_engine import (
     ArcadeGameState,
     calculate_priors_from_stats,
     register_high_score,
     resolve_arcade_pitch,
 )
-from pitch_predictor.scenarios import PITCH_TYPES_BY_CATEGORY
+from pitch_predictor.scenarios import MLB_PITCHERS, PITCH_TYPES_BY_CATEGORY
 from pitch_predictor.serving_client import PitchServingClient
 from pitch_predictor.ui_components import (
     _compact_html,
@@ -340,35 +341,40 @@ with col_rpg:
     cp1, cp2, cp3 = st.columns(3)
     with cp1:
         if st.button("🚀 Skenes", use_container_width=True):
-            st.session_state.rpg_vel = 70
-            st.session_state.rpg_efe = 20
-            st.session_state.rpg_tim = 10
+            p = MLB_PITCHERS["Paul Skenes"]
+            st.session_state.rpg_vel = round(p["pitcher_fb_prior"] * 100)
+            st.session_state.rpg_efe = round(p["pitcher_bb_prior"] * 100)
+            st.session_state.rpg_tim = round(p["pitcher_os_prior"] * 100)
             st.session_state.minigame_pitcher = "Paul Skenes"
             st.rerun()
         if st.button("🏹 Sale", use_container_width=True):
-            st.session_state.rpg_vel = 45
-            st.session_state.rpg_efe = 45
-            st.session_state.rpg_tim = 10
+            p = MLB_PITCHERS["Chris Sale"]
+            st.session_state.rpg_vel = round(p["pitcher_fb_prior"] * 100)
+            st.session_state.rpg_efe = round(p["pitcher_bb_prior"] * 100)
+            st.session_state.rpg_tim = round(p["pitcher_os_prior"] * 100)
             st.session_state.minigame_pitcher = "Chris Sale"
             st.rerun()
     with cp2:
         if st.button("🌀 Burnes", use_container_width=True):
-            st.session_state.rpg_vel = 20
-            st.session_state.rpg_efe = 65
-            st.session_state.rpg_tim = 15
+            p = MLB_PITCHERS["Corbin Burnes"]
+            st.session_state.rpg_vel = round(p["pitcher_fb_prior"] * 100)
+            st.session_state.rpg_efe = round(p["pitcher_bb_prior"] * 100)
+            st.session_state.rpg_tim = round(p["pitcher_os_prior"] * 100)
             st.session_state.minigame_pitcher = "Corbin Burnes"
             st.rerun()
         if st.button("🎌 Yamamoto", use_container_width=True):
-            st.session_state.rpg_vel = 45
-            st.session_state.rpg_efe = 25
-            st.session_state.rpg_tim = 30
+            p = MLB_PITCHERS["Yoshinobu Yamamoto"]
+            st.session_state.rpg_vel = round(p["pitcher_fb_prior"] * 100)
+            st.session_state.rpg_efe = round(p["pitcher_bb_prior"] * 100)
+            st.session_state.rpg_tim = round(p["pitcher_os_prior"] * 100)
             st.session_state.minigame_pitcher = "Yoshinobu Yamamoto"
             st.rerun()
     with cp3:
         if st.button("⚡ Webb", use_container_width=True):
-            st.session_state.rpg_vel = 30
-            st.session_state.rpg_efe = 20
-            st.session_state.rpg_tim = 50
+            p = MLB_PITCHERS["Logan Webb"]
+            st.session_state.rpg_vel = round(p["pitcher_fb_prior"] * 100)
+            st.session_state.rpg_efe = round(p["pitcher_bb_prior"] * 100)
+            st.session_state.rpg_tim = round(p["pitcher_os_prior"] * 100)
             st.session_state.minigame_pitcher = "Logan Webb"
             st.rerun()
         if st.button("⚖️ Equil.", use_container_width=True):
@@ -557,13 +563,9 @@ with col_console:
                 prediction_res = client.predict(raw_payload)
                 ai_pred = prediction_res.get("prediction", "Fastball")
             except (ConnectionError, TimeoutError, RuntimeError, ValueError):
-                # Fallback resiliente baseado nos priors se endpoint indisponível
-                if fb_p >= bb_p and fb_p >= os_p:
-                    ai_pred = "Fastball"
-                elif bb_p >= os_p:
-                    ai_pred = "Breaking Ball"
-                else:
-                    ai_pred = "Offspeed"
+                # Fallback unificado baseado no motor tático calibrado
+                fallback_res = predict_tactical_fallback(raw_payload)
+                ai_pred = fallback_res["prediction"]
 
             # Resolução do Duelo pela Game Engine
             next_state, outcome = resolve_arcade_pitch(

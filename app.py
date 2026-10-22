@@ -3,8 +3,9 @@ MLB Pitch Predictor — Statcast Tactical Broadcast Interface (Multipage Entrypo
 
 Configures the global Streamlit page layout and routes between:
 0. `pages/00_home_apresentacao.py` — Visão Geral & Apresentação Descomplicada (Default)
-1. `pages/01_live_predictor.py` — Simulador Tático em Tempo Real & Pitch-by-Pitch Tracker
+1. `pages/03_minigame.py` — Minigame Retrô Arcade: Você vs. IA no Montinho
 2. `pages/02_scout_report.py` — MLB Scouting Report, Matriz 4x3 de 12 Contagens & Game Plan
+3. `pages/04_pitch_vision_lab.py` — Laboratório de Visão Computacional, Pose 3D & Pitch Tipping
 """
 
 from __future__ import annotations
@@ -41,13 +42,6 @@ minigame_page = st.Page(
     url_path="minigame",
 )
 
-live_predictor_page = st.Page(
-    "pages/01_live_predictor.py",
-    title="Simulador Tático (Ao Vivo)",
-    icon="⚾",
-    url_path="simulador",
-)
-
 scout_report_page = st.Page(
     "pages/02_scout_report.py",
     title="MLB Scouting Report & Matriz",
@@ -67,7 +61,6 @@ pg = st.navigation(
         "⚾ Módulos da Aplicação": [
             home_page,
             minigame_page,
-            live_predictor_page,
             scout_report_page,
             vision_lab_page,
         ]

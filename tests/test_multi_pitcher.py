@@ -5,10 +5,10 @@ Unit and integration tests for multi-pitcher ingestion, registry, and UI feature
 from __future__ import annotations
 
 from pathlib import Path
-import numpy as np
-import pytest
 
-from pitch_predictor.scenarios import MLB_PITCHERS, PITCHER_ARCHETYPES
+import numpy as np
+
+from pitch_predictor.scenarios import MLB_PITCHERS
 from pitch_predictor.vision.overlay import (
     extract_and_annotate_release_frame,
     find_preloaded_release_frame,

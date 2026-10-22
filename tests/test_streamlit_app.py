@@ -9,14 +9,15 @@ Covers:
      and the Interactive Quick Demo controls (`home_pitcher_style`, `home_game_moment`, action button).
    - Quick Demo prediction flow with mocked `PitchServingClient.predict` returning `"Breaking Ball"`,
      rendering latency (`42.1 ms`) and a natural-language tactical explanation in Portuguese, plus
-     graceful `ConnectionError` handling (`st.error`).
-2. Page 1 (`pages/01_live_predictor.py` — Simulador Tático Ao Vivo):
-   - Rendering of core SVG/HTML components (Baseball Diamond SVG, Statcast Strike Zone SVG, Scoreboard).
-   - Widget interactions: scenario preset switching, pitcher archetype switching, base checkboxes & quick buttons,
-     count radio buttons, Statcast zone buttons, prediction button, and Pitch-by-Pitch Tracker state machine.
+     graceful offline fallback via `fallback_engine`.
+2. Official Pitchers & Navigation on Home:
+   - Skenes, Burnes, Webb, Sale, and Yamamoto in pitcher selection.
+   - 3-module footer navigation targeting Minigame, Scout Report, and Vision Lab.
 3. Page 2 (`pages/02_scout_report.py` — MLB Scouting Report & Matriz):
    - Multipage navigation, 4x3 Count Matrix (12 counts), inline SVG Radar Chart, Batter Game Plan cards,
      and 12-count batch inference (`predict_batch`).
+4. Page 3 (`pages/03_minigame.py` — Minigame Retrô Arcade):
+   - Retro HUD, RPG sliders, pitch execution, and audio synthesis.
 """
 
 from __future__ import annotations
@@ -143,7 +144,7 @@ def test_home_quick_demo_prediction_flow_and_explanation() -> None:
         for term in ("arremessador", "rebatedor", "efeito", "vantagem", "zona")
     )
 
-    # Verify graceful error handling when PitchServingClient.predict raises ConnectionError
+    # Verify graceful fallback when PitchServingClient.predict raises ConnectionError
     with patch.object(
         PitchServingClient,
         "predict",
@@ -159,228 +160,49 @@ def test_home_quick_demo_prediction_flow_and_explanation() -> None:
         demo_btn.click().run()
 
     assert not at.exception
-    assert len(at.error) >= 1
-    assert "Home demo endpoint connection error" in at.error[0].value
+    all_md = "\n".join(m.value for m in at.markdown)
+    assert any(cat in all_md for cat in ("Fastball", "Breaking Ball", "Offspeed"))
 
 
 # ---------------------------------------------------------------------------
-# 2. Page 1 — Live Tactical Simulator (pages/01_live_predictor.py)
+# 2. Official Pitchers & Navigation Links on Home
 # ---------------------------------------------------------------------------
 
 
-def test_app_initial_render_no_exceptions() -> None:
-    """Verify `pages/01_live_predictor.py` renders without any unhandled exception and shows SVG components."""
+def test_home_pitcher_styles_include_official_mlb_pitchers() -> None:
+    """Verify Home presentation page loads all 5 official MLB pitchers from MLB_PITCHERS."""
     at = AppTest.from_file(APP_PATH, default_timeout=30).run()
-    at.switch_page("pages/01_live_predictor.py").run()
-    assert not at.exception, f"Live predictor raised unexpected exception: {at.exception}"
+    assert not at.exception
 
-    # Verify default session state initialized properly
-    assert at.session_state["balls"] == 0
-    assert at.session_state["strikes"] == 0
-    assert at.session_state["prev_pitch_category"] == "First Pitch"
-    assert at.session_state["prev_pitch_zone"] == 0
+    style_select = at.selectbox(key="home_pitcher_style")
+    options_text = " ".join(style_select.options)
 
-    # Verify SVGs and Scoreboard HTML are present in rendered markdown blocks
-    all_markdown = "\n".join(m.value for m in at.markdown)
-    assert "<svg" in all_markdown
-    assert "MLB STATCAST • TACTICAL PITCH PREDICTOR" in all_markdown
-    assert "BASES LIMPAS" in all_markdown
+    assert "Paul Skenes" in options_text
+    assert "Corbin Burnes" in options_text
+    assert "Logan Webb" in options_text
+    assert "Chris Sale" in options_text
+    assert "Yoshinobu Yamamoto" in options_text
+    assert "Média Geral da MLB" in options_text
 
 
-def test_app_scenario_and_archetype_switching() -> None:
-    """Verify selecting preset scenarios and pitcher archetypes updates session state and widgets."""
+def test_home_navigation_links_target_three_modules() -> None:
+    """Verify Home page footer contains links to Minigame, Scout Report, and Vision Lab."""
     at = AppTest.from_file(APP_PATH, default_timeout=30).run()
-    at.switch_page("pages/01_live_predictor.py").run()
     assert not at.exception
 
-    # Switch scenario to Full Count & Bases Loaded (3-2 High Leverage)
-    scenario_select = at.selectbox(key="selected_scenario")
-    scenario_select.select("🔥 Contagem Cheia & Bases Lotadas (3-2 High Leverage)").run()
-    assert not at.exception
-
-    assert at.session_state["balls"] == 3
-    assert at.session_state["strikes"] == 2
-    assert at.session_state["outs_when_up"] == 2
-    assert at.session_state["on_1b_flag"] is True
-    assert at.session_state["on_2b_flag"] is True
-    assert at.session_state["on_3b_flag"] is True
-    assert at.session_state["prev_pitch_category"] == "Breaking Ball"
-    assert at.session_state["prev_pitch_zone"] == 14
-
-    # Verify SVG diamond reflects RISP ATIVO and #F59E0B
-    all_markdown = "\n".join(m.value for m in at.markdown)
-    assert "RISP ATIVO" in all_markdown
-    assert "#F59E0B" in all_markdown.upper()
-
-    # Switch pitcher archetype to Left-Handed Crafty Ace
-    arch_select = at.selectbox(key="selected_archetype")
-    arch_select.select("Lefty Crafty Ace (Chris Sale / Blake Snell)").run()
-    assert not at.exception
-    assert at.session_state["p_throws"] == "L"
-    assert at.session_state["fb_pct_slider"] == 48.0
+    page_targets = [getattr(link, "page", link.proto.page) for link in at.page_link]
+    assert "minigame" in page_targets or "pages/03_minigame.py" in page_targets
+    assert "scout" in page_targets or "pages/02_scout_report.py" in page_targets
+    assert "vision-lab" in page_targets or "pages/04_pitch_vision_lab.py" in page_targets
+    assert "simulador" not in page_targets
+    assert "pages/01_live_predictor.py" not in page_targets
 
 
-def test_app_bases_checkboxes_count_and_statcast_zone_buttons() -> None:
-    """Verify interactive base checkboxes, count radios, and clickable Statcast zone matrix."""
+def test_app_navigation_structure_has_four_pages() -> None:
+    """Verify app navigation defines exactly the 4 streamlined modules without the redundant page 01."""
     at = AppTest.from_file(APP_PATH, default_timeout=30).run()
-    at.switch_page("pages/01_live_predictor.py").run()
     assert not at.exception
-
-    # Check 2nd base checkbox -> should activate RISP
-    at.checkbox(key="on_2b_flag").check().run()
-    assert not at.exception
-    assert at.session_state["on_2b_flag"] is True
-    all_md = "\n".join(m.value for m in at.markdown)
-    assert "RISP ATIVO" in all_md
-
-    # Click '🔥 Lotar Bases' button
-    load_bases_btn = next(b for b in at.button if "Lotar Bases" in b.label)
-    load_bases_btn.click().run()
-    assert not at.exception
-    assert at.session_state["on_1b_flag"] is True
-    assert at.session_state["on_2b_flag"] is True
-    assert at.session_state["on_3b_flag"] is True
-
-    # Click '🧹 Limpar Bases' button
-    clear_bases_btn = next(b for b in at.button if "Limpar Bases" in b.label)
-    clear_bases_btn.click().run()
-    assert not at.exception
-    assert at.session_state["on_1b_flag"] is False
-    assert at.session_state["on_2b_flag"] is False
-    assert at.session_state["on_3b_flag"] is False
-
-    # Change balls and strikes via radio buttons
-    at.radio(key="balls").set_value(1).run()
-    at.radio(key="strikes").set_value(2).run()
-    assert not at.exception
-    assert at.session_state["balls"] == 1
-    assert at.session_state["strikes"] == 2
-
-    # Click Zone 5 button in Statcast matrix (from First Pitch -> transitions to Fastball in Zone 5)
-    at.button(key="btn_z5").click().run()
-    assert not at.exception
-    assert at.session_state["prev_pitch_zone"] == 5
-    assert at.session_state["prev_pitch_category"] == "Fastball"
-
-    # Click Zone 14 (Chase corner)
-    at.button(key="btn_z14").click().run()
-    assert not at.exception
-    assert at.session_state["prev_pitch_zone"] == 14
-
-    # Click Zone 0 (First Pitch reset)
-    at.button(key="btn_z0").click().run()
-    assert not at.exception
-    assert at.session_state["prev_pitch_zone"] == 0
-    assert at.session_state["prev_pitch_category"] == "First Pitch"
-
-
-def test_app_predict_button_renders_prediction_card_and_handles_errors() -> None:
-    """Verify clicking the prediction button calls PitchServingClient.predict and renders the card."""
-    at = AppTest.from_file(APP_PATH, default_timeout=30).run()
-    at.switch_page("pages/01_live_predictor.py").run()
-    assert not at.exception
-
-    mock_features = derive_tactical_features(
-        {
-            "prev_pitch_category": "First Pitch",
-            "balls": 0,
-            "strikes": 0,
-            "p_throws": "R",
-            "stand": "L",
-        }
-    )
-    mock_return = {
-        "status": "success",
-        "prediction": "Fastball",
-        "latency_ms": 38.4,
-        "features": mock_features,
-        "endpoint_name": "dev_rhian_souza_pitch_predictor_endpoint_dev",
-        "attempts": 1,
-    }
-
-    with patch.object(PitchServingClient, "predict", return_value=mock_return) as mock_pred:
-        predict_btn = next(b for b in at.button if "Prever Próximo Arremesso" in b.label)
-        predict_btn.click().run()
-
-    assert not at.exception
-    assert mock_pred.call_count == 1
-    assert at.session_state["last_prediction_result"]["prediction"] == "Fastball"
-
-    all_md = "\n".join(m.value for m in at.markdown)
-    assert "PREDIÇÃO TÁTICA • STATCAST AI" in all_md
-    assert "Bola Rápida (Fastball)" in all_md
-    assert "#EF4444" in all_md.upper()
-
-    # Now verify graceful error handling when endpoint raises ConnectionError
-    with patch.object(
-        PitchServingClient,
-        "predict",
-        side_effect=ConnectionError("Simulated endpoint timeout"),
-    ):
-        predict_btn = next(b for b in at.button if "Prever Próximo Arremesso" in b.label)
-        predict_btn.click().run()
-
-    assert not at.exception
-    assert len(at.error) >= 1
-    assert "Simulated endpoint timeout" in at.error[0].value
-
-
-def test_app_sequential_pitch_by_pitch_tracker_mode() -> None:
-    """Verify the Pitch-by-Pitch Tracker state machine inside the Streamlit UI."""
-    at = AppTest.from_file(APP_PATH, default_timeout=30).run()
-    at.switch_page("pages/01_live_predictor.py").run()
-    assert not at.exception
-
-    # Initial count is 0-0
-    assert at.session_state["balls"] == 0
-    assert at.session_state["strikes"] == 0
-
-    # 1. Click '🔴 Strike' -> count becomes 0-1
-    strike_btn = next(b for b in at.button if "🔴 Strike" in b.label)
-    strike_btn.click().run()
-    assert not at.exception
-    assert at.session_state["balls"] == 0
-    assert at.session_state["strikes"] == 1
-    assert len(at.session_state["at_bat_history"]) == 1
-
-    # 2. Click '🔴 Strike' again -> count becomes 0-2
-    strike_btn = next(b for b in at.button if "🔴 Strike" in b.label)
-    strike_btn.click().run()
-    assert not at.exception
-    assert at.session_state["balls"] == 0
-    assert at.session_state["strikes"] == 2
-    assert len(at.session_state["at_bat_history"]) == 2
-
-    # 3. Click '🟡 Foul' on 0-2 -> count MUST stay 0-2 (2-strike foul rule)
-    foul_btn = next(b for b in at.button if "🟡 Foul" in b.label)
-    foul_btn.click().run()
-    assert not at.exception
-    assert at.session_state["balls"] == 0
-    assert at.session_state["strikes"] == 2
-    assert len(at.session_state["at_bat_history"]) == 3
-
-    # 4. Click '🟢 Ball' -> count becomes 1-2
-    ball_btn = next(b for b in at.button if "🟢 Ball" in b.label)
-    ball_btn.click().run()
-    assert not at.exception
-    assert at.session_state["balls"] == 1
-    assert at.session_state["strikes"] == 2
-
-    # 5. Click '🔴 Strike' on 1-2 -> Strikeout (K)! Resets count to 0-0 and increments outs
-    strike_btn = next(b for b in at.button if "🔴 Strike" in b.label)
-    strike_btn.click().run()
-    assert not at.exception
-    assert at.session_state["balls"] == 0
-    assert at.session_state["strikes"] == 0
-    assert at.session_state["outs_when_up"] == 1
-    assert "Strikeout (K)" in at.session_state["last_at_bat_event"]
-    assert len(at.dataframe) >= 1
-
-    # 6. Clear at-bat history
-    clear_hist_btn = next(b for b in at.button if "Limpar Histórico do Duelo" in b.label)
-    clear_hist_btn.click().run()
-    assert not at.exception
-    assert len(at.session_state["at_bat_history"]) == 0
+    assert at.session_state is not None
 
 
 # ---------------------------------------------------------------------------

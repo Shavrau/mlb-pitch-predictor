@@ -184,6 +184,28 @@ MLB_PITCHERS: dict[str, dict[str, Any]] = {
     },
 }
 
+
+def get_pitcher_profile(name_or_id: str | int) -> dict[str, Any]:
+    """
+    Retrieve an official MLB pitcher's canonical profile by name, partial name, or ID.
+    Falls back to Paul Skenes if not found.
+    """
+    if isinstance(name_or_id, int):
+        for p in MLB_PITCHERS.values():
+            if p.get("pitcher_id") == name_or_id:
+                return deepcopy(p)
+    query = str(name_or_id).strip().lower()
+    for name, p in MLB_PITCHERS.items():
+        if query == name.lower() or query in p.get("display_name", "").lower():
+            return deepcopy(p)
+    return deepcopy(MLB_PITCHERS["Paul Skenes"])
+
+
+def get_pitcher_names() -> list[str]:
+    """Return the ordered list of canonical MLB pitcher names."""
+    return list(MLB_PITCHERS.keys())
+
+
 TACTICAL_SCENARIOS: dict[str, dict[str, Any]] = {
     "⚾ Abertura de Duelo (0-0 First Pitch)": {
         "badge": "NEUTRAL • 0-0",

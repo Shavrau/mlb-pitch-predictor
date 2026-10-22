@@ -128,53 +128,11 @@ def simulate_tactical_12_counts_fallback(
     """
     Compute a deterministic, baseball-authentic 12-count prediction map based on
     pitcher priors, count leverage, platoon handedness, and RISP when offline or pre-loading.
+    Delegates to the unified fallback engine.
     """
-    predictions_map: dict[str, str] = {}
-    for rec in batch_records:
-        count_str = str(rec["count_state"])
-        fb = float(rec["pitcher_fb_prior"])
-        bb = float(rec["pitcher_bb_prior"])
-        os_val = float(rec["pitcher_os_prior"])
-        same_hand = int(rec["same_hand"])
-        risp = int(rec["scoring_position"])
-        leverage = str(rec["count_leverage"])
+    from pitch_predictor.fallback_engine import simulate_12_counts_fallback
 
-        # Situational weights adjusted by count leverage, platoon, and RISP
-        w_fb = fb
-        w_bb = bb
-        w_os = os_val
-
-        if count_str in {"3-0", "2-0", "3-1", "1-0"}:
-            w_fb += 0.35
-        elif count_str == "0-0":
-            w_fb += 0.14
-        elif count_str in {"0-2", "1-2"}:
-            w_bb += 0.42
-        elif count_str == "0-1":
-            w_bb += 0.38 if same_hand == 1 else 0.32
-        elif count_str in {"1-1", "2-2"}:
-            if same_hand == 0:
-                w_os += 0.55
-            else:
-                w_bb += 0.36
-        elif count_str == "2-1":
-            w_fb += 0.15
-        elif count_str == "3-2":
-            if same_hand == 0 and os_val >= 0.08:
-                w_os += 0.55
-            else:
-                w_bb += 0.38
-
-        if risp == 1 and leverage != "Pitcher Behind":
-            w_bb += 0.08
-
-        best_cat = max(
-            (("Fastball", w_fb), ("Breaking Ball", w_bb), ("Offspeed", w_os)),
-            key=lambda item: item[1],
-        )[0]
-        predictions_map[count_str] = best_cat
-
-    return predictions_map
+    return simulate_12_counts_fallback(batch_records)
 
 
 def compute_matrix_distribution(
