@@ -88,7 +88,7 @@ PITCH_CATEGORY_STYLES: dict[str, dict[str, str]] = {
         "icon": "🛑",
         "label_pt": "Mudança de Velocidade (Offspeed)",
         "arsenal": "Changeup (CH) • Splitter (FS)",
-        "tactical_insight": "Variação de velocidade tunelada com a bola rápida para desestabilizar o timing do swing e induzir bolas rasteiras (groundballs).",
+        "tactical_insight": "Variação de velocidade com soltura idêntica à bola rápida para desestabilizar o timing do rebatedor e induzir contatos fracos e bolas rasteiras.",
     },
 }
 

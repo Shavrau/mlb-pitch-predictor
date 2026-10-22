@@ -35,7 +35,7 @@ MLB_BATTERS: list[dict[str, Any]] = [
         "stand": "L",
         "archetype": "Fenômeno da Força (Power Slugger)",
         "description": "Clube 50/50. Esmaga retas no coração da zona; vulnerável a bolas de efeito no canto externo baixo.",
-        "trait": "Anti-Fastball: +25% de chance de rebatida forte contra bolas rápidas.",
+        "trait": "Devorador de Retas: +25% de chance de rebatida forte contra bolas rápidas.",
         "trait_id": "anti_fastball",
     },
     {
@@ -44,7 +44,7 @@ MLB_BATTERS: list[dict[str, Any]] = [
         "stand": "R",
         "archetype": "Gigante da Força (Power Giant)",
         "description": "Alcance massivo e saída de bola de 115+ mph. Não perdoa arremessos no topo da zona.",
-        "trait": "High Zone Punisher: Perigo extremo contra bolas no topo da zona.",
+        "trait": "Castigo no Topo: Perigo extremo contra bolas altas na zona de strike.",
         "trait_id": "high_zone_punisher",
     },
     {
@@ -52,8 +52,8 @@ MLB_BATTERS: list[dict[str, Any]] = [
         "team": "New York Mets",
         "stand": "L",
         "archetype": "Mestre da Disciplina (Plate Discipline)",
-        "description": "Olho de águia de elite. Dificilmente vai atrás de arremessos fora da zona (Chase).",
-        "trait": "Eye of the Hawk: Raramente é enganado por bolas fora da zona.",
+        "description": "Olho de águia no bastão. Dificilmente é enganado por arremessos fora da zona.",
+        "trait": "Olho de Águia: Raramente vai atrás de bolas fora da zona.",
         "trait_id": "eye_of_the_hawk",
     },
     {
@@ -62,7 +62,7 @@ MLB_BATTERS: list[dict[str, Any]] = [
         "stand": "R",
         "archetype": "Mestre do Contato & Precisão",
         "description": "Controle cirúrgico do taco. Dificilmente sofre strikeout e coloca a bola em jogo.",
-        "trait": "Contact King: Alta frequência de contato e bolas rebatidas em foul.",
+        "trait": "Rei do Contato: Bate quase tudo para foul e raramente sofre strikeout.",
         "trait_id": "contact_king",
     },
     {
@@ -71,7 +71,7 @@ MLB_BATTERS: list[dict[str, Any]] = [
         "stand": "L",
         "archetype": "Slugger Decisivo (Clutch)",
         "description": "Rebatedor agressivo em contagens iniciais com poder brutal para o campo oposto.",
-        "trait": "Aggressive Ambush: Extremamente agressivo em contagens de 0-0 e 1-0.",
+        "trait": "Emboscada Inicial: Ataca agressivamente nos primeiros arremessos (0-0 e 1-0).",
         "trait_id": "aggressive_ambush",
     },
 ]
@@ -184,8 +184,8 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
         "name": "Logan Webb",
         "team": "San Francisco Giants",
         "p_throws": "R",
-        "tags": ["🛑 Tunelamento", "📉 Groundballs", "🔥 RHP", "🎯 Controle Cirúrgico"],
-        "description": "Mestre do tunelamento e líder em induzir contatos fracos no chão.",
+        "tags": ["🎭 Disfarce de Trajetória", "📉 Bolas Rasteiras", "🔥 RHP", "🎯 Controle Cirúrgico"],
+        "description": "Mestre no disfarce de trajetória e especialista em induzir contatos fracos rasteiros.",
         "priors": (0.46, 0.22, 0.32),
         "pitches": [
             {
@@ -228,7 +228,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
         "name": "Chris Sale",
         "team": "Atlanta Braves",
         "p_throws": "L",
-        "tags": ["🏹 Canhoto LHP", "📐 Slot Baixo (25°)", "❄️ Wipeout", "🏆 Cy Young NL"],
+        "tags": ["🏹 Canhoto LHP", "📐 Soltura Baixa (25°)", "❄️ Strikeout Fulminante", "🏆 Cy Young NL"],
         "description": "Canhoto lendário com ângulo de soltura lateral cruzado e slider letal.",
         "priors": (0.48, 0.36, 0.16),
         "pitches": [
@@ -239,7 +239,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
                 "code": "SL",
                 "category": "Breaking Ball",
                 "speed": "81 mph",
-                "desc": "Wipeout com quebra horizontal fulminante",
+                "desc": "Slider fulminante com quebra horizontal devastadora",
                 "whiff_rate": 0.42,
                 "foul_rate": 0.35,
             },
@@ -327,10 +327,10 @@ QUICK_AIM_MAP: dict[str, dict[str, Any]] = {
         "desc": "Bola de efeito no pé / Zona de Strike 8",
         "is_in_zone": True,
     },
-    "Fora da Zona (Chase)": {
+    "Fora da Zona (Isca)": {
         "zone": 14,
-        "label": "🎣 Fora da Zona (Chase)",
-        "desc": "Isca no chão para induzir Whiff / Zona 14",
+        "label": "🎣 Fora da Zona (Isca)",
+        "desc": "Bola no chão para induzir swing no vazio / Zona 14",
         "is_in_zone": False,
     },
 }

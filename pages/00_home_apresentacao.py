@@ -51,7 +51,7 @@ FRIENDLY_PITCHER_STYLES: dict[str, dict[str, Any]] = {
         "pitcher_fb_prior": MLB_PITCHERS["Logan Webb"]["pitcher_fb_prior"],
         "pitcher_bb_prior": MLB_PITCHERS["Logan Webb"]["pitcher_bb_prior"],
         "pitcher_os_prior": MLB_PITCHERS["Logan Webb"]["pitcher_os_prior"],
-        "short_desc": f"Sinker / Changeup Master (Groundball King) • {MLB_PITCHERS['Logan Webb']['arm_slot_type']}",
+        "short_desc": f"Mestre em Bolas Rasteiras (Sinker/Changeup) • {MLB_PITCHERS['Logan Webb']['arm_slot_type']}",
     },
     f"🏹 Chris Sale ({MLB_PITCHERS['Chris Sale']['team']})": {
         "p_throws": MLB_PITCHERS["Chris Sale"]["p_throws"],
@@ -177,7 +177,7 @@ def build_concise_tactical_bullet(
     if int(features.get("scoring_position", 0)) == 1:
         return (
             f"Com corredores prontos para anotar corrida na contagem **{count_state}**, a IA equilibra "
-            f"o repertório histórico do arremessador para induzir contato fraco ou bola rasteira (groundball)."
+            f"o repertório histórico do arremessador para induzir contato fraco ou bola rasteira fácil para a defesa."
         )
     return (
         f"No início do duelo (**{count_state}**), a IA indica a escolha mais eficiente para abrir a contagem "
