@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v1.9.4 Checkpoint (Refinamento de Terminologia PT-BR & Minigame Arcade Vertical Cards)  
+> **Versão do Projeto:** v1.9.5 Checkpoint (Seletor Dinâmico de Arremessador no Vision Lab & Refinamento PT-BR)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit.
 
@@ -8,11 +8,17 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v1.9.4)
+## 1. Estado Atual da Base de Código (Checkpoint v1.9.5)
 
-Após execução da reformulação visual e do refinamento idiomático em Português do Brasil (PT-BR):
-- **Suíte de Testes**: **207 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+Após implementação do seletor dinâmico de arremessador no Vision Lab e refinamento idiomático em PT-BR:
+- **Suíte de Testes**: **208 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
 - **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe`, `shap`, `mlflow` e `databricks-sdk` instalados.
+- **Laboratório de Visão & Biomecânica Dinâmico (`pages/04_pitch_vision_lab.py`)**:
+  - **Seletor de Arremessadores Oficiais da MLB (`st.selectbox(key="vision_pitcher_selector")`)**:
+    - Suporte completo aos 5 astros: Paul Skenes (RHP), Corbin Burnes (RHP), Logan Webb (RHP), Chris Sale (LHP), Yoshinobu Yamamoto (RHP).
+    - Sincronização automática de manifestos, clipes de vídeo, datasets biomecânicos e snapshots calibrados de liberação (Release Point).
+    - Detecção automática de lateralidade (Destro vs. Canhoto): adaptação do esqueleto anatômico no momento de soltura (braço esquerdo dominante para Chris Sale).
+    - Sincronização dos relatórios SHAP e dicas táticas customizadas para o arremessador selecionado.
 - **Refinamento Idiomático em PT-BR (Padrão Transmissão Esportiva / ESPN Brasil)**:
   - Eliminação de traduções literais artificiais como *"tunelamento"* $\rightarrow$ substituído por *"🎭 Disfarce de Trajetória"* e *"solturas com trajetória idêntica"*.
   - Eliminação de *"groundballs"* soltos no texto $\rightarrow$ substituído por *"📉 Bolas Rasteiras"* e *"contato fraco rasteiro"*.
@@ -38,7 +44,7 @@ Após execução da reformulação visual e do refinamento idiomático em Portug
 - **Aplicação em Nuvem Operacional (Databricks Apps)**:
   - App `pitch-predictor-app-dev` em estado **`RUNNING` / `ACTIVE`**.
   - URL Corporativa Pública: **`https://pitch-predictor-app-dev-7474645845452998.aws.databricksapps.com`**.
-  - Deploy `01f1ce256f99173896ccb89e9024064b` ativo com `SUCCEEDED`.
+  - Deploy `01f1ce273e601e079634999dc8d78299` ativo com `SUCCEEDED`.
 - **Centralização em `MLB_PITCHERS` (Single Source of Truth)**:
   - Registro único estruturado em `src/pitch_predictor/scenarios.py` com priors reais, arsenal, mão de arremesso (R/L) e perfil biomecânico calibrado para os 5 astros:
     1. **Paul Skenes** (`#694973` - Pittsburgh Pirates, RHP, Power Pitcher, 102 mph Fastball / Splinker)
