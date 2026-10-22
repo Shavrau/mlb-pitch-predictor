@@ -250,6 +250,7 @@ def test_all_html_and_svg_renderers_are_commonmark_safe_single_line() -> None:
     """
     from pitch_predictor.ui_components import (
         get_custom_css,
+        render_pixel_pitcher_svg,
         render_scoreboard_banner_html,
     )
 
@@ -259,6 +260,11 @@ def test_all_html_and_svg_renderers_are_commonmark_safe_single_line() -> None:
         render_strike_zone_svg(selected_zone=14, prev_category="Breaking Ball"),
         render_prediction_card_html("Fastball", features, latency_ms=105.0),
         render_scoreboard_banner_html(features, "dev_rhian_souza_pitch_predictor_endpoint_dev"),
+        render_pixel_pitcher_svg("Paul Skenes"),
+        render_pixel_pitcher_svg("Corbin Burnes"),
+        render_pixel_pitcher_svg("Logan Webb"),
+        render_pixel_pitcher_svg("Chris Sale"),
+        render_pixel_pitcher_svg("Yoshinobu Yamamoto"),
         get_custom_css(),
     ]
     for frag in fragments:

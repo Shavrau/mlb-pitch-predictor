@@ -454,3 +454,255 @@ def get_custom_css() -> str:
     """
     return _compact_html(raw_css)
 
+
+# ---------------------------------------------------------------------------
+# 5. Retratos Retro Pixel Art dos Astros da MLB (24x24)
+# ---------------------------------------------------------------------------
+
+PITCHER_PIXEL_MAPS: dict[str, dict[str, Any]] = {
+    "Paul Skenes": {
+        "palette": {
+            ".": None,
+            "K": "#111111",  # Black Pirates cap / jersey
+            "G": "#FDB827",  # Gold Pirates logo / trim
+            "S": "#FCD5B5",  # Skin
+            "D": "#E5B995",  # Skin shadow
+            "H": "#4E342E",  # Brown hair & signature mustache
+            "E": "#231510",  # Dark eyes
+            "W": "#FFFFFF",  # Jersey number
+        },
+        "rows": [
+            "........................",
+            ".........GGGG...........",
+            ".......KKKKKKKK.........",
+            "......KKKKKKKKKK........",
+            ".....KKKKGGKKKKKK.......",
+            ".....KKKKGGKKKKKK.......",
+            "....KKKKKKKKKKKKKK......",
+            "...KKKKKKKKKKKKKKKKK....",
+            "....HHHSSSSSSSSHHH......",
+            "....HHHSSSSSSSSHHH......",
+            "....HHSEESSSSEESHH......",
+            "....HHSSSSDDSSSSHH......",
+            ".....HSSSSDEDSSSH.......",
+            ".....HSSHEEEEHSSH.......",
+            ".....HSSEEEEEESSH.......",
+            "......SSSDDDDSS.........",
+            ".......SSSSSSSS.........",
+            "........SSSSSS..........",
+            ".....KKKKGGGGKKKK.......",
+            "...KKKKKKGGGGKKKKKK.....",
+            "..KKKKKKKGGGGKKKKKKK....",
+            ".KKKKWKKKKKKKKKKKKKKK...",
+            ".KKKWWKKKKKKKKKKKKKKK...",
+            ".KKKWWKKKKKKKKKKKKKKK...",
+        ],
+    },
+    "Corbin Burnes": {
+        "palette": {
+            ".": None,
+            "K": "#111111",  # Black cap crown
+            "O": "#DF4601",  # Orioles Orange visor & jersey
+            "Y": "#E5C158",  # Blonde curly hair
+            "A": "#C69B34",  # Full blonde beard
+            "S": "#FDE0D0",  # Fair skin
+            "D": "#E8BEAA",  # Skin shadow
+            "U": "#38BDF8",  # Blue eyes
+            "W": "#FFFFFF",  # Logo detail
+        },
+        "rows": [
+            "........................",
+            ".........OOOO...........",
+            ".......KKKKKKKK.........",
+            "......KKKKKKKKKK........",
+            ".....KKKKWKKKKKKK.......",
+            ".....KKKKWWKKKKKK.......",
+            "....KKKKKKKKKKKKKK......",
+            "...OOOOOOOOOOOOOOOOO....",
+            "....YYYSSSSSSSSYYY......",
+            "...YYYYYSSSSSSSSYYYY....",
+            "...YYYSUUSSSSUUSYYYY....",
+            "...YYYYSSSDDDSSSYYYY....",
+            "....YYSSSSDEDSSSSYY.....",
+            ".....YSSAAAAAASSY.......",
+            ".....YSAAAAAAAASY.......",
+            "......AAAAAAAAAA........",
+            ".......AAAAAAAA.........",
+            "........SSSSSS..........",
+            ".....OOOOOOOOOOOO.......",
+            "...OOOOOOOOOOOOOOOO.....",
+            "..OOOOOKKOOOOKKOOOOO....",
+            ".OOOOOOKKOOOOKKOOOOOO...",
+            ".OOOOOOOOOOOOOOOOOOOO...",
+            ".OOOOOOOOOOOOOOOOOOOO...",
+        ],
+    },
+    "Logan Webb": {
+        "palette": {
+            ".": None,
+            "K": "#18181B",  # Black Giants cap / collar
+            "O": "#FD5A1E",  # Giants Orange SF logo & visor
+            "H": "#382415",  # Brown hair & sideburns
+            "S": "#F5CEAB",  # Skin tone
+            "D": "#DCAB83",  # Skin shadow
+            "E": "#26180F",  # Dark eyes
+            "W": "#FDFBF7",  # Giants off-white cream jersey
+        },
+        "rows": [
+            "........................",
+            ".........OOOO...........",
+            ".......KKKKKKKK.........",
+            "......KKKKKKKKKK........",
+            ".....KKKKOKKKKKKK.......",
+            ".....KKKKOOKKKKKK.......",
+            "....KKKKKKKKKKKKKK......",
+            "...OOOOOOOOOOOOOOOOO....",
+            "....HHHSSSSSSSSHHH......",
+            "....HHHSSSSSSSSHHH......",
+            "....HHSEESSSSEESHH......",
+            "....HHSSSSDDSSSSHH......",
+            "....HHSSSSDDSSSSHH......",
+            ".....HSSSSDDSSSSHH......",
+            ".....HSSSSKKSSSSHH......",
+            "......SSSDDDDSS.........",
+            ".......SSSSSSSS.........",
+            "........SSSSSS..........",
+            ".....WWWWOKOWWWW........",
+            "...WWWWWWOKOWWWWWW......",
+            "..WWWWWWWOKOWWWWWWW.....",
+            ".WWWWWWWWOKOWWWWWWWW....",
+            ".WWWWWWWWKKKWWWWWWWW....",
+            ".WWWWWWWWWWWWWWWWWWW....",
+        ],
+    },
+    "Chris Sale": {
+        "palette": {
+            ".": None,
+            "N": "#13274F",  # Braves Navy cap & jersey
+            "R": "#CE1141",  # Scarlet Red visor & collar
+            "K": "#1F1F1F",  # Dark hair
+            "S": "#EED8C6",  # Pale lean skin
+            "D": "#D1B49D",  # Sunken cheek shadow
+            "T": "#4B5563",  # Southpaw dark stubble / scruff
+            "E": "#1C1917",  # Intense dark eyes
+            "W": "#FFFFFF",  # Logo
+        },
+        "rows": [
+            "........................",
+            ".........RRRR...........",
+            ".......NNNNNNNN.........",
+            "......NNNNNNNNNN........",
+            ".....NNNNWWNNNNNN.......",
+            ".....NNNWWWWNNNNN.......",
+            "....NNNNNNNNNNNNNN......",
+            "...RRRRRRRRRRRRRRRRR....",
+            "....KKKSSSSSSSSKKK......",
+            "....KKKSSSSSSSSKKK......",
+            "....KKSEESSSSEESKK......",
+            "....KKDDSSDDSSDDDK......",
+            ".....KDSSSDEDSSDK.......",
+            ".....KDSSSTTSSSDK.......",
+            ".....KDSSTTTTSSDK.......",
+            "......DDTTTTTTDD........",
+            ".......DTTTTTTD.........",
+            "........SSSSSS..........",
+            ".....NNNNRRRRNNNN.......",
+            "...NNNNNNRRRRNNNNNN.....",
+            "..NNNNNNNRRRRNNNNNNN....",
+            ".NNNNNNNNNNNNNNNNNNNN...",
+            ".NNNNNNNNNNNNNNNNNNNN...",
+            ".NNNNNNNNNNNNNNNNNNNN...",
+        ],
+    },
+    "Yoshinobu Yamamoto": {
+        "palette": {
+            ".": None,
+            "B": "#005A9C",  # Dodgers Royal Blue cap & jersey
+            "W": "#FFFFFF",  # White LA logo & collar
+            "K": "#0F172A",  # Sleek black hair
+            "S": "#F8D7B0",  # Warm skin tone
+            "D": "#DEB386",  # Skin shadow
+            "E": "#0F172A",  # Almond dark eyes
+            "R": "#EF4444",  # Dodgers red jersey accent (#18)
+        },
+        "rows": [
+            "........................",
+            ".........WWWW...........",
+            ".......BBBBBBBB.........",
+            "......BBBBBBBBBB........",
+            ".....BBBBWWBBBBBB.......",
+            ".....BBBBWWBBBBBB.......",
+            "....BBBBBBBBBBBBBB......",
+            "...BBBBBBBBBBBBBBBBB....",
+            "....KKKSSSSSSSSKKK......",
+            "....KKKSSSSSSSSKKK......",
+            "....KKWEESSSSEEWKK......",
+            "....KKSSSSDDSSSSKK......",
+            ".....KSSSSDEDSSSK.......",
+            ".....KSSSSDDSSSSK.......",
+            ".....KSSSDDDDDSKK.......",
+            "......SSSSDDSSSS........",
+            ".......SSSSSSSS.........",
+            "........SSSSSS..........",
+            ".....BBBBWWWWBBBB.......",
+            "...BBBBBBWWWWBBBBBB.....",
+            "..BBBBBBBWKKWBBBBBBB....",
+            ".BBBRBBBBWKKWBBBBBBBB...",
+            ".BBRRBBBBBBBBBBBBBBBB...",
+            ".BBRRBBBBBBBBBBBBBBBB...",
+        ],
+    },
+}
+
+
+def render_pixel_pitcher_svg(pitcher_name: str) -> str:
+    """
+    Renderiza um retrato retro 8-bit / 16-bit pixel-art do arremessador da MLB em SVG.
+
+    Desenha boné oficial da franquia, traços característicos (mustache do Skenes,
+    barba loira do Burnes, sideburns do Webb, etc.) e uniforme de jogo.
+    """
+    data = PITCHER_PIXEL_MAPS.get(pitcher_name, PITCHER_PIXEL_MAPS["Paul Skenes"])
+    palette = data["palette"]
+    rows = data["rows"]
+
+    rects_svg: list[str] = []
+    for y, row_str in enumerate(rows):
+        cur_char = row_str[0]
+        cur_len = 1
+        start_x = 0
+        for x in range(1, len(row_str)):
+            if row_str[x] == cur_char:
+                cur_len += 1
+            else:
+                color = palette.get(cur_char)
+                if color:
+                    rects_svg.append(
+                        f'<rect x="{start_x}" y="{y}" width="{cur_len}" height="1" fill="{color}"/>'
+                    )
+                cur_char = row_str[x]
+                cur_len = 1
+                start_x = x
+        color = palette.get(cur_char)
+        if color:
+            rects_svg.append(
+                f'<rect x="{start_x}" y="{y}" width="{cur_len}" height="1" fill="{color}"/>'
+            )
+
+    rects_body = "".join(rects_svg)
+    p_id = pitcher_name.replace(" ", "_")
+
+    svg = f"""
+    <svg viewBox="0 0 24 24" width="100%" height="135" shape-rendering="crispEdges" style="background: radial-gradient(circle at 50% 30%, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border-radius: 6px; border: 1px solid rgba(0, 255, 204, 0.25); display: block; margin: 0 auto 6px auto;">
+        <defs>
+            <pattern id="pixelGrid_{p_id}" width="2" height="2" patternUnits="userSpaceOnUse">
+                <rect width="2" height="1" fill="rgba(255,255,255,0.02)"/>
+            </pattern>
+        </defs>
+        <rect width="24" height="24" fill="url(#pixelGrid_{p_id})"/>
+        {rects_body}
+    </svg>
+    """
+    return _compact_html(svg)
+
+

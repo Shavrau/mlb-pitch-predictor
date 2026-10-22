@@ -20,11 +20,11 @@ from pitch_predictor.minigame_engine import (
     register_high_score,
     resolve_arcade_pitch,
 )
-from pitch_predictor.scenarios import MLB_PITCHERS
 from pitch_predictor.serving_client import PitchServingClient
 from pitch_predictor.ui_components import (
     _compact_html,
     render_baseball_diamond_svg,
+    render_pixel_pitcher_svg,
     render_strike_zone_svg,
 )
 
@@ -101,11 +101,32 @@ def _get_retro_arcade_css() -> str:
         background: rgba(0, 255, 204, 0.12);
         color: #00FFCC;
         border: 1px solid rgba(0, 255, 204, 0.4);
-        border-radius: 12px;
-        padding: 2px 8px;
-        font-size: 11px;
-        font-weight: 600;
-        margin: 2px 3px;
+        border-radius: 10px;
+        padding: 2px 6px;
+        font-size: 9.5px;
+        font-weight: 700;
+        margin: 2px 2px;
+        line-height: 1.2;
+    }
+
+    .retro-pitcher-card {
+        background: radial-gradient(circle at 50% 15%, rgba(17, 24, 39, 0.95), rgba(7, 14, 24, 0.98));
+        border: 2px solid #00FFCC;
+        box-shadow: 0 0 14px rgba(0, 255, 204, 0.25);
+        border-radius: 8px;
+        padding: 10px 8px;
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 490px;
+        text-align: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .retro-pitcher-card:hover {
+        box-shadow: 0 0 22px rgba(0, 255, 204, 0.5);
+        transform: translateY(-2px);
     }
 
     .tier-badge-s {
@@ -416,7 +437,7 @@ if game.game_over:
 
 
 # ---------------------------------------------------------------------------
-# 6. PASSO 1: Seleção de Arremessador Estrela da MLB
+# 6. PASSO 1: Seleção de Arremessador Estrela da MLB (Cards Verticais)
 # ---------------------------------------------------------------------------
 
 if st.session_state.minigame_step == "selection":
@@ -426,9 +447,11 @@ if st.session_state.minigame_step == "selection":
     # Lista dos 5 arremessadores oficiais
     pitcher_keys = ["Paul Skenes", "Corbin Burnes", "Logan Webb", "Chris Sale", "Yoshinobu Yamamoto"]
 
-    for p_name in pitcher_keys:
+    # Layout com 5 cards verticais, 1 ao lado do outro
+    cols = st.columns(5, gap="small")
+
+    for idx, p_name in enumerate(pitcher_keys):
         p_info = get_pitcher_tier_info(p_name)
-        mlb_prof = MLB_PITCHERS.get(p_name, {})
 
         tags_html = " ".join([f'<span class="quality-tag">{tag}</span>' for tag in p_info["tags"]])
 
@@ -438,49 +461,62 @@ if st.session_state.minigame_step == "selection":
         pitch_a = p_pitches[1]
         pitch_b = p_pitches[2]
 
-        card_html = f"""
-        <div class="retro-cabinet-card" style="margin-bottom: 12px; padding: 12px 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span class="arcade-font neon-gold" style="font-size: 14px;">{p_info['name']}</span>
-                <span style="font-size: 12px; color: #94A3B8;">{p_info['team']} • <strong>{p_info['p_throws']}HP</strong></span>
-            </div>
-            <div style="font-size: 12px; color: #CBD5E1; margin-bottom: 8px;">
-                {p_info['description']}
-            </div>
-            <div style="margin-bottom: 10px;">
-                {tags_html}
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 11px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px;">
-                <div>
-                    <span class="tier-badge-s">TIER S</span>
-                    <strong style="color: #FFFFFF; display: block; margin-top: 2px;">{pitch_s['name']} ({pitch_s['speed']})</strong>
-                    <span style="color: #94A3B8; font-size: 10px;">{pitch_s['desc']}</span>
-                </div>
-                <div>
-                    <span class="tier-badge-a">TIER A</span>
-                    <strong style="color: #FFFFFF; display: block; margin-top: 2px;">{pitch_a['name']} ({pitch_a['speed']})</strong>
-                    <span style="color: #94A3B8; font-size: 10px;">{pitch_a['desc']}</span>
-                </div>
-                <div>
-                    <span class="tier-badge-b">TIER B</span>
-                    <strong style="color: #FFFFFF; display: block; margin-top: 2px;">{pitch_b['name']} ({pitch_b['speed']})</strong>
-                    <span style="color: #94A3B8; font-size: 10px;">{pitch_b['desc']}</span>
-                </div>
-            </div>
-        </div>
-        """
-        st.markdown(_compact_html(card_html), unsafe_allow_html=True)
+        pixel_svg = render_pixel_pitcher_svg(p_name)
 
-        if st.button(
-            f"🎯 Escolher {p_name} & Ir para o Montinho",
-            key=f"btn_pick_{p_name.replace(' ', '_')}",
-            type="primary",
-            use_container_width=True,
-        ):
-            st.session_state.minigame_pitcher = p_name
-            st.session_state.arcade_state.pitcher_name = p_name
-            st.session_state.minigame_step = "duel"
-            st.rerun()
+        with cols[idx]:
+            card_html = f"""
+            <div class="retro-pitcher-card">
+                <!-- TOPO: Tags de Conquistas & Especialidades -->
+                <div style="margin-bottom: 4px; min-height: 44px;">
+                    {tags_html}
+                </div>
+                <div class="arcade-font neon-gold" style="font-size: 11px; margin-bottom: 2px; line-height: 1.3;">
+                    {p_info['name']}
+                </div>
+                <div style="font-size: 10px; color: #94A3B8; margin-bottom: 6px;">
+                    {p_info['team']} • <strong style="color: #60A5FA;">{p_info['p_throws']}HP</strong>
+                </div>
+
+                <!-- MEIO: Versão Pixel Art Retrô -->
+                <div style="margin: 2px 0 6px 0;">
+                    {pixel_svg}
+                </div>
+
+                <!-- PARTE DE BAIXO: Características & Arsenal em Tiers -->
+                <div style="background: rgba(0,0,0,0.4); border-radius: 6px; padding: 6px; font-size: 10px; text-align: left; margin-bottom: 6px;">
+                    <div style="margin-bottom: 4px;">
+                        <span class="tier-badge-s">TIER S</span>
+                        <strong style="color: #FFFFFF; font-size: 10px; display: block; margin-top: 1px;">{pitch_s['name']} ({pitch_s['speed']})</strong>
+                        <span style="color: #94A3B8; font-size: 8.5px;">{pitch_s['desc']}</span>
+                    </div>
+                    <div style="margin-bottom: 4px;">
+                        <span class="tier-badge-a">TIER A</span>
+                        <strong style="color: #FFFFFF; font-size: 10px; display: block; margin-top: 1px;">{pitch_a['name']} ({pitch_a['speed']})</strong>
+                        <span style="color: #94A3B8; font-size: 8.5px;">{pitch_a['desc']}</span>
+                    </div>
+                    <div>
+                        <span class="tier-badge-b">TIER B</span>
+                        <strong style="color: #FFFFFF; font-size: 10px; display: block; margin-top: 1px;">{pitch_b['name']} ({pitch_b['speed']})</strong>
+                        <span style="color: #94A3B8; font-size: 8.5px;">{pitch_b['desc']}</span>
+                    </div>
+                </div>
+                <div style="font-size: 9px; color: #CBD5E1; margin-bottom: 4px; min-height: 28px; line-height: 1.2;">
+                    {p_info['description']}
+                </div>
+            </div>
+            """
+            st.markdown(_compact_html(card_html), unsafe_allow_html=True)
+
+            if st.button(
+                f"🎯 Escolher {p_name}",
+                key=f"btn_pick_{p_name.replace(' ', '_')}",
+                type="primary",
+                use_container_width=True,
+            ):
+                st.session_state.minigame_pitcher = p_name
+                st.session_state.arcade_state.pitcher_name = p_name
+                st.session_state.minigame_step = "duel"
+                st.rerun()
 
     st.stop()
 
