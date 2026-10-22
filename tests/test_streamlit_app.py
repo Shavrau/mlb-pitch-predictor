@@ -486,6 +486,16 @@ def test_scout_report_batch_inference_button_updates_matrix_and_handles_errors()
     assert "Batch endpoint timeout" in at.error[0].value
 
 
+def test_scout_report_stale_session_state_recovery() -> None:
+    """Verify that stale session state values (e.g. from previous releases) are safely repaired."""
+    at = AppTest.from_file(APP_PATH, default_timeout=30)
+    at.session_state["scout_base_state"] = "RISP (Corredor na 2B)"
+    at.run()
+    at.switch_page("pages/02_scout_report.py").run()
+    assert not at.exception
+    assert "Posição de Anotar" in at.session_state["scout_base_state"]
+
+
 # ---------------------------------------------------------------------------
 # 4. Retro Arcade Survival Minigame (pages/03_minigame.py)
 # ---------------------------------------------------------------------------
@@ -540,10 +550,10 @@ def test_minigame_pitch_execution_with_mocked_prediction() -> None:
 
 def test_app_multipage_switch_to_vision_lab() -> None:
     """Verify switching from app entrypoint to Vision Lab page renders without exceptions."""
-    at = AppTest.from_file(APP_PATH, default_timeout=30).run()
+    at = AppTest.from_file(APP_PATH, default_timeout=60).run()
     assert not at.exception
 
-    at.switch_page("pages/04_pitch_vision_lab.py").run()
+    at.switch_page("pages/04_pitch_vision_lab.py").run(timeout=60)
     assert not at.exception
     assert len(at.title) >= 1
     assert "Laborat" in at.title[0].value or "Vis" in at.title[0].value

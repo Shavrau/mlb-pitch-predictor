@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v1.5.0 Checkpoint (Passo 2: Deploy do App Streamlit no Databricks Apps Concluído)  
+> **Versão do Projeto:** v1.8.0 Checkpoint (Yoshinobu Yamamoto Ingestion & Minigame Zero-Scroll UI Redesign)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit.
 
@@ -8,17 +8,48 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v1.5.0)
+## 1. Estado Atual da Base de Código (Checkpoint v1.8.0)
 
 Após análise aprofundada da base de código, o projeto encontra-se em estado funcional, testado e modular:
-- **Suíte de Testes**: **192 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1` em ~71 segundos).
+- **Suíte de Testes**: **200 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
 - **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe`, `shap`, `mlflow` e `databricks-sdk` instalados.
+- **Ingestão Multi-Player & Registro Oficial MLB (5 Estrelas)**:
+  - Ingestão real Statcast via PyBaseball e resolução de clipes Savant para 5 arremessadores de elite:
+    1. **Paul Skenes** (`#694973` - Pittsburgh Pirates, RHP, Power Pitcher, 102 mph Fastball / Splinker)
+    2. **Corbin Burnes** (`#669203` - Baltimore Orioles, RHP, Breaking Specialist, Cutter / Curveball)
+    3. **Logan Webb** (`#657277` - San Francisco Giants, RHP, Offspeed Master, Sinker / Changeup)
+    4. **Chris Sale** (`#519242` - Atlanta Braves, LHP, Lefty Crafty Ace, Low 3/4 Slot / Sweeping Slider)
+    5. **Yoshinobu Yamamoto** (`#808967` - Los Angeles Dodgers, RHP, Devastating Splitter Ace, Rainbow Curve / 96 mph FF)
+  - Registro estruturado `MLB_PITCHERS` em `src/pitch_predictor/scenarios.py` com priors reais, arsenal, mão de arremesso (R/L) e perfil biomecânico calibrado.
+  - Manifestos, features biomecânicas (`biomechanical_features.csv` e `.parquet`) e 150+ snapshots anotados em neon Statcast individualizados para cada arremessador.
+- **UI Redesign do Minigame Arcade (Zero-Scroll)**:
+  - `pages/03_minigame.py`: Redesenhado completamente para caber em viewport único (above-the-fold, ~620px de altura total).
+  - Eliminação da necessidade de rolagem vertical: o botão de arremesso ("ARREMESSAR CONTRA A IA"), a seleção de categoria/tipo/zona e o card de resultado imediato estão alinhados horizontalmente no topo da tela.
+  - HUD superior com exibição direta da contagem em tempo real (`Bolas - Strikes`), vidas, pontuação e combo.
+  - Presets rápidos com os 5 arremessadores (Skenes, Burnes, Webb, Sale e Yamamoto).
+- **Seleção Dinâmica de Arremessador na UI**:
+  - `pages/04_pitch_vision_lab.py`: Seletor de arremessador no topo, sincronizando clipes, ângulos anatômicos, esqueleto (com suporte destros/canhotos), relatórios de tipping e estudo de ablação com o jogador selecionado.
+  - `pages/01_live_predictor.py`: Seletor de arremessador oficial MLB, aplicando priors e lateralidade (p_throws) ao simulador tático.
+  - `pages/02_scout_report.py`: Scouting report adaptado para arremessadores específicos e arquétipos gerais.
+  - `pages/00_home_apresentacao.py`: Cards dos 5 arremessadores estrela da MLB.
+- **Lakeflow Job Serverless End-to-End Totalmente Operacional**:
+  - Job `pitch_predictor_job_dev` (ID: `819238473316716`) executado com sucesso completo (`TERMINATED SUCCESS` no Run `442745640587439`).
+  - Todas as 6 tarefas executadas com sucesso:
+    1. `setup_environment`: DDL idempotente no Unity Catalog (`pitch_predictor.baseball_ml_dev`).
+    2. `data_ingestion`: Ingestão incremental de lances Statcast via PyBaseball.
+    3. `bronze_declarative_pipeline`: Pipeline Lakeflow Spark Declarative (`raw_pitches` $\rightarrow$ `silver_pitch_features`).
+    4. `video_biomechanics_pipeline`: Ingestão incremental de clipes Savant, extração de 33 marcos 3D MediaPipe Pose e materialização na tabela Delta `biomechanical_features`.
+    5. `automl_training`: Treinamento distribuído com split temporal por `game_date` e rastreamento MLflow.
+    6. `model_inference`: Validação de inferência em lote e scoring com `@prod`.
 - **Aplicação em Nuvem Operacional (Databricks Apps)**:
   - App `pitch-predictor-app-dev` em estado **`RUNNING` / `ACTIVE`**.
   - URL Corporativa Pública com Single Sign-On: **`https://pitch-predictor-app-dev-7474645845452998.aws.databricksapps.com`**.
   - Todas as 5 páginas Streamlit ativas em nuvem: Apresentação, Minigame Arcade, Simulador Tático, Scouting Report e Laboratório de Visão/Tipping.
-  - Recurso anexado: permissão `CAN_QUERY` sobre o endpoint de Model Serving.
-- **Unity Catalog Dedicado**: Catálogo `pitch_predictor` ativo em Dev (`pitch_predictor.baseball_ml_dev`), com pipeline Lakeflow Serverless (`@dp`) operacional e validado (`raw_pitches` com 6.749 linhas, `silver_pitch_features` com 6.720 linhas, `biomechanical_features` com 30 arremessos reais extraídos).
+  - Ponto de soltura (Release Point) calibrado com imagens broadcast HD de Paul Skenes no montinho, com retículo neon e HUD em todas as categorias.
+- **Unity Catalog Dedicado**: Catálogo `pitch_predictor` ativo em Dev (`pitch_predictor.baseball_ml_dev`):
+  - `raw_pitches`: Streaming Table Delta Live Tables (Bronze).
+  - `silver_pitch_features`: Materialized View Delta Live Tables (Silver, zero-leakage).
+  - `biomechanical_features`: Managed Delta Table com marcos 3D e ângulos cinemáticos (Gold/Biomechanical).
 - **Modelo Multimodal Servido em Tempo Real (Databricks Model Serving Serverless)**:
   - Modelo registrado no Unity Catalog: `pitch_predictor.baseball_ml_dev.multimodal_pitch_predictor` (Versão 2, Alias `@prod`).
   - Endpoint ativo e operacional: `dev_rhian_souza_pitch_predictor_endpoint_dev` em estado `READY` / `DEPLOYMENT_READY` com escala para zero e 100% de tráfego.
@@ -48,7 +79,7 @@ Após análise aprofundada da base de código, o projeto encontra-se em estado f
 
 ## 2. Invariantes de Arquitetura Invioláveis
 
-Todo agente atuando neste projeto **DEVE SEGUIR ESTRITAMENTE** as 4 invariantes abaixo:
+Todo agente atuando neste projeto **DEVE SEGUIR ESTRITAMENTE** as 5 invariantes abaixo:
 
 ### Invariante 1: Reprodutibilidade de Ambiente e Unity Catalog (IaC Invariant)
 - **Proibido Comandos Ad-Hoc no Terminal**: Nunca crie catálogos, esquemas ou volumes executando comandos manuais. Toda infraestrutura deve ser declarada como código para manter paridade entre Dev, Staging e Produção.
@@ -73,6 +104,11 @@ Todo agente atuando neste projeto **DEVE SEGUIR ESTRITAMENTE** as 4 invariantes 
 1. **Red Agent (QA)**: Escreve testes unitários e de integração em `tests/test_*.py` cobrindo casos limites e comportamentos esperados (fase de falha inicial).
 2. **Green Agent (Developer)**: Implementa o código mínimo e limpo em `src/` para fazer 100% dos testes passarem.
 3. **Gatekeeper (Reviewer)**: Executa a suíte completa de testes, verifica linter e audita o `git diff` antes de validar a entrega.
+
+### Invariante 5: Isolamento de Escopo de UI & Estabilidade Visual (No-Unintended-Regressions)
+- **Escopo Estrito de Telas**: Quando o usuário solicitar alterações de UI ou novos recursos direcionados a uma página específica (ex: minigame), é PROIBIDO introduzir novos seletores, cards ou reformulações visuais em páginas maduras e estáveis sem instrução expressa.
+- **Não Aninhamento Excessivo no Streamlit**: `st.columns()` NUNCA deve ser chamado dentro de outra coluna (`st.columns` suporta no máximo 1 nível de profundidade). Aninhamentos maiores causam `StreamlitAPIException` fatal.
+- **Validação de Opções em Widgets**: Qualquer chave de `st.session_state` vinculada a `st.selectbox`, `st.radio` ou `st.multiselect` deve ser validada contra a lista de opções ativas antes da renderização para prevenir `ValueError: ... is not in iterable`.
 
 ---
 

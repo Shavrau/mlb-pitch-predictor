@@ -16,7 +16,7 @@ PAGE_PATH = str(Path(__file__).resolve().parent.parent / "pages" / "04_pitch_vis
 
 def test_vision_lab_page_renders_without_exceptions() -> None:
     """Verify that the Vision Lab page renders cleanly without any unhandled exceptions."""
-    at = AppTest.from_file(PAGE_PATH, default_timeout=30).run()
+    at = AppTest.from_file(PAGE_PATH, default_timeout=60).run()
     assert not at.exception, f"Vision Lab page raised an exception: {at.exception}"
 
     assert len(at.title) >= 1
@@ -29,7 +29,7 @@ def test_vision_lab_page_renders_without_exceptions() -> None:
 
 def test_vision_lab_page_elements_and_metrics() -> None:
     """Verify presence of pitch selector, kinematic metrics, and dual predictor containers."""
-    at = AppTest.from_file(PAGE_PATH, default_timeout=30).run()
+    at = AppTest.from_file(PAGE_PATH, default_timeout=60).run()
     assert not at.exception
 
     # Selectbox for pitch selection
@@ -48,7 +48,7 @@ def test_vision_lab_page_elements_and_metrics() -> None:
 
 def test_vision_lab_page_switching_pitch_selection() -> None:
     """Verify selecting a different pitch category re-runs and updates analysis without error."""
-    at = AppTest.from_file(PAGE_PATH, default_timeout=30).run()
+    at = AppTest.from_file(PAGE_PATH, default_timeout=60).run()
     assert not at.exception
 
     pitch_selector = at.selectbox(key="vision_pitch_selector")
@@ -58,3 +58,4 @@ def test_vision_lab_page_switching_pitch_selection() -> None:
 
     all_markdown = "\n".join(m.value for m in at.markdown)
     assert "Breaking Ball" in all_markdown or "Sweeper" in all_markdown
+

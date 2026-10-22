@@ -30,6 +30,13 @@ from pitch_predictor.serving_client import (
 )
 from pitch_predictor.ui_components import get_custom_css
 
+SCOUT_BASE_OPTIONS = [
+    "RISP (Corredor na 2B — Posição de Anotar)",
+    "Bases Limpas",
+    "Corredor na 1ª Base (Double Play / Eliminação Dupla)",
+    "Bases Lotadas (Pressão Máxima)",
+]
+
 
 @st.cache_resource(show_spinner=False)
 def get_serving_client(endpoint_name: str = DEFAULT_ENDPOINT_NAME) -> PitchServingClient:
@@ -37,16 +44,19 @@ def get_serving_client(endpoint_name: str = DEFAULT_ENDPOINT_NAME) -> PitchServi
     return PitchServingClient(endpoint_name=endpoint_name)
 
 
+SCOUT_ARCHETYPE_OPTIONS = list(PITCHER_ARCHETYPES.keys())
+
+
 def init_scout_state() -> None:
     """Initialize session state keys for the Scouting Report page."""
     default_arch = "Breaking Specialist (Corbin Burnes / Sonny Gray)"
-    if "scout_archetype" not in st.session_state:
+    if "scout_archetype" not in st.session_state or st.session_state.scout_archetype not in SCOUT_ARCHETYPE_OPTIONS:
         st.session_state.scout_archetype = default_arch
-    if "scout_stand" not in st.session_state:
+    if "scout_stand" not in st.session_state or st.session_state.scout_stand not in ("L", "R"):
         st.session_state.scout_stand = "L"
-    if "scout_base_state" not in st.session_state:
-        st.session_state.scout_base_state = "RISP (Corredor na 2B)"
-    if "scout_prev_cat" not in st.session_state:
+    if "scout_base_state" not in st.session_state or st.session_state.scout_base_state not in SCOUT_BASE_OPTIONS:
+        st.session_state.scout_base_state = SCOUT_BASE_OPTIONS[0]
+    if "scout_prev_cat" not in st.session_state or st.session_state.scout_prev_cat not in ("Fastball", "Breaking Ball", "Offspeed"):
         st.session_state.scout_prev_cat = "Fastball"
     if "scout_predictions_map" not in st.session_state:
         st.session_state.scout_predictions_map = None
@@ -109,12 +119,7 @@ with st.container(border=True):
     with ctrl_c3:
         selected_bases = st.selectbox(
             "Situação de Corredores",
-            options=[
-                "RISP (Corredor na 2B — Posição de Anotar)",
-                "Bases Limpas",
-                "Corredor na 1ª Base (Double Play / Eliminação Dupla)",
-                "Bases Lotadas (Pressão Máxima)",
-            ],
+            options=SCOUT_BASE_OPTIONS,
             key="scout_base_state",
         )
     with ctrl_c4:

@@ -35,6 +35,7 @@ data/
 *.json
 !resources/*.json
 !sample_inference_request.json
+!src/pitch_predictor/vision/sample_data/*.csv
 
 # Local ML models and databases
 models/

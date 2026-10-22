@@ -46,7 +46,13 @@ mlflow.set_registry_uri("databricks-uc")
 # COMMAND ----------
 # Load model as PyFunc
 try:
-    model = mlflow.pyfunc.load_model(model_uri)
+    try:
+        model = mlflow.pyfunc.load_model(model_uri)
+    except Exception as alias_err:
+        fallback_uri = f"models:/{full_model_name}/1"
+        print(f"Notice loading {model_uri}: {alias_err}. Attempting fallback to version 1: {fallback_uri}")
+        model = mlflow.pyfunc.load_model(fallback_uri)
+
     print(f"Model successfully loaded. MLflow Run ID: {model.metadata.run_id}")
     
     # Read sample features from silver table to test scoring

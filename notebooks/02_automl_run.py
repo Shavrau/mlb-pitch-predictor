@@ -115,9 +115,32 @@ automl_params = build_automl_params(
 experiment_name = automl_params["experiment_name"]
 print("AutoML Configuration:", automl_params)
 
+# Ensure workspace experiment parent directory exists
+try:
+    from databricks.sdk import WorkspaceClient
+
+    w = WorkspaceClient()
+    parent_path = str(Path(experiment_name).parent).replace("\\", "/")
+    w.workspace.mkdirs(parent_path)
+    print(f"Ensured workspace directory exists: {parent_path}")
+except Exception as we:
+    print(f"Notice ensuring workspace directory {experiment_name}: {we}")
+
 # Set MLflow tracking and UC model registry
 mlflow.set_registry_uri("databricks-uc")
-mlflow.set_experiment(experiment_name)
+try:
+    mlflow.set_experiment(experiment_name)
+    print(f"MLflow experiment active: {experiment_name}")
+except Exception as exp_err:
+    print(f"Notice setting experiment {experiment_name}: {exp_err}. Attempting user directory fallback...")
+    try:
+        user_name = w.current_user.me().user_name
+        fallback_exp = f"/Users/{user_name}/automl_{catalog}_{schema}_{automl_params['target_col']}_predictor"
+        mlflow.set_experiment(fallback_exp)
+        experiment_name = fallback_exp
+        print(f"Fallback MLflow experiment active: {experiment_name}")
+    except Exception as exp_fallback_err:
+        print(f"Notice during experiment fallback: {exp_fallback_err}")
 
 # COMMAND ----------
 trained_successfully = False

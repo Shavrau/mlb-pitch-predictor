@@ -47,6 +47,32 @@ Streamlit executes top-to-bottom on every user interaction. To maintain stabilit
 - **Visual Containers & Cards**:
   Group controls with `with st.container(border=True):` to create distinct visual cards.
 
+### 2.3. Limitação Estrita de Aninhamento de Colunas (1-Level Nesting)
+O runtime do Streamlit proíbe estritamente aninhar colunas dentro de outras colunas:
+```python
+# ❌ INCORRETO (Causa StreamlitAPIException fatal):
+col1, col2 = st.columns(2)
+with col1:
+    sub1, sub2 = st.columns(2)  # Falha fatal!
+
+# ✅ CORRETO (Design Linear ou Uso de Containers):
+main_container = st.container(border=True)
+with main_container:
+    col1, col2, col3 = st.columns([1, 1, 1])
+```
+
+### 2.4. Reconciliação Defensiva de Estado em Widgets (`ValueError: not in iterable`)
+Ao inicializar ou restaurar estados de sessão vinculados a `st.selectbox`, `st.radio` ou `st.multiselect`:
+```python
+if "my_select" not in st.session_state or st.session_state.my_select not in VALID_OPTIONS:
+    st.session_state.my_select = VALID_OPTIONS[0]
+```
+
+### 2.5. Padrão Viewport Único (Zero-Scroll UI) para Consoles e Jogos
+Para telas interativas de alta densidade (como minigames ou simuladores):
+- Manter todos os controles vitais (distribuição de atributos, consoles de comando e feedback imediato) alinhados lado a lado em altura de até ~620px (*above-the-fold*).
+- O usuário deve ser capaz de interagir e visualizar o resultado sem precisar rolar a página verticalmente.
+
 ---
 
 ## 3. Custom Styling & Visual Customization
@@ -79,6 +105,18 @@ For custom diagrams (e.g., Baseball Diamond, Strike Zone):
 - Render SVGs directly via `st.markdown(svg_string, unsafe_allow_html=True)`.
 - Use `viewBox="0 0 W H"` for full vector responsiveness.
 - Bind fill/stroke colors dynamically based on `st.session_state`.
+
+### 3.3. Compatibilidade Cross-Version para Imagens (`st.image`)
+Para garantir compatibilidade entre versões locais do Streamlit e a nuvem Databricks Serverless Apps:
+```python
+try:
+    st.image(image_data, caption=caption, use_container_width=True)
+except TypeError:
+    try:
+        st.image(image_data, caption=caption, use_column_width=True)
+    except TypeError:
+        st.image(image_data, caption=caption)
+```
 
 ---
 

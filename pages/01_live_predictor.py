@@ -455,79 +455,77 @@ with col_zone:
                     key="prev_pitch_result",
                 )
 
-        # Visual SVG + Interactive Clickable Zone Matrix side-by-side
-        svg_col, grid_col = st.columns([1.15, 1.05])
-        with svg_col:
-            st.markdown(
-                render_strike_zone_svg(
-                    selected_zone=int(st.session_state.prev_pitch_zone),
-                    prev_category=st.session_state.prev_pitch_category,
-                ),
-                unsafe_allow_html=True,
-            )
-        with grid_col:
-            st.caption("**Clique para selecionar a Zona:**")
+        # Visual SVG Strike Zone
+        st.markdown(
+            render_strike_zone_svg(
+                selected_zone=int(st.session_state.prev_pitch_zone),
+                prev_category=st.session_state.prev_pitch_category,
+            ),
+            unsafe_allow_html=True,
+        )
+
+        st.caption("**Clique para selecionar a Zona Statcast:**")
+        st.button(
+            "0 • First Pitch",
+            key="btn_z0",
+            type="primary" if st.session_state.prev_pitch_zone == 0 else "secondary",
+            on_click=select_zone_callback,
+            args=(0,),
+            use_container_width=True,
+        )
+        # Top Chase Row (11, 12)
+        ch_top1, ch_top2 = st.columns(2)
+        with ch_top1:
             st.button(
-                "0 • First Pitch",
-                key="btn_z0",
-                type="primary" if st.session_state.prev_pitch_zone == 0 else "secondary",
+                "↖ Z11",
+                key="btn_z11",
+                type="primary" if st.session_state.prev_pitch_zone == 11 else "secondary",
                 on_click=select_zone_callback,
-                args=(0,),
+                args=(11,),
                 use_container_width=True,
             )
-            # Top Chase Row (11, 12)
-            ch_top1, ch_top2 = st.columns(2)
-            with ch_top1:
-                st.button(
-                    "↖ Z11",
-                    key="btn_z11",
-                    type="primary" if st.session_state.prev_pitch_zone == 11 else "secondary",
-                    on_click=select_zone_callback,
-                    args=(11,),
-                    use_container_width=True,
-                )
-            with ch_top2:
-                st.button(
-                    "↗ Z12",
-                    key="btn_z12",
-                    type="primary" if st.session_state.prev_pitch_zone == 12 else "secondary",
-                    on_click=select_zone_callback,
-                    args=(12,),
-                    use_container_width=True,
-                )
-            # 3x3 Strike Zone Rows (1..9)
-            for row_zones in ((1, 2, 3), (4, 5, 6), (7, 8, 9)):
-                z_cols = st.columns(3)
-                for idx, z_num in enumerate(row_zones):
-                    with z_cols[idx]:
-                        st.button(
-                            f"{z_num}",
-                            key=f"btn_z{z_num}",
-                            type="primary" if st.session_state.prev_pitch_zone == z_num else "secondary",
-                            on_click=select_zone_callback,
-                            args=(z_num,),
-                            use_container_width=True,
-                        )
-            # Bottom Chase Row (13, 14)
-            ch_bot1, ch_bot2 = st.columns(2)
-            with ch_bot1:
-                st.button(
-                    "↙ Z13",
-                    key="btn_z13",
-                    type="primary" if st.session_state.prev_pitch_zone == 13 else "secondary",
-                    on_click=select_zone_callback,
-                    args=(13,),
-                    use_container_width=True,
-                )
-            with ch_bot2:
-                st.button(
-                    "↘ Z14",
-                    key="btn_z14",
-                    type="primary" if st.session_state.prev_pitch_zone == 14 else "secondary",
-                    on_click=select_zone_callback,
-                    args=(14,),
-                    use_container_width=True,
-                )
+        with ch_top2:
+            st.button(
+                "↗ Z12",
+                key="btn_z12",
+                type="primary" if st.session_state.prev_pitch_zone == 12 else "secondary",
+                on_click=select_zone_callback,
+                args=(12,),
+                use_container_width=True,
+            )
+        # 3x3 Strike Zone Rows (1..9)
+        for row_zones in ((1, 2, 3), (4, 5, 6), (7, 8, 9)):
+            z_cols = st.columns(3)
+            for idx, z_num in enumerate(row_zones):
+                with z_cols[idx]:
+                    st.button(
+                        f"{z_num}",
+                        key=f"btn_z{z_num}",
+                        type="primary" if st.session_state.prev_pitch_zone == z_num else "secondary",
+                        on_click=select_zone_callback,
+                        args=(z_num,),
+                        use_container_width=True,
+                    )
+        # Bottom Chase Row (13, 14)
+        ch_bot1, ch_bot2 = st.columns(2)
+        with ch_bot1:
+            st.button(
+                "↙ Z13",
+                key="btn_z13",
+                type="primary" if st.session_state.prev_pitch_zone == 13 else "secondary",
+                on_click=select_zone_callback,
+                args=(13,),
+                use_container_width=True,
+            )
+        with ch_bot2:
+            st.button(
+                "↘ Z14",
+                key="btn_z14",
+                type="primary" if st.session_state.prev_pitch_zone == 14 else "secondary",
+                on_click=select_zone_callback,
+                args=(14,),
+                use_container_width=True,
+            )
 
     with st.container(border=True):
         st.markdown(
