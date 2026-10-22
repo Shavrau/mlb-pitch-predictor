@@ -48,7 +48,7 @@ PITCHER_ARCHETYPES: dict[str, dict[str, Any]] = {
         "pitcher_os_prior": 0.0800,
         "p_throws": "R",
         "signature_arsenal": "FF (100+ mph) • SL/Splinker (90 mph) • CH (88 mph)",
-        "description": "Dominância pela velocidade no topo da zona combinada com Slider de strikeout fulminante.",
+        "description": "Dominância pela velocidade no topo da zona combinada com Slider de wipeout.",
     },
     "Breaking Specialist (Corbin Burnes / Sonny Gray)": {
         "pitcher_fb_prior": 0.4200,
@@ -138,7 +138,7 @@ MLB_PITCHERS: dict[str, dict[str, Any]] = {
             "trunk_tilt": 15.30,
             "stride_extension": 1.40,
         },
-        "description": "Líder da MLB em induzir bolas rasteiras, mestre no disfarce de trajetória com Changeup que despenca na borda inferior.",
+        "description": "Líder em groundballs da MLB, mestre no disfarce de trajetória com Changeup que despenca na borda inferior.",
     },
     "Chris Sale": {
         "pitcher_id": 519242,
@@ -309,7 +309,7 @@ TACTICAL_SCENARIOS: dict[str, dict[str, Any]] = {
     },
     "🛑 Duelo de Mudança (1-1 Platoon Oposto & Corredor na 1B)": {
         "badge": "DOUBLE PLAY SETUP • 1-1",
-        "description": "Corredor na 1ª base com 1 out e mão oposta (RHP vs LHB). Cenário clássico para Changeup/Splitter induzindo bola rasteira fácil para eliminação dupla (Double Play).",
+        "description": "Corredor na 1ª base com 1 out e mão oposta (RHP vs LHB). Cenário clássico para Changeup/Splitter induzindo groundball para eliminação dupla (Double Play).",
         "inputs": {
             "prev_pitch_category": "Fastball",
             "prev_pitch_type": "SI",

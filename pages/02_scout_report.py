@@ -213,7 +213,7 @@ with st.container(border=True):
     )
     st.caption(
         f"Fonte ativa: **{st.session_state.scout_batch_source}** • "
-        f"Duelo de Laterais: **{profile['p_throws']}HP vs {selected_stand}HB** • "
+        f"Platoon: **{profile['p_throws']}HP vs {selected_stand}HB** • "
         f"Situação: **{selected_bases}**"
     )
     st.markdown(render_count_matrix_html(predictions_map), unsafe_allow_html=True)
@@ -244,7 +244,7 @@ with st.container(border=True):
         st.markdown("##### 📊 Desvio Tático Situacional (IA vs. Prior Estático)")
         st.caption(
             "Demonstra como o modelo vai além da média histórica do arremessador, "
-            "ajustando a chamada conforme contagem, vantagem tática, duelo destro/canhoto e corredores em base."
+            "ajustando a chamada conforme contagem, vantagem tática, platoon e corredores em base."
         )
         comp_df = pd.DataFrame(
             [
