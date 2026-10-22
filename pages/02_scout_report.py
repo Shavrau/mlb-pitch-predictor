@@ -314,7 +314,7 @@ with st.container(border=True):
     with info_col:
         st.caption(
             "O relatório inclui o perfil do arremessador, a tabela completa das 12 contagens "
-            "e o Game Plan de 3 estágios pronto para impressão no dugout."
+            "e o plano de jogo (Game Plan) em 3 estágios pronto para uso no dugout."
         )
 
     with st.expander("📋 Visualizar / Copiar Relatório em Markdown (1-Click Copy)"):

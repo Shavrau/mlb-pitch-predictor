@@ -531,7 +531,7 @@ pitches = p_info["pitches"]
 col_top_l, col_top_r = st.columns([2.5, 1])
 with col_top_l:
     st.markdown(
-        f"**Montinho Ativo:** <span class='neon-cyan'>{pitcher_name}</span> ({p_info['p_throws']}HP) | "
+        f"**No Montinho:** <span class='neon-cyan'>{pitcher_name}</span> ({p_info['p_throws']}HP) | "
         f"*{p_info['team']}*",
         unsafe_allow_html=True,
     )

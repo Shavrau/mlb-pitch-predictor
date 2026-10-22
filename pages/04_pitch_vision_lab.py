@@ -256,7 +256,7 @@ with st.container(border=True):
         """
         ### O que é Pitch Tipping?
         No beisebol de elite, **Pitch Tipping** é o fenômeno em que a mecânica corporal do arremessador
-        involuntariamente **"denuncia"** o tipo de arremesso antes da bola deixar sua mão.
+        involuntariamente **"denuncia"** o tipo de arremesso antes de a bola deixar sua mão.
         
         Neste laboratório, utilizamos **Visão Computacional e IA Biomecânica** para rastrear **33 articulações 3D**,
         medindo o ângulo do braço (*arm slot*), a flexão do cotovelo e a inclinação do tronco no exato momento da soltura,

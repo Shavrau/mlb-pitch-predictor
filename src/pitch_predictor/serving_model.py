@@ -180,7 +180,7 @@ class MultimodalServingPyfuncModel(mlflow.pyfunc.PythonModel):
                 vis_prob_val = float(vis_probs[i][vis_classes.index(vis_p)])
                 summary = (
                     f"Pitch Tipping Detectado: Contexto situacional sugeria {sc_p}, mas postura física "
-                    f"no release denunciou {p_pred} ({vis_prob_val:.1%} na visão). Modality override ativo."
+                    f"na soltura denunciou {p_pred} ({vis_prob_val:.1%} na visão). Prioridade biomecânica ativa."
                 )
             else:
                 alignment = "CONTEXT_REINFORCED"

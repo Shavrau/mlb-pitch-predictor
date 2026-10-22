@@ -264,12 +264,12 @@ class PitchTippingClassifier:
         top_2 = feature_attributions[:2]
         bullets = []
         for f in top_2:
-            sign_str = "indicando fortemente" if f["shap_value"] > 0 else "afastando hipotese de"
+            sign_str = "indicando fortemente" if f["shap_value"] > 0 else "afastando a hipótese de"
             bullets.append(f"- **{f['display_name']}** ({f['value']:.1f}{f['unit']}): {sign_str} {predicted_category}")
 
         summary_text = (
             f"Previsão Biomecânica: **{predicted_category}** ({confidence * 100:.1f}% de certeza).\n"
-            f"Tells Físicos Principais (*Pitch Tipping*):\n" + "\n".join(bullets)
+            f"Sinais Físicos Principais (*Pitch Tipping*):\n" + "\n".join(bullets)
         )
 
         return {

@@ -248,7 +248,7 @@ def generate_batter_game_plan(
                 f"forçar o strike e evitar o walk. Busque contato forte puxando a bola (pull-side)."
             ),
             "chase_warning": (
-                "Se o arremesso sair do túnel central (Zonas 4-5-6), aceite a base por bolas (Walk / BB) "
+                "Se o arremesso sair do centro da zona (Zonas 4-5-6), aceite a base por bolas (Walk / BB) "
                 "e não expanda a zona em 3-1."
             ),
         },

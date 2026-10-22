@@ -37,35 +37,35 @@ FRIENDLY_PITCHER_STYLES: dict[str, dict[str, Any]] = {
         "pitcher_fb_prior": MLB_PITCHERS["Paul Skenes"]["pitcher_fb_prior"],
         "pitcher_bb_prior": MLB_PITCHERS["Paul Skenes"]["pitcher_bb_prior"],
         "pitcher_os_prior": MLB_PITCHERS["Paul Skenes"]["pitcher_os_prior"],
-        "short_desc": f"102 mph Fastball / Splinker • {MLB_PITCHERS['Paul Skenes']['arm_slot_type']}",
+        "short_desc": f"Fastball de 102 mph / Splinker • {MLB_PITCHERS['Paul Skenes']['arm_slot_type']}",
     },
     f"🌀 Corbin Burnes ({MLB_PITCHERS['Corbin Burnes']['team']})": {
         "p_throws": MLB_PITCHERS["Corbin Burnes"]["p_throws"],
         "pitcher_fb_prior": MLB_PITCHERS["Corbin Burnes"]["pitcher_fb_prior"],
         "pitcher_bb_prior": MLB_PITCHERS["Corbin Burnes"]["pitcher_bb_prior"],
         "pitcher_os_prior": MLB_PITCHERS["Corbin Burnes"]["pitcher_os_prior"],
-        "short_desc": f"Cutter / Sweeper Specialist (2800+ RPM) • {MLB_PITCHERS['Corbin Burnes']['arm_slot_type']}",
+        "short_desc": f"Especialista em Cutter / Sweeper (2800+ RPM) • {MLB_PITCHERS['Corbin Burnes']['arm_slot_type']}",
     },
     f"🛑 Logan Webb ({MLB_PITCHERS['Logan Webb']['team']})": {
         "p_throws": MLB_PITCHERS["Logan Webb"]["p_throws"],
         "pitcher_fb_prior": MLB_PITCHERS["Logan Webb"]["pitcher_fb_prior"],
         "pitcher_bb_prior": MLB_PITCHERS["Logan Webb"]["pitcher_bb_prior"],
         "pitcher_os_prior": MLB_PITCHERS["Logan Webb"]["pitcher_os_prior"],
-        "short_desc": f"Sinker / Changeup Master (Groundball King) • {MLB_PITCHERS['Logan Webb']['arm_slot_type']}",
+        "short_desc": f"Mestre em Sinker / Changeup (Groundball King) • {MLB_PITCHERS['Logan Webb']['arm_slot_type']}",
     },
     f"🏹 Chris Sale ({MLB_PITCHERS['Chris Sale']['team']})": {
         "p_throws": MLB_PITCHERS["Chris Sale"]["p_throws"],
         "pitcher_fb_prior": MLB_PITCHERS["Chris Sale"]["pitcher_fb_prior"],
         "pitcher_bb_prior": MLB_PITCHERS["Chris Sale"]["pitcher_bb_prior"],
         "pitcher_os_prior": MLB_PITCHERS["Chris Sale"]["pitcher_os_prior"],
-        "short_desc": f"Lefty Crafty Ace (NL Cy Young '24) • {MLB_PITCHERS['Chris Sale']['arm_slot_type']}",
+        "short_desc": f"Ás Canhoto / Cy Young NL '24 • {MLB_PITCHERS['Chris Sale']['arm_slot_type']}",
     },
     f"🎌 Yoshinobu Yamamoto ({MLB_PITCHERS['Yoshinobu Yamamoto']['team']})": {
         "p_throws": MLB_PITCHERS["Yoshinobu Yamamoto"]["p_throws"],
         "pitcher_fb_prior": MLB_PITCHERS["Yoshinobu Yamamoto"]["pitcher_fb_prior"],
         "pitcher_bb_prior": MLB_PITCHERS["Yoshinobu Yamamoto"]["pitcher_bb_prior"],
         "pitcher_os_prior": MLB_PITCHERS["Yoshinobu Yamamoto"]["pitcher_os_prior"],
-        "short_desc": f"Devastating Splitter / Rainbow Curve • {MLB_PITCHERS['Yoshinobu Yamamoto']['arm_slot_type']}",
+        "short_desc": f"Splitter Devastador / Rainbow Curve • {MLB_PITCHERS['Yoshinobu Yamamoto']['arm_slot_type']}",
     },
     "⚖️ Média Geral da MLB (Padrão da Liga)": {
         "p_throws": "R",
@@ -250,7 +250,7 @@ hero_html = _compact_html(
         <div>
           <span style="background:rgba(56,189,248,0.15);color:#38BDF8;font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:999px;letter-spacing:0.06em;text-transform:uppercase;">DATABRICKS SERVERLESS AI • MLB STATCAST</span>
           <h1 style="font-size:24px;font-weight:900;color:#F8FAFC;margin:6px 0 4px 0;">⚾ MLB Pitch Predictor — Decodificando o Arremesso com Inteligência Artificial</h1>
-          <p style="font-size:14px;color:#94A3B8;margin:0;">A bola chega a <strong>160 km/h</strong> em <strong>0.40 segundos</strong>. A Inteligência Artificial antecipa o arremesso antes dele acontecer.</p>
+          <p style="font-size:14px;color:#94A3B8;margin:0;">A bola chega a <strong>160 km/h</strong> em <strong>0.40 segundos</strong>. A Inteligência Artificial antecipa o arremesso antes de ele acontecer.</p>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:14px;">
@@ -262,7 +262,7 @@ hero_html = _compact_html(
         <div style="background:#080C14;border:1px solid #26354A;border-top:3px solid #F59E0B;border-radius:10px;padding:10px 14px;">
           <div style="font-size:10px;color:#94A3B8;font-weight:800;text-transform:uppercase;">LIMITE HUMANO</div>
           <div style="font-size:20px;font-weight:900;color:#F59E0B;margin:2px 0;">🧠 0.15 segundos</div>
-          <div style="font-size:11.5px;color:#94A3B8;">Tempo do olho processar o movimento</div>
+          <div style="font-size:11.5px;color:#94A3B8;">Tempo de o olho processar o movimento</div>
         </div>
         <div style="background:#080C14;border:1px solid #26354A;border-top:3px solid #10B981;border-radius:10px;padding:10px 14px;">
           <div style="font-size:10px;color:#94A3B8;font-weight:800;text-transform:uppercase;">NOSSO MODELO</div>
@@ -431,18 +431,18 @@ nav_c1, nav_c2, nav_c3 = st.columns(3)
 with nav_c1:
     st.page_link(
         "pages/03_minigame.py",
-        label="🎮 Jogar Minigame: Você vs. IA (Fliperama) →",
+        label="Jogar Minigame: Você vs. IA (Fliperama) →",
         icon="🎮",
     )
 with nav_c2:
     st.page_link(
         "pages/02_scout_report.py",
-        label="📋 Abrir MLB Scouting Report & Matriz →",
+        label="Abrir MLB Scouting Report & Matriz →",
         icon="📋",
     )
 with nav_c3:
     st.page_link(
         "pages/04_pitch_vision_lab.py",
-        label="🔬 Abrir Laboratório de Visão & Tipping →",
+        label="Abrir Laboratório de Visão & Tipping →",
         icon="🔬",
     )
