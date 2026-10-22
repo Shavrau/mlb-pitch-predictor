@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v1.9.2 Checkpoint (Minigame UI Vertical Cards & Retro Pixel Art Sprites)  
+> **Versão do Projeto:** v1.9.3 Checkpoint (Minigame UI Vertical Cards & Official MLB Pitcher Headshots)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit.
 
@@ -8,16 +8,16 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v1.9.2)
+## 1. Estado Atual da Base de Código (Checkpoint v1.9.3)
 
 Após execução da reformulação visual e estrutural do Minigame:
-- **Suíte de Testes**: **206 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+- **Suíte de Testes**: **207 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
 - **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe`, `shap`, `mlflow` e `databricks-sdk` instalados.
 - **Minigame Arcade - Seleção em Cards Verticais Lado a Lado (`pages/03_minigame.py` e `src/pitch_predictor/ui_components.py`)**:
   - **Layout de 5 Cards Verticais (`st.columns(5)`)**:
     - Disposição lado a lado dos 5 astros da MLB (Skenes, Burnes, Webb, Sale, Yamamoto).
     - **Topo do Card**: Tags de conquistas e qualidades em destaque (`[🏆 Cy Young]`, `[🚀 102 mph]`, `[🌪️ 2800+ RPM]`, `[🏹 Canhoto LHP]`, `[👻 Bola Fantasma]`, etc.), nome do jogador e franquia.
-    - **Meio do Card**: Retratos exclusivos em **Pixel Art Retrô 8-bit/16-bit** (`render_pixel_pitcher_svg`), renderizados em SVG ultra-nítido (`shape-rendering="crispEdges"`) com detalhes icônicos de cada jogador (o bigode de Paul Skenes, a cabeleira e barba loira de Corbin Burnes, os sideburns de Logan Webb, o boné dos Braves e ângulo de Chris Sale, e o boné dos Dodgers com postura concentrada de Yoshinobu Yamamoto).
+    - **Meio do Card**: Fotos reais oficiais de estúdio dos 5 astros da MLB (`render_pitcher_photo_html`), incorporadas em alta resolução com fundo transparente via Base64 local (`src/pitch_predictor/assets/headshots/`) com fallback para o CDN da MLB (`img.mlbstatic.com`), dentro de uma moldura neon arcade retro.
     - **Parte de Baixo do Card**: Características de arsenal organizadas em Tiers (Tier S, Tier A, Tier B com velocidades em mph), resumo tático e botão direto de seleção `🎯 Escolher [Nome]`.
 - **Motor Probabilístico Calibrado por Tiers**:
   - O rebatedor não obtém automaticamente uma rebatida mesmo se a IA adivinhar o arremesso.
@@ -31,7 +31,7 @@ Após execução da reformulação visual e estrutural do Minigame:
 - **Aplicação em Nuvem Operacional (Databricks Apps)**:
   - App `pitch-predictor-app-dev` em estado **`RUNNING` / `ACTIVE`**.
   - URL Corporativa Pública: **`https://pitch-predictor-app-dev-7474645845452998.aws.databricksapps.com`**.
-  - Deploy `01f1ce2064ef184fa5eaad190fd9d2c6` ativo com `SUCCEEDED`.
+  - Deploy `01f1ce22db9612e89664e138c03df03b` ativo com `SUCCEEDED`.
 - **Centralização em `MLB_PITCHERS` (Single Source of Truth)**:
   - Registro único estruturado em `src/pitch_predictor/scenarios.py` com priors reais, arsenal, mão de arremesso (R/L) e perfil biomecânico calibrado para os 5 astros:
     1. **Paul Skenes** (`#694973` - Pittsburgh Pirates, RHP, Power Pitcher, 102 mph Fastball / Splinker)
