@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v1.9.6 Checkpoint (Preservação de Jargão Oficial do Beisebol & Eliminação de "Tunelamento")  
+> **Versão do Projeto:** v1.9.7 Checkpoint (Revisão Geral de Escrita & Polimento Idiomático em Todas as Telas)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit.
 
@@ -8,14 +8,16 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v1.9.6)
+## 1. Estado Atual da Base de Código (Checkpoint v1.9.7)
 
-Após calibração dos termos e deploy do Seletor Dinâmico do Vision Lab:
+Após revisão editorial completa e deploy da versão polida no Databricks Apps:
 - **Suíte de Testes**: **208 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
 - **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe`, `shap`, `mlflow` e `databricks-sdk` instalados.
-- **Diretriz Canônica de Terminologia de Beisebol**:
-  - **Termos Canônicos Mantidos**: Mantidos termos universais consagrados do beisebol amplamente utilizados no Brasil e na transmissão esportiva (ESPN Brasil): *Groundballs*, *Groundout*, *Wipeout*, *Platoon*, *Chase*, *Whiff*, *Double Play*, *Slot*, *Fastball*, *Breaking Ball*, *Offspeed*.
-  - **Única Restrição Estrita**: Eliminação de traduções literais artificiais não usadas no Brasil como *"tunelamento"* $\rightarrow$ mantido o conceito descritivo natural: *"🎭 Disfarce de Trajetória"* e *"solturas com trajetória idêntica"*.
+- **Revisão Geral de Escrita & Redação Esportiva**:
+  - **Correções Gramaticais e Semânticas**: Correção da regência preposicional diante de sujeitos no infinitivo (*"antes de ele acontecer"*, *"tempo de o olho processar"*, *"antes de a bola deixar sua mão"*).
+  - **Acentuação e Termos Técnicos**: Inclusão de acentos em relatórios gerados por modelos (*"afastando a hipótese de"*), substituição de termos de pôquer por esportivos (*"Sinais Físicos"* em vez de *"Tells Físicos"*).
+  - **Consistência de Navegação e Botões**: Remoção de emojis duplicados nos links de navegação rápida da Home e aprimoramento de clareza textual nos cards e painéis.
+  - **Terminologia Canônica Preservada**: Termos universais de transmissão esportiva (*Groundout*, *Groundballs*, *Wipeout*, *Platoon*, *Chase*, *Whiff*, *Double Play*) mantidos integralmente, mantendo a erradicação do termo artificial *"tunelamento"* em favor de *"🎭 Disfarce de Trajetória"*.
 - **Laboratório de Visão & Biomecânica Dinâmico (`pages/04_pitch_vision_lab.py`)**:
   - **Seletor de Arremessadores Oficiais da MLB (`st.selectbox(key="vision_pitcher_selector")`)**:
     - Suporte completo aos 5 astros: Paul Skenes (RHP), Corbin Burnes (RHP), Logan Webb (RHP), Chris Sale (LHP), Yoshinobu Yamamoto (RHP).
