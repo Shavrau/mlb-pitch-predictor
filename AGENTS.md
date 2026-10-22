@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v1.9.5 Checkpoint (Seletor Dinâmico de Arremessador no Vision Lab & Refinamento PT-BR)  
+> **Versão do Projeto:** v1.9.6 Checkpoint (Preservação de Jargão Oficial do Beisebol & Eliminação de "Tunelamento")  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit.
 
@@ -8,24 +8,20 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v1.9.5)
+## 1. Estado Atual da Base de Código (Checkpoint v1.9.6)
 
-Após implementação do seletor dinâmico de arremessador no Vision Lab e refinamento idiomático em PT-BR:
+Após calibração dos termos e deploy do Seletor Dinâmico do Vision Lab:
 - **Suíte de Testes**: **208 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
 - **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe`, `shap`, `mlflow` e `databricks-sdk` instalados.
+- **Diretriz Canônica de Terminologia de Beisebol**:
+  - **Termos Canônicos Mantidos**: Mantidos termos universais consagrados do beisebol amplamente utilizados no Brasil e na transmissão esportiva (ESPN Brasil): *Groundballs*, *Groundout*, *Wipeout*, *Platoon*, *Chase*, *Whiff*, *Double Play*, *Slot*, *Fastball*, *Breaking Ball*, *Offspeed*.
+  - **Única Restrição Estrita**: Eliminação de traduções literais artificiais não usadas no Brasil como *"tunelamento"* $\rightarrow$ mantido o conceito descritivo natural: *"🎭 Disfarce de Trajetória"* e *"solturas com trajetória idêntica"*.
 - **Laboratório de Visão & Biomecânica Dinâmico (`pages/04_pitch_vision_lab.py`)**:
   - **Seletor de Arremessadores Oficiais da MLB (`st.selectbox(key="vision_pitcher_selector")`)**:
     - Suporte completo aos 5 astros: Paul Skenes (RHP), Corbin Burnes (RHP), Logan Webb (RHP), Chris Sale (LHP), Yoshinobu Yamamoto (RHP).
     - Sincronização automática de manifestos, clipes de vídeo, datasets biomecânicos e snapshots calibrados de liberação (Release Point).
     - Detecção automática de lateralidade (Destro vs. Canhoto): adaptação do esqueleto anatômico no momento de soltura (braço esquerdo dominante para Chris Sale).
     - Sincronização dos relatórios SHAP e dicas táticas customizadas para o arremessador selecionado.
-- **Refinamento Idiomático em PT-BR (Padrão Transmissão Esportiva / ESPN Brasil)**:
-  - Eliminação de traduções literais artificiais como *"tunelamento"* $\rightarrow$ substituído por *"🎭 Disfarce de Trajetória"* e *"solturas com trajetória idêntica"*.
-  - Eliminação de *"groundballs"* soltos no texto $\rightarrow$ substituído por *"📉 Bolas Rasteiras"* e *"contato fraco rasteiro"*.
-  - Eliminação de *"wipeout"* $\rightarrow$ substituído por *"❄️ Strikeout Fulminante"* e *"quebra horizontal devastadora"*.
-  - Ajuste de *"slot baixo"* $\rightarrow$ *"📐 Soltura Baixa (25°)"*.
-  - Naturalização dos traços dos astros rebatedores (`MLB_BATTERS`): *Devorador de Retas*, *Castigo no Topo*, *Olho de Águia*, *Rei do Contato*, *Emboscada Inicial*.
-  - Mira simplificada: *"🎣 Fora da Zona (Isca)"* induzindo swing no vazio.
 - **Minigame Arcade - Seleção em Cards Verticais Lado a Lado (`pages/03_minigame.py` e `src/pitch_predictor/ui_components.py`)**:
   - **Layout de 5 Cards Verticais (`st.columns(5)`)**:
     - Disposição lado a lado dos 5 astros da MLB (Skenes, Burnes, Webb, Sale, Yamamoto).
@@ -40,9 +36,11 @@ Após implementação do seletor dinâmico de arremessador no Vision Lab e refin
   - Com o medidor alto ($\ge 2$), se a IA adivinhar o arremesso, resulta em punição severa (Home Run / rebatida extra-base).
   - Variar o arremesso para Tier A ou B quebra o timing do rebatedor ("🧊 Quebrou o timing!") e resfria o medidor imediatamente a zero.
 - **Astros Reais da MLB no Bastão (`MLB_BATTERS`)**:
-  - Shohei Ohtani (Power Slugger, Devorador de Retas), Aaron Judge (Power Giant, Castigo no Topo), Juan Soto (Olho de Águia), Mookie Betts (Rei do Contato), Bryce Harper (Emboscada Inicial).
+  - Shohei Ohtani (Power Slugger, Anti-Fastball), Aaron Judge (Power Giant, High Zone Punisher), Juan Soto (Eye of the Hawk / Plate Discipline), Mookie Betts (Contact King), Bryce Harper (Aggressive Ambush).
 - **Aplicação em Nuvem Operacional (Databricks Apps)**:
   - App `pitch-predictor-app-dev` em estado **`RUNNING` / `ACTIVE`**.
+  - URL Corporativa Pública: **`https://pitch-predictor-app-dev-7474645845452998.aws.databricksapps.com`**.
+  - Deploy `01f1ce2863da10c4a7dec107cb5c6ebd` ativo com `SUCCEEDED`.
   - URL Corporativa Pública: **`https://pitch-predictor-app-dev-7474645845452998.aws.databricksapps.com`**.
   - Deploy `01f1ce273e601e079634999dc8d78299` ativo com `SUCCEEDED`.
 - **Centralização em `MLB_PITCHERS` (Single Source of Truth)**:
