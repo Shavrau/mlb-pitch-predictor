@@ -250,6 +250,7 @@ def test_all_html_and_svg_renderers_are_commonmark_safe_single_line() -> None:
     """
     from pitch_predictor.ui_components import (
         get_custom_css,
+        render_pitcher_photo_html,
         render_pixel_pitcher_svg,
         render_scoreboard_banner_html,
     )
@@ -265,10 +266,29 @@ def test_all_html_and_svg_renderers_are_commonmark_safe_single_line() -> None:
         render_pixel_pitcher_svg("Logan Webb"),
         render_pixel_pitcher_svg("Chris Sale"),
         render_pixel_pitcher_svg("Yoshinobu Yamamoto"),
+        render_pitcher_photo_html("Paul Skenes"),
+        render_pitcher_photo_html("Corbin Burnes"),
+        render_pitcher_photo_html("Logan Webb"),
+        render_pitcher_photo_html("Chris Sale"),
+        render_pitcher_photo_html("Yoshinobu Yamamoto"),
         get_custom_css(),
     ]
     for frag in fragments:
         assert "\n" not in frag, "HTML/SVG fragment must not contain newlines (CommonMark <pre><code> hazard)"
         assert "    " not in frag, "HTML/SVG fragment must not contain 4-space indentation"
         assert "<!--" not in frag, "HTML/SVG fragment must not contain HTML comments"
+
+
+def test_render_pitcher_photo_html_loads_official_headshots() -> None:
+    """Verify render_pitcher_photo_html renders real photos for all 5 MLB stars."""
+    from pitch_predictor.ui_components import render_pitcher_photo_html
+
+    pitchers = ["Paul Skenes", "Corbin Burnes", "Logan Webb", "Chris Sale", "Yoshinobu Yamamoto"]
+    for p_name in pitchers:
+        html = render_pitcher_photo_html(p_name)
+        assert "<img" in html
+        assert f'alt="{p_name}"' in html
+        assert ("data:image/png;base64," in html) or ("https://img.mlbstatic.com" in html)
+        assert "\n" not in html
+
 

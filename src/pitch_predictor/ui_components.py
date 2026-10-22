@@ -17,6 +17,9 @@ Provides:
 
 from __future__ import annotations
 
+import base64
+import functools
+from pathlib import Path
 from typing import Any
 
 STATCAST_ZONES: dict[int, dict[str, str]] = {
@@ -704,5 +707,53 @@ def render_pixel_pitcher_svg(pitcher_name: str) -> str:
     </svg>
     """
     return _compact_html(svg)
+
+
+# ---------------------------------------------------------------------------
+# 6. Retratos Oficiais em Alta Definição dos Astros da MLB
+# ---------------------------------------------------------------------------
+
+PITCHER_HEADSHOT_FILES: dict[str, str] = {
+    "Paul Skenes": "paul_skenes.png",
+    "Corbin Burnes": "corbin_burnes.png",
+    "Logan Webb": "logan_webb.png",
+    "Chris Sale": "chris_sale.png",
+    "Yoshinobu Yamamoto": "yoshinobu_yamamoto.png",
+}
+
+PITCHER_HEADSHOT_URLS: dict[str, str] = {
+    "Paul Skenes": "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_426,q_auto:best/v1/people/694973/headshot/67/current",
+    "Corbin Burnes": "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_426,q_auto:best/v1/people/669203/headshot/67/current",
+    "Logan Webb": "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_426,q_auto:best/v1/people/657277/headshot/67/current",
+    "Chris Sale": "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_426,q_auto:best/v1/people/519242/headshot/67/current",
+    "Yoshinobu Yamamoto": "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_426,q_auto:best/v1/people/808967/headshot/67/current",
+}
+
+
+@functools.lru_cache(maxsize=16)
+def get_pitcher_headshot_src(pitcher_name: str) -> str:
+    """Retorna o data URI base64 local da foto do arremessador, ou a URL oficial da MLB."""
+    filename = PITCHER_HEADSHOT_FILES.get(pitcher_name)
+    if filename:
+        local_path = Path(__file__).resolve().parent / "assets" / "headshots" / filename
+        if local_path.is_file():
+            try:
+                encoded = base64.b64encode(local_path.read_bytes()).decode("utf-8")
+                return f"data:image/png;base64,{encoded}"
+            except OSError:
+                pass
+    return PITCHER_HEADSHOT_URLS.get(pitcher_name, PITCHER_HEADSHOT_URLS["Paul Skenes"])
+
+
+def render_pitcher_photo_html(pitcher_name: str) -> str:
+    """Renderiza a foto real do arremessador da MLB em moldura retrô com iluminação neon."""
+    src = get_pitcher_headshot_src(pitcher_name)
+    raw_html = f"""
+    <div style="background: radial-gradient(circle at 50% 30%, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border-radius: 6px; border: 1px solid rgba(0, 255, 204, 0.35); padding: 4px; margin: 2px auto 6px auto; height: 135px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 15px rgba(0, 255, 204, 0.1);">
+        <img src="{src}" alt="{pitcher_name}" style="max-height: 125px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.7)); display: block; margin: 0 auto;" />
+    </div>
+    """
+    return _compact_html(raw_html)
+
 
 

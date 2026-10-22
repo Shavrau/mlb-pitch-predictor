@@ -24,7 +24,7 @@ from pitch_predictor.serving_client import PitchServingClient
 from pitch_predictor.ui_components import (
     _compact_html,
     render_baseball_diamond_svg,
-    render_pixel_pitcher_svg,
+    render_pitcher_photo_html,
     render_strike_zone_svg,
 )
 
@@ -461,7 +461,7 @@ if st.session_state.minigame_step == "selection":
         pitch_a = p_pitches[1]
         pitch_b = p_pitches[2]
 
-        pixel_svg = render_pixel_pitcher_svg(p_name)
+        photo_html = render_pitcher_photo_html(p_name)
 
         with cols[idx]:
             card_html = f"""
@@ -473,14 +473,12 @@ if st.session_state.minigame_step == "selection":
                 <div class="arcade-font neon-gold" style="font-size: 11px; margin-bottom: 2px; line-height: 1.3;">
                     {p_info['name']}
                 </div>
-                <div style="font-size: 10px; color: #94A3B8; margin-bottom: 6px;">
+                <div style="font-size: 10px; color: #94A3B8; margin-bottom: 4px;">
                     {p_info['team']} • <strong style="color: #60A5FA;">{p_info['p_throws']}HP</strong>
                 </div>
 
-                <!-- MEIO: Versão Pixel Art Retrô -->
-                <div style="margin: 2px 0 6px 0;">
-                    {pixel_svg}
-                </div>
+                <!-- MEIO: Foto Oficial em Alta Resolução -->
+                {photo_html}
 
                 <!-- PARTE DE BAIXO: Características & Arsenal em Tiers -->
                 <div style="background: rgba(0,0,0,0.4); border-radius: 6px; padding: 6px; font-size: 10px; text-align: left; margin-bottom: 6px;">
