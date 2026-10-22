@@ -17,7 +17,11 @@ import pandas as pd
 import streamlit as st
 
 from pitch_predictor.multimodal import MultimodalPitchClassifier
-from pitch_predictor.scenarios import MLB_PITCHERS
+from pitch_predictor.scenarios import (
+    MLB_PITCHERS,
+    get_pitcher_names,
+    get_pitcher_profile,
+)
 from pitch_predictor.serving_client import PitchServingClient
 from pitch_predictor.vision.overlay import (
     extract_and_annotate_release_frame,
@@ -261,21 +265,32 @@ with st.container(border=True):
     )
 
 # ---------------------------------------------------------------------------
-# Seleção do Arremesso & Dados do Lance
+# Seleção do Arremessador & Arremesso
 # ---------------------------------------------------------------------------
 
-st.subheader("1. Seleção do Arremesso & Dados do Lance")
+st.subheader("1. Seleção do Arremessador & Dados do Lance")
 
-pitcher_info = MLB_PITCHERS.get("Paul Skenes", {
-    "pitcher_id": 694973,
-    "name": "Paul Skenes",
-    "team": "PIT",
-    "p_throws": "R",
-    "pitcher_fb_prior": 0.55,
-    "pitcher_bb_prior": 0.30,
-    "pitcher_os_prior": 0.15,
-    "signature_arsenal": "4-Seam Fastball (102 mph) • Splinker • Sweeper",
-})
+PITCHER_EMOJIS = {
+    "Paul Skenes": "🚀",
+    "Corbin Burnes": "🌪️",
+    "Logan Webb": "📉",
+    "Chris Sale": "🏹",
+    "Yoshinobu Yamamoto": "👻",
+}
+
+pitcher_names = get_pitcher_names()
+
+col_pitcher, col_clip = st.columns([1, 1.25], gap="medium")
+
+with col_pitcher:
+    selected_pitcher_name = st.selectbox(
+        "Arremessador Estrela da MLB:",
+        options=pitcher_names,
+        format_func=lambda name: f"{PITCHER_EMOJIS.get(name, '⚾')} {name} ({MLB_PITCHERS[name]['team']} • {MLB_PITCHERS[name]['p_throws']}HP)",
+        key="vision_pitcher_selector",
+    )
+
+pitcher_info = get_pitcher_profile(selected_pitcher_name)
 pitcher_id = pitcher_info["pitcher_id"]
 p_throws = pitcher_info["p_throws"]
 
@@ -297,14 +312,22 @@ for _, row in manifest_df.iterrows():
 if not options_labels:
     options_labels = ["Fastball (FF) — Game 745170 | AB #31 | Pitch #4"]
 
+# Reset selected pitch if pitcher changed or value not in active options
+if "current_vision_pitcher" not in st.session_state:
+    st.session_state.current_vision_pitcher = selected_pitcher_name
+elif st.session_state.current_vision_pitcher != selected_pitcher_name:
+    st.session_state.current_vision_pitcher = selected_pitcher_name
+    st.session_state.vision_pitch_selector = options_labels[0]
+
 if "vision_pitch_selector" in st.session_state and st.session_state.vision_pitch_selector not in options_labels:
     st.session_state.vision_pitch_selector = options_labels[0]
 
-selected_label = st.selectbox(
-    "Selecione o clipe do arremesso para inspeção biomecânica:",
-    options=options_labels,
-    key="vision_pitch_selector",
-)
+with col_clip:
+    selected_label = st.selectbox(
+        "Selecione o clipe do arremesso para inspeção biomecânica:",
+        options=options_labels,
+        key="vision_pitch_selector",
+    )
 
 selected_idx = options_labels.index(selected_label) if selected_label in options_labels else 0
 selected_row = manifest_df.iloc[selected_idx]
@@ -607,8 +630,8 @@ else:
 
 with st.expander("📊 Relatório de Impacto & Estudo de Ablação Multimodal (Lift)", expanded=False):
     st.markdown(
-        """
-        O estudo de ablação compara o desempenho de 3 pipelines sobre a partição de teste de arremessos de Paul Skenes:
+        f"""
+        O estudo de ablação compara o desempenho de 3 pipelines sobre a partição de teste de arremessos de {pitcher_info['name']}:
         - **Statcast Isolado**: Prediz baseado apenas em contagem, corredores e histórico.
         - **Visão Isolada**: Prediz baseado apenas nos ângulos corporais no frame de soltura.
         - **Fusão Multimodal**: Combina ambas as fontes de informação com ponderação calibrada.
@@ -660,18 +683,20 @@ with shap_col2, st.container(border=True):
     st.markdown(explanation.get("summary_text", ""))
 
     st.markdown("---")
+    p_last_name = pitcher_info["name"].split()[-1]
     if bio_pred == "Fastball":
+        speed_text = "100+ mph" if pitcher_id == 694973 else "alta velocidade"
         st.markdown(
-            "💡 **Dica para o Rebatedor**: O braço de Skenes estende-se em amplitude máxima (146°), "
-            "sem flexão no cotovelo. **Prepare o swing rápido para velocidade de 100+ mph**."
+            f"💡 **Dica para o Rebatedor**: O braço de {p_last_name} estende-se em amplitude máxima ({elbow_flex_val:.0f}°), "
+            f"sem flexão excessiva no cotovelo. **Prepare o swing rápido para {speed_text}**."
         )
     elif bio_pred == "Breaking Ball":
         st.markdown(
-            "💡 **Dica para o Rebatedor**: O cotovelo flexionado em 98° e a soltura rebaixada para 12° denunciam "
-            "que ele está 'envelopando' a bola para imprimir giro horizontal. **Espere o Sweeper quebrando para fora**."
+            f"💡 **Dica para o Rebatedor**: O cotovelo flexionado em {elbow_flex_val:.0f}° e a soltura ajustada ({arm_slot_val:.0f}°) denunciam "
+            "que ele está 'envelopando' a bola para imprimir giro horizontal. **Atenção à bola de efeito quebrando para fora da zona**."
         )
     else:
         st.markdown(
-            "💡 **Dica para o Rebatedor**: O arm slot elevado de 74° indica soltura por cima para criar ação descendente. "
-            "**Atenção ao Splitter afundando na parte baixa da zona**."
+            f"💡 **Dica para o Rebatedor**: O arm slot em {arm_slot_val:.0f}° com soltura firme indica desaceleração e ação descendente. "
+            "**Atenção ao arremesso em mudança afundando na parte baixa da zona**."
         )
