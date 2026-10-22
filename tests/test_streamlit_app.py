@@ -324,30 +324,48 @@ def test_scout_report_stale_session_state_recovery() -> None:
 
 
 def test_minigame_initial_render_and_hud() -> None:
-    """Verify pages/03_minigame.py renders retro arcade HUD, RPG sliders, and cabinet buttons."""
+    """Verify pages/03_minigame.py renders retro arcade HUD, step 1 pitcher selection, and step 2 duel console."""
     at = AppTest.from_file(MINIGAME_PAGE_PATH, default_timeout=30).run()
     assert not at.exception, f"Minigame raised exception: {at.exception}"
 
     all_md = "\n".join(m.value for m in at.markdown)
+    # 1. Verify Arcade HUD
     assert "PONTUAÇÃO" in all_md
     assert "RECORDE" in all_md
     assert "VIDAS" in all_md
     assert "COMBO" in all_md
-    assert "Atributos do Arremessador" in all_md
-    assert "Gabinete de Arremesso" in all_md
+    assert "TIMING DO REBATEDOR" in all_md
 
-    # Check sliders exist
-    assert any("Velocidade" in s.label for s in at.slider)
-    assert any("Efeito" in s.label for s in at.slider)
-    assert any("Variação" in s.label for s in at.slider)
+    # 2. Verify Step 1: 5 MLB Star Pitchers with Quality Tags & Tiers
+    assert "Escolha seu Arremessador Estrela" in all_md
+    assert "Paul Skenes" in all_md
+    assert "Corbin Burnes" in all_md
+    assert "Logan Webb" in all_md
+    assert "Chris Sale" in all_md
+    assert "Yoshinobu Yamamoto" in all_md
+    assert "TIER S" in all_md
+    assert "TIER A" in all_md
+    assert "TIER B" in all_md
 
-    # Check pitch button exists
+    # 3. Click to select Paul Skenes and transition to Step 2 (Duel)
+    pick_btn = next(b for b in at.button if "Escolher Paul Skenes" in b.label)
+    pick_btn.click().run()
+    assert not at.exception
+
+    all_md_duel = "\n".join(m.value for m in at.markdown)
+    assert "Gabinete de Arremesso" in all_md_duel
+    assert "Paul Skenes" in all_md_duel
     assert any("ARREMESSAR CONTRA A IA" in b.label for b in at.button)
+    assert any("Trocar (Bullpen)" in b.label for b in at.button)
 
 
 def test_minigame_pitch_execution_with_mocked_prediction() -> None:
-    """Verify executing a pitch in the minigame queries serving client and updates state."""
-    at = AppTest.from_file(MINIGAME_PAGE_PATH, default_timeout=30).run()
+    """Verify executing a pitch in the minigame step 2 queries serving client and updates state."""
+    at = AppTest.from_file(MINIGAME_PAGE_PATH, default_timeout=30)
+    # Start directly in duel step or select pitcher
+    at.session_state["minigame_step"] = "duel"
+    at.session_state["minigame_pitcher"] = "Paul Skenes"
+    at.run()
     assert not at.exception
 
     mock_return = {
@@ -368,6 +386,8 @@ def test_minigame_pitch_execution_with_mocked_prediction() -> None:
     assert mock_pred.call_count == 1
     assert len(at.session_state["arcade_state"].history) == 1
     assert at.session_state["last_outcome"] is not None
+    assert at.session_state["last_outcome"]["pitch_tier"] in ("S", "A", "B")
+
 
 
 def test_app_multipage_switch_to_vision_lab() -> None:

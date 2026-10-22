@@ -344,3 +344,172 @@ def test_get_random_retro_batter_returns_valid_hud_profile() -> None:
     assert "name" in batter
     assert isinstance(batter["name"], str)
     assert len(batter["name"]) > 0
+
+
+# ---------------------------------------------------------------------------
+# 5. MLB Star Batters, Pitcher Tiers & Probabilistic Engine Tests
+# ---------------------------------------------------------------------------
+
+
+def test_mlb_batters_registry_contains_five_official_sluggers() -> None:
+    """Verify MLB_BATTERS contains all 5 star sluggers with full tactical metadata."""
+    from pitch_predictor.minigame_engine import MLB_BATTERS
+
+    assert len(MLB_BATTERS) == 5
+    batter_names = [b["name"] for b in MLB_BATTERS]
+    assert "Shohei Ohtani" in batter_names
+    assert "Aaron Judge" in batter_names
+    assert "Juan Soto" in batter_names
+    assert "Mookie Betts" in batter_names
+    assert "Bryce Harper" in batter_names
+
+    for b in MLB_BATTERS:
+        assert "stand" in b and b["stand"] in ("R", "L")
+        assert "trait" in b and len(b["trait"]) > 0
+        assert "trait_id" in b and len(b["trait_id"]) > 0
+        assert "archetype" in b and len(b["archetype"]) > 0
+
+
+def test_pitcher_tiers_registry_covers_five_pitchers_with_three_tiers() -> None:
+    """Verify PITCHER_TIERS registers all 5 MLB stars with S, A, and B tier pitches."""
+    from pitch_predictor.minigame_engine import PITCHER_TIERS, get_pitcher_tier_info
+
+    assert len(PITCHER_TIERS) == 5
+    pitchers = ["Paul Skenes", "Corbin Burnes", "Logan Webb", "Chris Sale", "Yoshinobu Yamamoto"]
+    for p_name in pitchers:
+        info = get_pitcher_tier_info(p_name)
+        assert info["name"] == p_name
+        assert "tags" in info and len(info["tags"]) >= 3
+        assert "pitches" in info and len(info["pitches"]) == 3
+
+        tiers = [p["tier"] for p in info["pitches"]]
+        assert tiers == ["S", "A", "B"]
+
+        for p in info["pitches"]:
+            assert "name" in p and len(p["name"]) > 0
+            assert "code" in p and len(p["code"]) >= 2
+            assert "category" in p and p["category"] in ("Fastball", "Breaking Ball", "Offspeed")
+            assert "speed" in p and "mph" in p["speed"]
+
+
+def test_probabilistic_resolve_tier_s_foul_and_contact_out() -> None:
+    """Verify Tier S pitch induces FOUL or weak OUT when AI guesses right with low rng_seed."""
+    state = ArcadeGameState(balls=0, strikes=0, outs=0, lives=3)
+
+    # 1. Low rng_seed (e.g. 0.10 < 0.35 foul_thresh for Tier S) -> FOUL
+    state_foul, outcome_foul = resolve_arcade_pitch(
+        state=state,
+        user_category="Fastball",
+        user_type="FF",
+        user_zone=2,
+        ai_prediction="Fastball",
+        pitch_tier="S",
+        probabilistic=True,
+        rng_seed=0.10,
+    )
+    assert outcome_foul["result"] == "FOUL"
+    assert state_foul.strikes == 1
+    assert state_foul.lives == 3
+
+    # 2. Mid rng_seed (0.45, between 0.35 and 0.60 out_thresh for Tier S) -> OUT
+    state_out, outcome_out = resolve_arcade_pitch(
+        state=state,
+        user_category="Fastball",
+        user_type="FF",
+        user_zone=2,
+        ai_prediction="Fastball",
+        pitch_tier="S",
+        probabilistic=True,
+        rng_seed=0.45,
+    )
+    assert outcome_out["result"] == "OUT"
+    assert state_out.outs == 1
+    assert state_out.lives == 3
+
+    # 3. High rng_seed (0.80 >= 0.60) -> HIT
+    state_hit, outcome_hit = resolve_arcade_pitch(
+        state=state,
+        user_category="Fastball",
+        user_type="FF",
+        user_zone=2,
+        ai_prediction="Fastball",
+        pitch_tier="S",
+        probabilistic=True,
+        rng_seed=0.80,
+    )
+    assert outcome_hit["result"] == "HIT"
+    assert state_hit.on_1b == 1
+
+
+def test_timing_meter_heat_anti_spam_and_timing_break() -> None:
+    """Verify repeated same pitches heat up the timing meter, and switching pitches breaks timing."""
+    state = ArcadeGameState(lives=3, balls=0, strikes=0)
+
+    # Pitch 1: 4-Seam Fastball (FF)
+    s1, _o1 = resolve_arcade_pitch(
+        state=state,
+        user_category="Fastball",
+        user_type="FF",
+        user_zone=2,
+        ai_prediction="Offspeed",
+        pitch_tier="S",
+        probabilistic=True,
+    )
+    assert s1.consecutive_same_pitch == 1
+    assert s1.timing_meter == 0
+
+    # Pitch 2: 4-Seam Fastball again -> timing_meter increments to 1
+    s2, _o2 = resolve_arcade_pitch(
+        state=s1,
+        user_category="Fastball",
+        user_type="FF",
+        user_zone=2,
+        ai_prediction="Offspeed",
+        pitch_tier="S",
+        probabilistic=True,
+    )
+    assert s2.consecutive_same_pitch == 2
+    assert s2.timing_meter == 1
+
+    # Pitch 3: 4-Seam Fastball 3rd time -> timing_meter reaches 2 (Heated!)
+    s3, _o3 = resolve_arcade_pitch(
+        state=s2,
+        user_category="Fastball",
+        user_type="FF",
+        user_zone=2,
+        ai_prediction="Offspeed",
+        pitch_tier="S",
+        probabilistic=True,
+    )
+    assert s3.consecutive_same_pitch == 3
+    assert s3.timing_meter == 2
+
+    # Pitch 4: Fastball again and AI guesses right while timing_meter >= 2 -> CRUSH (HOME_RUN)!
+    s4, o4 = resolve_arcade_pitch(
+        state=s3,
+        user_category="Fastball",
+        user_type="FF",
+        user_zone=2,
+        ai_prediction="Fastball",
+        pitch_tier="S",
+        probabilistic=True,
+    )
+    assert o4["result"] == "HOME_RUN"
+    assert "cronometrou seu arremesso repetido" in o4["message"]
+    assert s4.lives < 3
+
+    # Pitch 5: Switching to Splinker (FS) breaks the timing and resets meter to 0!
+    s5, o5 = resolve_arcade_pitch(
+        state=s4,
+        user_category="Offspeed",
+        user_type="FS",
+        user_zone=8,
+        ai_prediction="Breaking Ball",
+        pitch_tier="A",
+        probabilistic=True,
+    )
+    assert s5.timing_meter == 0
+    assert s5.consecutive_same_pitch == 1
+    assert o5["timing_broken"] is True
+    assert "Quebrou o timing do rebatedor" in o5["message"]
+

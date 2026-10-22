@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v1.9.0 Checkpoint (Sprint 1 Architecture Simplification & Page 01 Deprecation)  
+> **Versão do Projeto:** v1.9.1 Checkpoint (Sprint 2 Arcade Minigame Reformulation - 2-Step Flow, Pitch Tiers & Anti-Spam Timing Meter)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit.
 
@@ -8,11 +8,25 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v1.9.0)
+## 1. Estado Atual da Base de Código (Checkpoint v1.9.1)
 
-Após análise aprofundada da base de código e execução da Sprint 1 de Simplificação Arquitetural:
-- **Suíte de Testes**: **202 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1` em ~64 segundos).
+Após execução das Sprints 1 e 2 de Simplificação e Reformulação do Minigame:
+- **Suíte de Testes**: **206 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
 - **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe`, `shap`, `mlflow` e `databricks-sdk` instalados.
+- **Reformulação Completa do Minigame Arcade (`pages/03_minigame.py` e `src/pitch_predictor/minigame_engine.py`)**:
+  - **Fluxo Multi-Etapas (2-Step)**:
+    - **Passo 1 (Draft de Arremessador)**: Apresenta cards visuais para os 5 astros oficiais da MLB (Skenes, Burnes, Webb, Sale, Yamamoto) com tags de qualidades (`[🚀 102 mph]`, `[🌪️ 2800+ RPM]`, `[🛑 Tunelamento]`, etc.) e detalhamento de arsenal por Tiers (S, A, B).
+    - **Passo 2 (Duelo no Montinho)**: Console simplificado com no máximo 6 controles interativos (3 botões de Tier de arremesso, 3 opções de mira rápida: Topo, Fundo, Chase, e botão primário de arremesso).
+    - **Botão de Troca (Bullpen)**: Permite alternar de arremessador a qualquer momento sem zerar a pontuação ou o multiplicador de combo.
+  - **Motor Probabilístico Calibrado por Tiers**:
+    - O rebatedor não obtém automaticamente uma rebatida mesmo se a IA adivinhar o arremesso.
+    - Arremessos de Tier S possuem alta probabilidade de induzir foul ball (strike) ou contato fraco (groundout/flyout -> Out).
+  - **Medidor de Timing do Rebatedor (Sistema Anti-Spam)**:
+    - Arremessar o mesmo tipo de bola consecutivamente eleva o medidor de calor do rebatedor (`🟩 Frio` $\rightarrow$ `🟨 Alerta` $\rightarrow$ `🟥 Na Espera!`).
+    - Com o medidor alto ($\ge 2$), se a IA adivinhar o arremesso, resulta em punição severa (Home Run / rebatida extra-base).
+    - Variar o arremesso para Tier A ou B quebra o timing do rebatedor ("🧊 Quebrou o timing!") e resfria o medidor imediatamente a zero.
+  - **Astros Reais da MLB no Bastão (`MLB_BATTERS`)**:
+    - Shohei Ohtani (Power Slugger, Anti-Fastball), Aaron Judge (Power Giant, High Zone Punisher), Juan Soto (Eye of the Hawk), Mookie Betts (Contact King), Bryce Harper (Aggressive Ambush).
 - **Centralização em `MLB_PITCHERS` (Single Source of Truth)**:
   - Registro único estruturado em `src/pitch_predictor/scenarios.py` com priors reais, arsenal, mão de arremesso (R/L) e perfil biomecânico calibrado para os 5 astros:
     1. **Paul Skenes** (`#694973` - Pittsburgh Pirates, RHP, Power Pitcher, 102 mph Fastball / Splinker)

@@ -1,9 +1,10 @@
 """
 Página de Minigame Retro Arcade: Você vs. IA no Montinho (MLB Pitch Predictor).
 
-Estética fliperama dos anos 90 (8-bit / 16-bit), sistema RPG de distribuição
-de 100 pontos de atributos, modo sobrevivência infinita com High Score e efeitos
-sonoros sintetizados chiptune via Web Audio API.
+Estética fliperama dos anos 90 (8-bit / 16-bit), fluxo multi-etapas simples:
+- Passo 1: Seleção de Arremessador Estrela da MLB com tags de qualidades e arsenal por Tiers (S, A, B).
+- Passo 2: Duelo no montinho simplificado (máx 6 botões), mira rápida (Topo, Fundo, Chase)
+  e motor probabilístico com medidor de timing do rebatedor (anti-spam).
 """
 
 from __future__ import annotations
@@ -12,12 +13,14 @@ import streamlit as st
 
 from pitch_predictor.fallback_engine import predict_tactical_fallback
 from pitch_predictor.minigame_engine import (
+    MLB_BATTERS,
+    QUICK_AIM_MAP,
     ArcadeGameState,
-    calculate_priors_from_stats,
+    get_pitcher_tier_info,
     register_high_score,
     resolve_arcade_pitch,
 )
-from pitch_predictor.scenarios import MLB_PITCHERS, PITCH_TYPES_BY_CATEGORY
+from pitch_predictor.scenarios import MLB_PITCHERS
 from pitch_predictor.serving_client import PitchServingClient
 from pitch_predictor.ui_components import (
     _compact_html,
@@ -44,8 +47,8 @@ def _get_retro_arcade_css() -> str:
         border: 2px solid #00FFCC;
         box-shadow: 0 0 15px rgba(0, 255, 204, 0.3), inset 0 0 15px rgba(0, 255, 204, 0.1);
         border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 16px;
+        padding: 14px;
+        margin-bottom: 14px;
     }
 
     .retro-hud-header {
@@ -53,19 +56,19 @@ def _get_retro_arcade_css() -> str:
         border: 2px solid #FF007F;
         box-shadow: 0 0 20px rgba(255, 0, 127, 0.4);
         border-radius: 8px;
-        padding: 12px 18px;
+        padding: 10px 16px;
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 14px;
     }
 
     .retro-hud-item {
         font-family: 'Press Start 2P', monospace;
         font-size: 11px;
         letter-spacing: 1px;
-        margin: 4px 8px;
+        margin: 4px 6px;
     }
 
     .neon-cyan {
@@ -88,21 +91,87 @@ def _get_retro_arcade_css() -> str:
         text-shadow: 0 0 8px #10B981;
     }
 
-    .retro-badge {
-        display: inline-block;
-        padding: 4px 8px;
-        font-family: 'Press Start 2P', monospace;
-        font-size: 9px;
-        border-radius: 4px;
-        margin-right: 6px;
+    .neon-purple {
+        color: #A855F7;
+        text-shadow: 0 0 8px #A855F7;
     }
 
-    .scanline-overlay {
-        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-                    linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-        background-size: 100% 4px, 6px 100%;
-        border-radius: 8px;
-        padding: 4px;
+    .quality-tag {
+        display: inline-block;
+        background: rgba(0, 255, 204, 0.12);
+        color: #00FFCC;
+        border: 1px solid rgba(0, 255, 204, 0.4);
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        margin: 2px 3px;
+    }
+
+    .tier-badge-s {
+        display: inline-block;
+        background: rgba(255, 204, 0, 0.2);
+        color: #FFCC00;
+        border: 1px solid #FFCC00;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    .tier-badge-a {
+        display: inline-block;
+        background: rgba(0, 255, 204, 0.2);
+        color: #00FFCC;
+        border: 1px solid #00FFCC;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    .tier-badge-b {
+        display: inline-block;
+        background: rgba(168, 85, 247, 0.2);
+        color: #C084FC;
+        border: 1px solid #A855F7;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    .timing-meter-bar {
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 10px;
+        margin-top: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .timing-cold {
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid #10B981;
+        color: #10B981;
+    }
+
+    .timing-alert {
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid #F59E0B;
+        color: #F59E0B;
+    }
+
+    .timing-hot {
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid #EF4444;
+        color: #EF4444;
+        animation: pulse 1s infinite alternate;
     }
 
     .retro-gameover-banner {
@@ -172,7 +241,7 @@ def _render_chiptune_audio(sound_type: str | None) -> str:
                 playTone(220.00, "sine", 0.15, now, 0.1);
             }}
         }} catch (e) {{
-            // Ignore audio autoplay restrictions gracefully
+            // Audio autoplay policy fallback
         }}
     }})();
     </script>
@@ -184,8 +253,14 @@ def _render_chiptune_audio(sound_type: str | None) -> str:
 # 3. Inicialização de Session State
 # ---------------------------------------------------------------------------
 
+if "minigame_step" not in st.session_state:
+    st.session_state.minigame_step = "selection"
+
+if "minigame_pitcher" not in st.session_state:
+    st.session_state.minigame_pitcher = "Paul Skenes"
+
 if "arcade_state" not in st.session_state:
-    st.session_state.arcade_state = ArcadeGameState()
+    st.session_state.arcade_state = ArcadeGameState(pitcher_name=st.session_state.minigame_pitcher)
 
 if "arcade_leaderboard" not in st.session_state:
     st.session_state.arcade_leaderboard = [
@@ -195,13 +270,6 @@ if "arcade_leaderboard" not in st.session_state:
         {"initials": "DEV", "score": 1000},
         {"initials": "BOT", "score": 500},
     ]
-
-if "rpg_vel" not in st.session_state:
-    st.session_state.rpg_vel = 50
-if "rpg_efe" not in st.session_state:
-    st.session_state.rpg_efe = 30
-if "rpg_tim" not in st.session_state:
-    st.session_state.rpg_tim = 20
 
 if "minigame_audio" not in st.session_state:
     st.session_state.minigame_audio = True
@@ -215,7 +283,7 @@ if "last_sound_trigger" not in st.session_state:
 # Renderiza CSS
 st.markdown(_get_retro_arcade_css(), unsafe_allow_html=True)
 
-# Dispara áudio sintetizado se houver som pendente
+# Dispara áudio se houver evento pendente
 if st.session_state.minigame_audio and st.session_state.last_sound_trigger:
     st.markdown(
         _render_chiptune_audio(st.session_state.last_sound_trigger),
@@ -226,32 +294,50 @@ if st.session_state.minigame_audio and st.session_state.last_sound_trigger:
 game: ArcadeGameState = st.session_state.arcade_state
 
 # ---------------------------------------------------------------------------
-# 4. Painel Superior: Arcade HUD
+# 4. Painel Superior: Arcade HUD (Sempre Visível)
 # ---------------------------------------------------------------------------
 
-# Vidas em corações
 hearts_display = " ".join(["❤️" for _ in range(game.lives)])
 if game.lives < 3:
     hearts_display += " " + " ".join(["🖤" for _ in range(3 - game.lives)])
 if game.lives == 0:
     hearts_display = "💀 GAME OVER"
 
-# Outs display (● ● ○)
 outs_display = ""
 for i in range(2):
     outs_display += "● " if game.outs > i else "○ "
 
-# Combo display
 combo_badge = f"x{game.combo_multiplier}"
 if game.combo_multiplier >= 3:
     combo_badge += " 🔥 COMBO!"
 elif game.combo_multiplier == 2:
     combo_badge += " ⚡"
 
-current_pitcher_label = st.session_state.get("minigame_pitcher", "Paul Skenes")
+# Visual do Medidor de Timing
+if game.timing_meter == 0:
+    timing_html = """
+    <div class="timing-meter-bar timing-cold">
+        <span>TIMING DO REBATEDOR:</span>
+        <span>🟩 FRIO (0/3) — Desprevenido</span>
+    </div>
+    """
+elif game.timing_meter == 1:
+    timing_html = """
+    <div class="timing-meter-bar timing-alert">
+        <span>TIMING DO REBATEDOR:</span>
+        <span>🟨 ALERTA (1/3) — Antecipando repetição</span>
+    </div>
+    """
+else:
+    timing_html = f"""
+    <div class="timing-meter-bar timing-hot">
+        <span>TIMING DO REBATEDOR:</span>
+        <span>🟥 NA ESPERA! ({game.timing_meter}/3) — Perigo de Rebatida!</span>
+    </div>
+    """
 
 hud_html = f"""
-<div class="retro-hud-header" style="padding: 10px 16px; margin-bottom: 14px;">
+<div class="retro-hud-header">
     <div class="retro-hud-item neon-gold">
         PONTUAÇÃO: <span style="font-size: 13px;">{game.score:06d}</span>
     </div>
@@ -271,6 +357,7 @@ hud_html = f"""
         COMBO: <span>{combo_badge}</span>
     </div>
 </div>
+{timing_html}
 """
 st.markdown(_compact_html(hud_html), unsafe_allow_html=True)
 
@@ -286,7 +373,7 @@ if game.game_over:
             SUA PONTUAÇÃO FINAL: {game.score:06d} PONTOS
         </p>
         <p style="color: #94A3B8; font-size: 14px; margin-bottom: 16px;">
-            A IA do Databricks encontrou brechas no seu repertório! Registre suas iniciais no Hall da Fama.
+            A inteligência artificial encontrou brechas no seu repertório! Registre suas iniciais no Hall da Fama.
         </p>
     </div>
     """
@@ -300,7 +387,7 @@ if game.game_over:
             max_chars=3,
             key="retro_initials",
         )
-        if st.button("💾 GRAVAR INICIAIS NO HALL DA FAMA", use_container_width=True):
+        if st.button("💾 GRAVAR NO HALL DA FAMA", use_container_width=True):
             st.session_state.arcade_leaderboard = register_high_score(
                 initials=initials_input,
                 score=game.score,
@@ -308,16 +395,19 @@ if game.game_over:
             )
             st.success("✅ Iniciais registradas com sucesso!")
 
-        if st.button("🔄 JOGAR NOVAMENTE (NOVO DESAFIO)", use_container_width=True):
+        if st.button("🔄 JOGAR NOVAMENTE", use_container_width=True):
             old_high = max(game.high_score, game.score)
-            st.session_state.arcade_state = ArcadeGameState(high_score=old_high)
+            st.session_state.arcade_state = ArcadeGameState(
+                high_score=old_high,
+                pitcher_name=st.session_state.minigame_pitcher,
+            )
             st.session_state.last_outcome = None
             st.session_state.last_sound_trigger = None
+            st.session_state.minigame_step = "selection"
             st.rerun()
 
-    # Mostra ranking e encerra página
     st.markdown("---")
-    st.markdown("### 🏆 Hall da Fama Retrô (Top 10 Recordes)")
+    st.markdown("### 🏆 Hall da Fama Retrô (Top 10)")
     for rank, entry in enumerate(st.session_state.arcade_leaderboard, 1):
         st.markdown(
             f"**#{rank:02d}** `{entry['initials']}` — **{entry['score']:06d} pts**"
@@ -326,109 +416,125 @@ if game.game_over:
 
 
 # ---------------------------------------------------------------------------
-# 6. Layout Principal: 3 Colunas Arcade (Compacto & Sem Scroll)
+# 6. PASSO 1: Seleção de Arremessador Estrela da MLB
 # ---------------------------------------------------------------------------
 
-col_rpg, col_console, col_feedback = st.columns([1.05, 1.35, 1.1], gap="medium")
+if st.session_state.minigame_step == "selection":
+    st.markdown("## ⚾ Passo 1: Escolha seu Arremessador Estrela")
+    st.caption("Cada astro da MLB possui um arsenal calibrado em Tiers (S, A, B) e estilo tático único:")
 
-# --- COLUNA 1: RPG CHARACTER BUILDER (100 PONTOS DE ATRIBUTOS) ---
-with col_rpg:
-    st.markdown("### 🧙‍♂️ Atributos do Arremessador")
-    st.caption("Distribua 100 pontos entre os três pilares do seu repertório:")
+    # Lista dos 5 arremessadores oficiais
+    pitcher_keys = ["Paul Skenes", "Corbin Burnes", "Logan Webb", "Chris Sale", "Yoshinobu Yamamoto"]
 
-    # Presets rápidos de arremessadores da MLB (incluindo Yamamoto)
-    st.markdown("**Perfis Oficiais da MLB:**")
-    cp1, cp2, cp3 = st.columns(3)
-    with cp1:
-        if st.button("🚀 Skenes", use_container_width=True):
-            p = MLB_PITCHERS["Paul Skenes"]
-            st.session_state.rpg_vel = round(p["pitcher_fb_prior"] * 100)
-            st.session_state.rpg_efe = round(p["pitcher_bb_prior"] * 100)
-            st.session_state.rpg_tim = round(p["pitcher_os_prior"] * 100)
-            st.session_state.minigame_pitcher = "Paul Skenes"
-            st.rerun()
-        if st.button("🏹 Sale", use_container_width=True):
-            p = MLB_PITCHERS["Chris Sale"]
-            st.session_state.rpg_vel = round(p["pitcher_fb_prior"] * 100)
-            st.session_state.rpg_efe = round(p["pitcher_bb_prior"] * 100)
-            st.session_state.rpg_tim = round(p["pitcher_os_prior"] * 100)
-            st.session_state.minigame_pitcher = "Chris Sale"
-            st.rerun()
-    with cp2:
-        if st.button("🌀 Burnes", use_container_width=True):
-            p = MLB_PITCHERS["Corbin Burnes"]
-            st.session_state.rpg_vel = round(p["pitcher_fb_prior"] * 100)
-            st.session_state.rpg_efe = round(p["pitcher_bb_prior"] * 100)
-            st.session_state.rpg_tim = round(p["pitcher_os_prior"] * 100)
-            st.session_state.minigame_pitcher = "Corbin Burnes"
-            st.rerun()
-        if st.button("🎌 Yamamoto", use_container_width=True):
-            p = MLB_PITCHERS["Yoshinobu Yamamoto"]
-            st.session_state.rpg_vel = round(p["pitcher_fb_prior"] * 100)
-            st.session_state.rpg_efe = round(p["pitcher_bb_prior"] * 100)
-            st.session_state.rpg_tim = round(p["pitcher_os_prior"] * 100)
-            st.session_state.minigame_pitcher = "Yoshinobu Yamamoto"
-            st.rerun()
-    with cp3:
-        if st.button("⚡ Webb", use_container_width=True):
-            p = MLB_PITCHERS["Logan Webb"]
-            st.session_state.rpg_vel = round(p["pitcher_fb_prior"] * 100)
-            st.session_state.rpg_efe = round(p["pitcher_bb_prior"] * 100)
-            st.session_state.rpg_tim = round(p["pitcher_os_prior"] * 100)
-            st.session_state.minigame_pitcher = "Logan Webb"
-            st.rerun()
-        if st.button("⚖️ Equil.", use_container_width=True):
-            st.session_state.rpg_vel = 34
-            st.session_state.rpg_efe = 33
-            st.session_state.rpg_tim = 33
-            st.session_state.minigame_pitcher = "Equilibrado"
+    for p_name in pitcher_keys:
+        p_info = get_pitcher_tier_info(p_name)
+        mlb_prof = MLB_PITCHERS.get(p_name, {})
+
+        tags_html = " ".join([f'<span class="quality-tag">{tag}</span>' for tag in p_info["tags"]])
+
+        # Montagem dos 3 arremessos em Tiers
+        p_pitches = p_info["pitches"]
+        pitch_s = p_pitches[0]
+        pitch_a = p_pitches[1]
+        pitch_b = p_pitches[2]
+
+        card_html = f"""
+        <div class="retro-cabinet-card" style="margin-bottom: 12px; padding: 12px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span class="arcade-font neon-gold" style="font-size: 14px;">{p_info['name']}</span>
+                <span style="font-size: 12px; color: #94A3B8;">{p_info['team']} • <strong>{p_info['p_throws']}HP</strong></span>
+            </div>
+            <div style="font-size: 12px; color: #CBD5E1; margin-bottom: 8px;">
+                {p_info['description']}
+            </div>
+            <div style="margin-bottom: 10px;">
+                {tags_html}
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 11px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px;">
+                <div>
+                    <span class="tier-badge-s">TIER S</span>
+                    <strong style="color: #FFFFFF; display: block; margin-top: 2px;">{pitch_s['name']} ({pitch_s['speed']})</strong>
+                    <span style="color: #94A3B8; font-size: 10px;">{pitch_s['desc']}</span>
+                </div>
+                <div>
+                    <span class="tier-badge-a">TIER A</span>
+                    <strong style="color: #FFFFFF; display: block; margin-top: 2px;">{pitch_a['name']} ({pitch_a['speed']})</strong>
+                    <span style="color: #94A3B8; font-size: 10px;">{pitch_a['desc']}</span>
+                </div>
+                <div>
+                    <span class="tier-badge-b">TIER B</span>
+                    <strong style="color: #FFFFFF; display: block; margin-top: 2px;">{pitch_b['name']} ({pitch_b['speed']})</strong>
+                    <span style="color: #94A3B8; font-size: 10px;">{pitch_b['desc']}</span>
+                </div>
+            </div>
+        </div>
+        """
+        st.markdown(_compact_html(card_html), unsafe_allow_html=True)
+
+        if st.button(
+            f"🎯 Escolher {p_name} & Ir para o Montinho",
+            key=f"btn_pick_{p_name.replace(' ', '_')}",
+            type="primary",
+            use_container_width=True,
+        ):
+            st.session_state.minigame_pitcher = p_name
+            st.session_state.arcade_state.pitcher_name = p_name
+            st.session_state.minigame_step = "duel"
             st.rerun()
 
-    vel = st.slider(
-        "⚡ Velocidade (Fastball):",
-        0,
-        100,
-        int(st.session_state.rpg_vel),
-        key="slider_vel",
+    st.stop()
+
+
+# ---------------------------------------------------------------------------
+# 7. PASSO 2: Duelo no Montinho (Você vs. IA - Console Simplificado)
+# ---------------------------------------------------------------------------
+
+pitcher_name = st.session_state.minigame_pitcher
+p_info = get_pitcher_tier_info(pitcher_name)
+pitches = p_info["pitches"]
+
+# Barra de transição rápida (Trocar de Arremessador)
+col_top_l, col_top_r = st.columns([2.5, 1])
+with col_top_l:
+    st.markdown(
+        f"**Montinho Ativo:** <span class='neon-cyan'>{pitcher_name}</span> ({p_info['p_throws']}HP) | "
+        f"*{p_info['team']}*",
+        unsafe_allow_html=True,
     )
-    efe = st.slider(
-        "🌀 Efeito / Giro (Breaking):",
-        0,
-        100,
-        int(st.session_state.rpg_efe),
-        key="slider_efe",
+with col_top_r:
+    if st.button("🔄 Trocar (Bullpen)", use_container_width=True):
+        st.session_state.minigame_step = "selection"
+        st.rerun()
+
+# Layout em 3 Colunas Sem Scroll
+col_batter, col_mound, col_feedback = st.columns([1.05, 1.35, 1.1], gap="medium")
+
+# --- COLUNA 1: REBATEDOR & SITUAÇÃO DAS BASES ---
+with col_batter:
+    st.markdown("### 👤 No Bastão")
+
+    # Localiza perfil do astro atual no bastão
+    batter_profile = next(
+        (b for b in MLB_BATTERS if b["name"] == game.current_batter_name),
+        MLB_BATTERS[0],
     )
-    tim = st.slider(
-        "🛑 Variação / Timing (Offspeed):",
-        0,
-        100,
-        int(st.session_state.rpg_tim),
-        key="slider_tim",
-    )
 
-    st.session_state.rpg_vel = vel
-    st.session_state.rpg_efe = efe
-    st.session_state.rpg_tim = tim
-
-    total_pts = vel + efe + tim
-    fb_p, bb_p, os_p = calculate_priors_from_stats(vel, efe, tim)
-
-    if total_pts == 100:
-        st.caption(f"✅ Total: **{total_pts}/100** pts | FB: {fb_p*100:.0f}% • BB: {bb_p*100:.0f}% • OS: {os_p*100:.0f}%")
-    else:
-        st.caption(f"⚖️ Normalizado: FB: {fb_p*100:.0f}% • BB: {bb_p*100:.0f}% • OS: {os_p*100:.0f}%")
-
-    # Card do Rebatedor Atual
     batter_card_html = f"""
-    <div class="retro-cabinet-card" style="margin-top: 8px; padding: 10px;">
-        <div class="arcade-font neon-pink" style="font-size: 9px; margin-bottom: 4px;">
-            REBATEDOR NO DUELO:
+    <div class="retro-cabinet-card" style="padding: 10px;">
+        <div class="arcade-font neon-pink" style="font-size: 10px; margin-bottom: 4px;">
+            ASTRO DA MLB:
         </div>
-        <div style="font-size: 15px; font-weight: 700; color: #FFFFFF;">
-            👤 {game.current_batter_name}
+        <div style="font-size: 16px; font-weight: 700; color: #FFFFFF;">
+            {batter_profile['name']}
         </div>
-        <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">
-            Arremessador: <strong style="color: #00FFCC;">{st.session_state.get('minigame_pitcher', 'Paul Skenes')}</strong>
+        <div style="font-size: 11px; color: #60A5FA; margin-bottom: 6px;">
+            {batter_profile['team']} • <strong>{batter_profile['stand']}HB</strong>
+        </div>
+        <div style="font-size: 11px; color: #CBD5E1; margin-bottom: 6px;">
+            {batter_profile['description']}
+        </div>
+        <div style="background: rgba(255, 0, 127, 0.15); border: 1px solid #FF007F; border-radius: 4px; padding: 4px 6px; font-size: 10px; color: #FF99CC;">
+            ⚡ <strong>Traço Tático:</strong> {batter_profile['trait']}
         </div>
     </div>
     """
@@ -441,79 +547,60 @@ with col_rpg:
     )
 
 
-# --- COLUNA 2: CONSOLE DE ARREMESSO (ESCOLHA RÁPIDA DO JOGADOR) ---
-with col_console:
+# --- COLUNA 2: GABINETE DE ARREMESSO (MÁXIMO 6 BOTÕES / ESCOLHA RÁPIDA) ---
+with col_mound:
     st.markdown("### 🎮 Gabinete de Arremesso")
-    st.caption("Escolha o arremesso para tentar enganar a inteligência artificial:")
+    st.caption("Escolha o arremesso por Tier e aponte para enganar a IA:")
 
-    user_category = st.radio(
-        "1. Categoria do Arremesso:",
-        ["Fastball", "Breaking Ball", "Offspeed"],
-        format_func=lambda c: (
-            "⚡ Bola Rápida (Fastball)"
-            if c == "Fastball"
-            else (
-                "🌀 Efeito (Breaking Ball)"
-                if c == "Breaking Ball"
-                else "🛑 Mudança (Offspeed)"
-            )
-        ),
+    # 1. Seleção por Tier (3 opções diretas)
+    tier_options = [
+        f"⭐ Tier S: {pitches[0]['name']} ({pitches[0]['speed']})",
+        f"⚡ Tier A: {pitches[1]['name']} ({pitches[1]['speed']})",
+        f"🎯 Tier B: {pitches[2]['name']} ({pitches[2]['speed']})",
+    ]
+
+    selected_tier_str = st.radio(
+        "1. Selecione o Arremesso:",
+        tier_options,
+        index=0,
+        label_visibility="collapsed",
+    )
+
+    if "Tier S" in selected_tier_str:
+        chosen_pitch = pitches[0]
+    elif "Tier A" in selected_tier_str:
+        chosen_pitch = pitches[1]
+    else:
+        chosen_pitch = pitches[2]
+
+    # 2. Mira Rápida (3 botões em vez de 13 zonas)
+    aim_choice = st.radio(
+        "2. Ponto de Destino:",
+        list(QUICK_AIM_MAP.keys()),
+        format_func=lambda k: QUICK_AIM_MAP[k]["label"],
         horizontal=True,
     )
 
-    col_tp, col_zn = st.columns([1, 1.25])
-    with col_tp:
-        # Tipos compatíveis
-        type_candidates = PITCH_TYPES_BY_CATEGORY.get(user_category, [])
-        type_labels = [label for code, label in type_candidates if code != "None"]
-        selected_type_label = st.selectbox("2. Tipo Específico:", type_labels)
-        user_type = selected_type_label.split(" — ")[0]
+    target_zone = QUICK_AIM_MAP[aim_choice]["zone"]
+    target_category = chosen_pitch["category"]
+    target_type = chosen_pitch["code"]
+    target_tier = chosen_pitch["tier"]
 
-    with col_zn:
-        ZONE_OPTIONS_MAP = {
-            "🔥 Z5 — Centro (Meatball)": 5,
-            "Z1 — Alto-Esq (Fastball Up)": 1,
-            "Z2 — Alto-Centro (Topo)": 2,
-            "Z3 — Alto-Dir (Up & Away)": 3,
-            "Z4 — Meio-Esq (Canto In)": 4,
-            "Z6 — Meio-Dir (Canto Out)": 6,
-            "Z7 — Baixo-Esq (Canto)": 7,
-            "Z8 — Baixo-Centro (Borda)": 8,
-            "Z9 — Baixo-Dir (Strikeout)": 9,
-            "Z11 — Chase Alto-Esq (Fora)": 11,
-            "Z12 — Chase Alto-Dir (Whiff)": 12,
-            "Z13 — Chase Baixo-Esq (No Pé)": 13,
-            "Z14 — Chase Baixo-Dir (Chão)": 14,
-        }
-        current_zone_val = st.session_state.get("selected_minigame_zone", 5)
-        default_zone_idx = 0
-        for i, (k_lbl, v_val) in enumerate(ZONE_OPTIONS_MAP.items()):
-            if v_val == current_zone_val:
-                default_zone_idx = i
-                break
+    # Mini Visualização da Zona de Strike
+    st.markdown(
+        render_strike_zone_svg(target_zone, target_category),
+        unsafe_allow_html=True,
+    )
 
-        selected_zn_label = st.selectbox(
-            "3. Zona de Destino:",
-            options=list(ZONE_OPTIONS_MAP.keys()),
-            index=default_zone_idx,
-        )
-        user_zone = ZONE_OPTIONS_MAP[selected_zn_label]
-        st.session_state.selected_minigame_zone = user_zone
-
-    # Botão de Execução Arcade Primário e Imediato (Sem Scroll!)
+    # 3. Botão Primário de Ação
     pitch_btn = st.button(
         "🕹️ ARREMESSAR CONTRA A IA!",
         type="primary",
         use_container_width=True,
     )
 
-    # Mini Visualização da Zona de Strike Statcast
-    st.markdown(
-        render_strike_zone_svg(user_zone, user_category), unsafe_allow_html=True
-    )
-
     if pitch_btn:
-        with st.spinner("🧠 A IA está lendo a situação tática no Databricks..."):
+        with st.spinner("🧠 A IA está prevendo seu arremesso no Databricks..."):
             client = PitchServingClient(profile="dev")
 
             # Determina histórico anterior do duelo
@@ -535,7 +622,8 @@ with col_console:
                 else:
                     prev_res = "X"
 
-            pitcher_p_throws = "L" if st.session_state.get("minigame_pitcher") == "Chris Sale" else "R"
+            pitcher_p_throws = p_info["p_throws"]
+            fb_p, bb_p, os_p = p_info["priors"]
 
             raw_payload = {
                 "balls": game.balls,
@@ -548,7 +636,7 @@ with col_console:
                 "on_2b_flag": game.on_2b,
                 "on_3b_flag": game.on_3b,
                 "p_throws": pitcher_p_throws,
-                "stand": "R",
+                "stand": batter_profile["stand"],
                 "n_thruorder_pitcher": 1,
                 "prev_pitch_category": prev_cat,
                 "prev_pitch_type": prev_tp,
@@ -563,17 +651,18 @@ with col_console:
                 prediction_res = client.predict(raw_payload)
                 ai_pred = prediction_res.get("prediction", "Fastball")
             except (ConnectionError, TimeoutError, RuntimeError, ValueError):
-                # Fallback unificado baseado no motor tático calibrado
                 fallback_res = predict_tactical_fallback(raw_payload)
                 ai_pred = fallback_res["prediction"]
 
-            # Resolução do Duelo pela Game Engine
+            # Resolução Probabilística com Medidor de Timing (Anti-Spam)
             next_state, outcome = resolve_arcade_pitch(
                 state=game,
-                user_category=user_category,
-                user_type=user_type,
-                user_zone=user_zone,
+                user_category=target_category,
+                user_type=target_type,
+                user_zone=target_zone,
                 ai_prediction=ai_pred,
+                pitch_tier=target_tier,
+                probabilistic=True,
             )
 
             # Efeito sonoro correspondente
@@ -586,9 +675,9 @@ with col_console:
                 st.session_state.last_sound_trigger = "strikeout"
             elif res_type == "WHIFF":
                 st.session_state.last_sound_trigger = "whiff"
-            elif res_type == "STRIKE":
+            elif res_type in ("STRIKE", "FOUL"):
                 st.session_state.last_sound_trigger = "strike"
-            elif res_type == "WALK" or res_type == "BALL":
+            elif res_type in ("WALK", "BALL"):
                 st.session_state.last_sound_trigger = "ball"
 
             if next_state.game_over:
@@ -599,17 +688,18 @@ with col_console:
             st.rerun()
 
 
-# --- COLUNA 3: FEEDBACK DO DUELO EM TEMPO REAL (NO TOPO, VISÍVEL SEM SCROLL) ---
+# --- COLUNA 3: FEEDBACK DO DUELO EM TEMPO REAL ---
 with col_feedback:
-    st.markdown("### 📡 Resolução do Duelo")
+    st.markdown("### 📡 Resolução do Lance")
 
     outcome = st.session_state.last_outcome
     if outcome:
         res = outcome.get("result", "")
         ai_guess = outcome.get("ai_prediction", "")
         user_p = outcome.get("user_category", "")
+        tier = outcome.get("pitch_tier", "A")
 
-        is_success = res in ("STRIKE", "WHIFF", "STRIKEOUT", "INNING_CLEARED")
+        is_success = res in ("STRIKE", "WHIFF", "STRIKEOUT", "INNING_CLEARED", "OUT", "FOUL")
         box_border = "#00FFCC" if is_success else "#FF007F"
         badge_bg = (
             "rgba(0, 255, 204, 0.2)" if is_success else "rgba(255, 0, 127, 0.2)"
@@ -618,10 +708,10 @@ with col_feedback:
         feedback_html = f"""
         <div class="retro-cabinet-card" style="border-color: {box_border}; margin-bottom: 10px;">
             <div class="arcade-font neon-gold" style="font-size: 10px; margin-bottom: 6px;">
-                RESULTADO DO LANCE:
+                RESULTADO DO DUELO:
             </div>
             <div style="font-size: 13px; color: #FFFFFF; margin-bottom: 4px;">
-                Seu Arremesso: <strong style="color: #00FFCC;">{user_p} ({outcome.get('user_type')})</strong>
+                Seu Arremesso: <strong style="color: #00FFCC;">Tier {tier} • {user_p} ({outcome.get('user_type')})</strong>
             </div>
             <div style="font-size: 13px; color: #FFFFFF; margin-bottom: 6px;">
                 Previsão da IA: <strong style="color: #FF007F;">{ai_guess}</strong>
@@ -634,37 +724,39 @@ with col_feedback:
         st.markdown(_compact_html(feedback_html), unsafe_allow_html=True)
     else:
         st.info(
-            "👉 Escolha seu arremesso e zona no console ao lado e clique em **ARREMESSAR CONTRA A IA**!",
+            "👉 Escolha seu Tier de arremesso e clique em **ARREMESSAR CONTRA A IA**!",
             icon=":material/sports_baseball:",
         )
 
-    # Histórico Rápido dos Últimos 3 Arremessos
+    # Histórico dos últimos 3 lances
     st.markdown("#### 📜 Últimos Lances")
     if game.history:
         for idx, h in enumerate(reversed(game.history[-3:]), 1):
             st.markdown(
                 f"<div style='font-size: 12px; color: #CBD5E1; margin-bottom: 4px;'>"
-                f"<strong>#{len(game.history) - idx + 1}</strong> {h.get('pitch_category')} ({h.get('pitch_type')}) "
-                f"Z{h.get('pitch_zone')} ➔ IA: <code>{h.get('ai_prediction')}</code> ➔ <strong>{h.get('result')}</strong>"
+                f"<strong>#{len(game.history) - idx + 1}</strong> Tier {h.get('pitch_tier', 'A')} {h.get('pitch_type')} "
+                f"➔ IA: <code>{h.get('ai_prediction')}</code> ➔ <strong>{h.get('result')}</strong>"
                 f"</div>",
                 unsafe_allow_html=True,
             )
     else:
         st.caption("Nenhum arremesso realizado nesta partida.")
 
-    # Opções de Áudio e Reiniciar
+    # Opções e reinício
     st.markdown("---")
     ca1, ca2 = st.columns(2)
     with ca1:
         st.session_state.minigame_audio = st.toggle(
-            "🔊 Efeitos 8-Bit",
+            "🔊 Áudio 8-Bit",
             value=st.session_state.minigame_audio,
         )
     with ca2:
         if st.button("🔄 Novo Jogo", use_container_width=True):
             st.session_state.arcade_state = ArcadeGameState(
-                high_score=game.high_score
+                high_score=game.high_score,
+                pitcher_name=pitcher_name,
             )
             st.session_state.last_outcome = None
             st.session_state.last_sound_trigger = None
+            st.session_state.minigame_step = "selection"
             st.rerun()
