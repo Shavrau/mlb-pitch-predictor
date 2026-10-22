@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v1.9.3 Checkpoint (Minigame UI Vertical Cards & Official MLB Pitcher Headshots)  
+> **Versão do Projeto:** v1.9.4 Checkpoint (Refinamento de Terminologia PT-BR & Minigame Arcade Vertical Cards)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit.
 
@@ -8,11 +8,18 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v1.9.3)
+## 1. Estado Atual da Base de Código (Checkpoint v1.9.4)
 
-Após execução da reformulação visual e estrutural do Minigame:
+Após execução da reformulação visual e do refinamento idiomático em Português do Brasil (PT-BR):
 - **Suíte de Testes**: **207 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
 - **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe`, `shap`, `mlflow` e `databricks-sdk` instalados.
+- **Refinamento Idiomático em PT-BR (Padrão Transmissão Esportiva / ESPN Brasil)**:
+  - Eliminação de traduções literais artificiais como *"tunelamento"* $\rightarrow$ substituído por *"🎭 Disfarce de Trajetória"* e *"solturas com trajetória idêntica"*.
+  - Eliminação de *"groundballs"* soltos no texto $\rightarrow$ substituído por *"📉 Bolas Rasteiras"* e *"contato fraco rasteiro"*.
+  - Eliminação de *"wipeout"* $\rightarrow$ substituído por *"❄️ Strikeout Fulminante"* e *"quebra horizontal devastadora"*.
+  - Ajuste de *"slot baixo"* $\rightarrow$ *"📐 Soltura Baixa (25°)"*.
+  - Naturalização dos traços dos astros rebatedores (`MLB_BATTERS`): *Devorador de Retas*, *Castigo no Topo*, *Olho de Águia*, *Rei do Contato*, *Emboscada Inicial*.
+  - Mira simplificada: *"🎣 Fora da Zona (Isca)"* induzindo swing no vazio.
 - **Minigame Arcade - Seleção em Cards Verticais Lado a Lado (`pages/03_minigame.py` e `src/pitch_predictor/ui_components.py`)**:
   - **Layout de 5 Cards Verticais (`st.columns(5)`)**:
     - Disposição lado a lado dos 5 astros da MLB (Skenes, Burnes, Webb, Sale, Yamamoto).
@@ -27,11 +34,11 @@ Após execução da reformulação visual e estrutural do Minigame:
   - Com o medidor alto ($\ge 2$), se a IA adivinhar o arremesso, resulta em punição severa (Home Run / rebatida extra-base).
   - Variar o arremesso para Tier A ou B quebra o timing do rebatedor ("🧊 Quebrou o timing!") e resfria o medidor imediatamente a zero.
 - **Astros Reais da MLB no Bastão (`MLB_BATTERS`)**:
-  - Shohei Ohtani (Power Slugger, Anti-Fastball), Aaron Judge (Power Giant, High Zone Punisher), Juan Soto (Eye of the Hawk), Mookie Betts (Contact King), Bryce Harper (Aggressive Ambush).
+  - Shohei Ohtani (Power Slugger, Devorador de Retas), Aaron Judge (Power Giant, Castigo no Topo), Juan Soto (Olho de Águia), Mookie Betts (Rei do Contato), Bryce Harper (Emboscada Inicial).
 - **Aplicação em Nuvem Operacional (Databricks Apps)**:
   - App `pitch-predictor-app-dev` em estado **`RUNNING` / `ACTIVE`**.
   - URL Corporativa Pública: **`https://pitch-predictor-app-dev-7474645845452998.aws.databricksapps.com`**.
-  - Deploy `01f1ce22db9612e89664e138c03df03b` ativo com `SUCCEEDED`.
+  - Deploy `01f1ce256f99173896ccb89e9024064b` ativo com `SUCCEEDED`.
 - **Centralização em `MLB_PITCHERS` (Single Source of Truth)**:
   - Registro único estruturado em `src/pitch_predictor/scenarios.py` com priors reais, arsenal, mão de arremesso (R/L) e perfil biomecânico calibrado para os 5 astros:
     1. **Paul Skenes** (`#694973` - Pittsburgh Pirates, RHP, Power Pitcher, 102 mph Fastball / Splinker)
