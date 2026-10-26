@@ -1,171 +1,198 @@
-# ⚾ MLB Pitch Predictor — Statcast Tactical AI (v1.0.0 Checkpoint)
+# ⚾ MLB Pitch Predictor — Multimodal Statcast & Biomechanical AI
 
-> **Plataforma Modular de Inteligência Artificial para Predição Tática de Arremessos de Beisebol**  
-> Desenvolvida com **Databricks Serverless**, **AutoML**, **Lakeflow Spark Declarative Pipelines**, **MLflow Model Serving** e interface interativa multipágina em **Streamlit**.
-
----
-
-## 📌 Visão Geral do Projeto
-
-O **MLB Pitch Predictor** é um sistema preditivo que analisa a dinâmica duelo a duelo entre arremessador (*pitcher*) e rebatedor (*batter*) na Major League Baseball (MLB). Utilizando telemetria física e contextual do **Statcast**, o modelo prevê em tempo real qual categoria tática de arremesso será lançada:
-- 🚀 **Fastball** (Bola Rápida — *Four-Seam, Sinker, Cutter*)
-- 🌪️ **Breaking Ball** (Efeito Pronunciado — *Slider, Sweeper, Curveball, Knuckle Curve*)
-- 🛑 **Offspeed** (Variação de Velocidade & Ação Tardia — *Changeup, Splitter*)
-
-### Pilares Arquiteturais
-1. **Engenharia de Features Zero-Leakage**: Janelas temporais estritamente passadas e isoladas por confronto (*intra-at-bat*), eliminando qualquer risco de vazamento de dados futuros (*data leakage*).
-2. **Infraestrutura como Código (IaC Invariant)**: Definição declarativa e idempotente de Catalogs, Schemas e Volumes no Unity Catalog via Databricks Asset Bundles (DABs).
-3. **Pipeline Declarativo Serverless**: Ingestão e transformação Bronze/Silver utilizando Lakeflow Spark Declarative Pipelines (`@dp`).
-4. **Interface Multimodal & Gamificada**: Painel tático profissional estilo transmissão esportiva e minigame retrô arcade (8-bit / 16-bit) para duelo direto entre o usuário e o modelo preditivo.
-5. **Confiabilidade & Qualidade de Código**: Suíte abrangente de 133 testes automatizados (100% de aprovação) executada localmente e preparada para CI/CD.
+> **Next-Generation Multimodal Tactical & Biomechanical Pitch Prediction Platform**  
+> Powered by **Databricks Serverless**, **Lakeflow Spark Declarative Pipelines**, **Computer Vision Pose Estimation (MediaPipe 3D)**, **SHAP Explainability**, and an interactive multi-page **Streamlit** application.
 
 ---
 
-## 🗂️ Estrutura do Repositório
+## 📌 Project Overview
+
+**MLB Pitch Predictor** is an enterprise-grade multimodal artificial intelligence platform designed to analyze high-stakes pitcher-batter duels in Major League Baseball (MLB). By integrating real-time **Statcast physical telemetry** (count, baserunners, historical arsenal priors) with **computer vision biomechanics** (3D skeletal landmark tracking and release point pitch tipping analysis), the system predicts in real time which tactical pitch category will be delivered:
+
+- 🚀 **Fastball** (*Four-Seam, Sinker, Cutter*)
+- 🌪️ **Breaking Ball** (*Slider, Sweeper, Curveball, Knuckle Curve*)
+- 🛑 **Offspeed** (*Changeup, Splitter*)
+
+### Key Architectural Pillars
+
+1. **Zero-Leakage Pre-Pitch Feature Engineering**: Strict intra-at-bat historical sequence partitioning (`(game_pk, at_bat_number)` ordered by `pitch_number`) and causally masked historical pitcher priors with Bayesian league smoothing—guaranteeing 0% future data leakage.
+2. **Multimodal Fusion Engine**: Late-stage weighted fusion combining situational context from Statcast with 33 upper-body 3D anatomical landmarks extracted via computer vision at the exact moment of ball release.
+3. **Computer Vision & Pitch Tipping Detection**: Deep biomechanical analysis diagnosing arm slot angles, elbow flexion, release height, and trunk tilt, powered by SHAP tree explainability to detect physical "tells" before the ball leaves the pitcher's hand.
+4. **Serverless Infrastructure as Code (IaC)**: End-to-end declarative asset bundles (DABs), Unity Catalog governance (Bronze streaming tables, Silver materialized views, Gold biomechanical tables), and Lakeflow Jobs on Databricks Serverless.
+5. **Real-Time Model Serving**: Low-latency custom MLflow PyFunc model served on Databricks Model Serving Serverless with scale-to-zero capabilities and automatic offline fallback resilience.
+6. **Robust Testing & Engineering Standards**: **208 automated unit and integration tests** passing with 100% success rate across all pipelines, computer vision extractors, and UI components.
+
+---
+
+## 🗂️ Repository Structure
 
 ```text
 pitch_predictor/
-├── .agents/                        # Habilidades, diretrizes e regras para agentes de IA
+├── .agents/                        # Autonomous AI agent guidelines, invariants, and operational skills
 ├── config/
-│   └── config.yaml                 # Configuração de catálogo, esquema, volume e endpoint
+│   └── config.yaml                 # Catalog, schema, volume, and serving endpoint definitions
 ├── notebooks/
-│   ├── 00_setup_environment.py     # Inicialização idempotente do catálogo/esquema no Unity Catalog
-│   ├── 01_data_ingestion.py        # Coleta Statcast via PyBaseball e carga no Delta Lake (Bronze)
-│   ├── 02_automl_run.py            # Execução de AutoML do Databricks com otimização bayesiana
-│   └── 03_model_inference.py       # Avaliação e registro de modelos no MLflow / Unity Catalog
+│   ├── 00_setup_environment.py     # Idempotent Unity Catalog metastore and schema initialization
+│   ├── 01_data_ingestion.py        # Statcast data acquisition via PyBaseball into Delta Bronze
+│   ├── 02_automl_run.py            # Databricks AutoML execution with temporal date-based splitting
+│   ├── 03_model_inference.py       # Batch scoring validation and MLflow model registry verification
+│   └── 04_video_biomechanics_pipeline.py # Lakeflow Job task for Savant video and 3D pose ingestion
 ├── pages/
-│   ├── 00_home_apresentacao.py     # Visão Geral & Apresentação Descomplicada (Live Demo para leigos)
-│   ├── 01_live_predictor.py        # Simulador Tático em Tempo Real & Pitch-by-Pitch Tracker
-│   ├── 02_scout_report.py          # MLB Scouting Report, Matriz 4x3 de 12 Contagens & Game Plan
-│   └── 03_minigame.py              # Minigame Retrô Arcade: Você vs. IA no Montinho (8-bit / Chiptune)
+│   ├── 00_home_apresentacao.py     # Executive overview, live pitch prediction & star player profiles
+│   ├── 02_scout_report.py          # MLB Scouting Report, 4x3 12-count matrix & tactical game plans
+│   ├── 03_minigame.py              # Retro Arcade Duel: You vs. AI on the Mound (8-bit sound & RPG stats)
+│   └── 04_pitch_vision_lab.py      # Computer Vision Lab: MediaPipe 3D pose overlay, tipping & ablation
 ├── resources/
-│   ├── pitch_predictor_app.yml     # Definição do Databricks App resource
-│   ├── pitch_predictor_endpoint.yml# Definição do Databricks Model Serving Endpoint
-│   ├── pitch_predictor_job.yml     # Workflow orquestrado Serverless (Setup -> Ingestão -> AutoML)
+│   ├── pitch_predictor_app.yml     # Databricks App serverless deployment specification
+│   ├── pitch_predictor_endpoint.yml# Databricks Model Serving Serverless endpoint configuration
+│   ├── pitch_predictor_job.yml     # 6-task orchestrated Lakeflow Serverless workflow
 │   └── pitch_predictor_pipeline.pipeline.yml # Lakeflow Spark Declarative Pipeline definition
 ├── scripts/
-│   ├── setup_unity_catalog.py      # Script CLI para configuração idempotente do Unity Catalog
-│   ├── setup_unity_catalog.sql     # DDL idempotente parametrizado (${catalog}, ${schema})
-│   ├── verify_browser_dom.py       # Verificação automatizada de DOM para páginas Streamlit
-│   ├── verify_minigame_browser.py  # Teste E2E do Minigame Arcade via Playwright/Browser
-│   └── verify_ui_server.py         # Probe de saúde HTTP para o servidor Streamlit
-├── src/
-│   └── pitch_predictor/            # Pacote Python principal reutilizável
-│       ├── __init__.py             # Inicialização do pacote
-│       ├── config.py               # Resolução de configurações e WorkspaceClient Databricks
-│       ├── features.py             # Definição de colunas Silver, invariantes e transformações
-│       ├── ingestion.py            # Coleta de dados Statcast via PyBaseball com sanitização
-│       ├── minigame_engine.py      # Motor de regras do minigame arcade (RPG stats, resolução de duelos)
-│       ├── pipelines/              # Lakeflow pipelines (@dp)
-│       │   └── bronze_pitches.py   # Ingestão Delta Live Tables / Lakeflow Serverless
-│       ├── scenarios.py            # Cenários de jogo pré-configurados e perfis de arremessadores
-│       ├── scout_analytics.py      # Agregações e matrizes estatísticas de scouting report
-│       ├── serving_client.py       # Cliente resiliente de inferência (Databricks Serving + Mock Offline)
-│       ├── training.py             # Utilitários de orquestração do AutoML e rastreamento MLflow
-│       ├── ui_components.py        # Renderizadores SVG puros (Campo de Beisebol, Strike Zone 3x3)
-│       └── utils.py                # Utilitários de logging e Spark Session
-├── tests/                          # Suíte de 133 testes automatizados (pytest)
-│   ├── test_automl_training.py     # Testes de orquestração do AutoML e splits temporais
-│   ├── test_config.py              # Testes de resolução de variáveis e catálogo
-│   ├── test_ingestion.py           # Testes de validação de schemas Statcast e limites
-│   ├── test_minigame_engine.py     # Testes da máquina de estados do jogo e matriz de resolução
-│   ├── test_scout_analytics.py     # Testes da matriz 4x3 de contagens e agregações
-│   ├── test_serving_client.py      # Testes de inferência com endpoint e fallback de mock
-│   ├── test_silver_features.py     # Testes de isolamento intra-at-bat e zero leakage
-│   ├── test_streamlit_app.py       # Testes headless de navegação e renderização das páginas
-│   └── test_ui_components.py       # Testes de integridade de SVGs gerados programaticamente
-├── AGENTS.md                       # Diretrizes, invariantes e manual operacional para Agentes de IA
-├── app.py                          # Entrypoint principal da aplicação multipágina Streamlit
-├── app.yaml                        # Metadados de empacotamento do Databricks App
-├── databricks.yml                  # Configuração do Databricks Asset Bundle (DAB)
-├── pyproject.toml                  # Especificações de empacotamento Python
-├── requirements.txt                # Dependências fixadas do projeto
-└── sample_inference_request.json   # Payload de exemplo para testes de inferência no Model Serving
+│   ├── download_pitch_videos.py    # Incremental Baseball Savant video scraper and manifest builder
+│   ├── extract_pitch_poses.py      # MediaPipe 3D landmark extraction and kinematic angle computation
+│   ├── generate_all_15_release_frames.py # Statcast neon skeletal release frame calibration
+│   ├── ingest_multiple_pitchers.py # Multi-pitcher incremental ingestion (Skenes, Burnes, Webb, Sale, Yamamoto)
+│   ├── register_multimodal_model.py # MLflow PyFunc Unity Catalog registration with @prod alias
+│   ├── setup_unity_catalog.py      # Idempotent Unity Catalog setup CLI utility
+│   ├── setup_unity_catalog.sql     # Parametrized DDL templates (${catalog}, ${schema})
+│   ├── train_multimodal_model.py   # Hybrid model training and multimodal lift ablation study
+│   ├── train_tipping_model.py      # Random Forest tipping classifier training with SHAP analysis
+│   ├── verify_browser_dom.py       # Automated Playwright DOM inspector for Streamlit views
+│   ├── verify_minigame_browser.py  # End-to-end headless arcade minigame browser test
+│   └── verify_ui_server.py         # HTTP health check probe for the Streamlit server
+├── src/pitch_predictor/            # Core reusable Python package
+│   ├── __init__.py                 # Package initialization
+│   ├── config.py                   # Dynamic configuration loader & Databricks WorkspaceClient
+│   ├── fallback_engine.py          # Unified offline inference engine & tactical/multimodal fallback
+│   ├── features.py                 # Silver feature engineering, mappings, and zero-leakage transforms
+│   ├── ingestion.py                # Statcast data acquisition, schema validation, and sanitization
+│   ├── minigame_engine.py          # Turn-based arcade state machine, RPG attributes, and pitch tiers
+│   ├── multimodal.py               # Deterministic multimodal fusion, ablation study, and lift evaluation
+│   ├── scenarios.py                # Single source of truth for official MLB pitcher and batter profiles
+│   ├── scout_analytics.py          # 12-count matrix aggregations, go-to pitch, and put-away heuristics
+│   ├── serving_client.py           # Resilient Databricks Model Serving client with exponential backoff
+│   ├── serving_model.py            # MLflow Custom PyFunc wrapper with schema imputation & alignment status
+│   ├── training.py                 # Databricks AutoML orchestrator and MLflow experiment tracker
+│   ├── ui_components.py            # SVG visual components (Baseball Field, 3x3 Strike Zone, Neon Cards)
+│   ├── utils.py                    # Formatted logging and local Spark session bootstrap
+│   └── vision/                     # Computer Vision & Biomechanics submodule
+│       ├── __init__.py             # Unified vision exports and graceful dependency detection
+│       ├── incremental_pipeline.py # Serverless Databricks video-to-landmarks ETL orchestrator
+│       ├── overlay.py              # Real-time Statcast neon skeletal rendering over broadcast video
+│       ├── pose_extractor.py       # 33 MediaPipe 3D landmark extractor and joint angle calculus
+│       ├── tipping_model.py        # PitchTippingClassifier & SHAP TreeExplainer diagnostics
+│       └── video_ingestion.py      # Baseball Savant MP4 downloader and UC Volume sync
+├── tests/                          # 208 automated unit and integration tests (pytest)
+│   ├── test_automl_training.py     # AutoML orchestration and temporal splitting tests
+│   ├── test_config.py              # Configuration resolution and catalog path tests
+│   ├── test_fallback_engine.py     # Offline fallback heuristics and multimodal consistency tests
+│   ├── test_features_multimodal.py # Multimodal dataset fusion and feature alignment tests
+│   ├── test_incremental_pipeline.py# Video ETL pipeline incremental state and manifest tests
+│   ├── test_ingestion.py           # Statcast raw data validation and bounds checking
+│   ├── test_minigame_engine.py     # Arcade state machine, tiers, batter timing, and duel logic
+│   ├── test_multimodal.py          # Hybrid classifier inference, ablation study, and lift metrics
+│   ├── test_overlay.py             # Skeletal overlay rendering and video frame canvas tests
+│   ├── test_pose_extractor.py      # MediaPipe landmark extraction, angle physics, and arm slot tests
+│   ├── test_scenarios.py           # Pitcher catalog, priors, and single-source-of-truth tests
+│   ├── test_scout_analytics.py     # 4x3 12-count matrix calculations and game plan tests
+│   ├── test_serving_client.py      # REST endpoint client, retries, and offline mock fallback tests
+│   ├── test_serving_model.py       # MLflow PyFunc input/output schema and imputation tests
+│   ├── test_silver_features.py     # Intra-at-bat sequence isolation and zero future leakage tests
+│   ├── test_streamlit_app.py       # Headless Streamlit page rendering and navigation tests
+│   ├── test_tipping_model.py       # Biomechanical pitch tipping model and SHAP attribution tests
+│   ├── test_ui_components.py       # SVG integrity and visual card component tests
+│   └── test_video_ingestion.py     # Video scraper, URL resolver, and volume upload tests
+├── AGENTS.md                       # Architectural standards, invariants, and developer operational guide
+├── app.py                          # Streamlit multi-page application entrypoint
+├── app.yaml                        # Databricks Apps runtime packaging specification
+├── databricks.yml                  # Databricks Asset Bundle (DAB) declaration
+├── pyproject.toml                  # Python package specifications and build metadata
+├── requirements.txt                # Pinned production and development dependencies
+└── sample_inference_request.json   # Sample payload for Model Serving endpoint testing
 ```
 
 ---
 
-## 🚀 Módulos da Aplicação Interativa
+## 🚀 Interactive Multi-Page Application
 
-A aplicação web é executada via Streamlit e possui 4 módulos principais:
+The web interface is built with **Streamlit** and features 4 high-impact modules:
 
-### 1. 🏠 Visão Geral & Apresentação Descomplicada (`pages/00_home_apresentacao.py`)
-- Desenvolvida para demonstrações rápidas para qualquer audiência (sem necessidade de conhecimento técnico prévio).
-- Permite selecionar perfis amigáveis de arremessador (*Lança-Chamas*, *Mestre dos Efeitos*, *Mudança & Tempo*) e situações de jogo (*0-0*, *3-0 Encurralado*, *0-2 Pressão Total*).
-- Executa a inferência instantânea exibindo a probabilidade visual com gauges e explicação tática clara.
+### 1. 🏠 Executive Overview & Live Predictor (`pages/00_home_apresentacao.py`)
+- Live pitch prediction tracker with official MLB stars (**Paul Skenes**, **Corbin Burnes**, **Logan Webb**, **Chris Sale**, **Yoshinobu Yamamoto**).
+- Dynamic count, baserunner, and inning controls with real-time probability dials and tactical contextual explanations.
+- Direct navigation links to specialized analytical and arcade sub-modules.
 
-### 2. ⚾ Simulador Tático Ao Vivo (`pages/01_live_predictor.py`)
-- Simulador completo lance a lance (*pitch-by-pitch tracker*).
-- Controle de contagem (bolas/strikes), situação de bases (1ª, 2ª, 3ª), entradas, placar e histórico do duelo.
-- Consulta de arremessadores reais da MLB com priors calculados dinamicamente via Databricks ou base local.
+### 2. 📋 MLB Scouting Report & 4x3 Matrix (`pages/02_scout_report.py`)
+- Full tactical dossier mapping pitcher tendencies across all 12 baseball counts (`0-0` to `3-2`).
+- Algorithmic detection of "Go-To Pitch" (*Confidence*) and "Put-Away Pitch" (*Strikeout finisher*).
+- Automated batter game plan recommendations tailored to pitcher profiles and count leverage.
 
-### 3. 📋 MLB Scouting Report & Matriz 4x3 (`pages/02_scout_report.py`)
-- Dossiê detalhado de tendências do arremessador ao longo de todas as 12 contagens possíveis do beisebol (`0-0` a `3-2`).
-- Identificação automática do "Arremesso de Confiança" (*Go-To Pitch*) e "Arremesso de Eliminação" (*Put-Away Pitch*).
-- Game plan ofensivo automatizado para guiar a abordagem do rebatedor.
+### 3. 🎮 Retro Arcade Duel: You vs. AI (`pages/03_minigame.py`)
+- 90s arcade aesthetic with 8-bit / 16-bit styling, *Press Start 2P* typography, and neon CRT scanlines.
+- 5 vertical star pitcher selection cards with official MLB headshots and tier-calibrated arsenals (Tier S, A, B).
+- Real MLB batters (**Shohei Ohtani**, **Aaron Judge**, **Juan Soto**, **Mookie Betts**, **Bryce Harper**).
+- Batter Heat Timing meter (anti-spam system) and live synthesized chiptune sound effects via browser Web Audio API.
 
-### 4. 🎮 Minigame Retrô Arcade: Você vs. IA (`pages/03_minigame.py`)
-- Estética retrô fliperama dos anos 90 (8-bit / 16-bit com fontes *Press Start 2P* e cores Neon).
-- Distribuição de 100 pontos RPG de atributos (Velocidade, Efeito, Variação).
-- Mecânica de sobrevivência infinita com vidas, sequência de strikeouts, multiplicador de combo e High Score.
-- Efeitos sonoros sintetizados em tempo real via Web Audio API do navegador.
+### 4. 🔬 Computer Vision & Biomechanics Lab (`pages/04_pitch_vision_lab.py`)
+- High-definition video player featuring official MLB broadcast footage synchronized at release points.
+- 33-landmark 3D MediaPipe skeletal overlay in neon Statcast styling with automatic left/right arm slot detection.
+- Biomechanical pitch tipping diagnostics powered by SHAP feature attribution (elbow angle, release height, trunk tilt).
+- Interactive Ablation Study measuring the information lift of fusing physical mechanics with Statcast telemetry.
 
 ---
 
-## 🛠️ Execução Local e Testes
+## 🛠️ Local Setup & Execution
 
-### 1. Configurar Ambiente Virtual
+### 1. Configure Python Virtual Environment
 ```powershell
-# Criação e ativação do ambiente virtual
+# Create and activate virtual environment (Windows PowerShell)
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
-# Instalação das dependências e do pacote local
+# Install dependencies and editable package
 pip install -r requirements.txt
 pip install -e .
 ```
 
-### 2. Executar a Suíte de Testes (133 testes)
+### 2. Run Test Suite (208 tests)
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
-### 3. Iniciar a Aplicação Streamlit
+### 3. Launch Streamlit Application
 ```powershell
 .\.venv\Scripts\streamlit.exe run app.py
 ```
-Acesse a aplicação no navegador em: `http://localhost:8501`
+Open your browser at `http://localhost:8501`.
 
 ---
 
-## ☁️ Deploy e Operação no Databricks (DABs)
+## ☁️ Databricks Serverless Deployment (DABs)
 
-### 1. Autenticação e Validação
+### 1. Authentication & Bundle Validation
 ```bash
-# Autenticar com o workspace Databricks
+# Authenticate with Databricks CLI
 databricks auth login --profile dev
 
-# Validar o Databricks Asset Bundle
+# Validate the Databricks Asset Bundle
 databricks bundle validate -p dev
 ```
 
-### 2. Deploy dos Recursos
+### 2. Deploy Cloud Resources
 ```bash
-# Fazer o deploy dos notebooks, pipelines, jobs e apps
+# Deploy notebooks, declarative pipelines, Lakeflow jobs, and Databricks App
 databricks bundle deploy -p dev
 ```
 
-### 3. Disparo do Workflow
+### 3. Run Serverless Lakeflow Workflow
 ```bash
-# Executar o workflow orquestrado no Databricks Serverless
+# Execute end-to-end Lakeflow Job (Setup -> Ingestion -> DLT -> Pose Extraction -> AutoML -> Inference)
 databricks bundle run pitch_predictor_job -p dev
 ```
 
 ---
 
-## 🔮 Próximos Passos (Roadmap)
+## 📄 License & Attribution
 
-- **Integração com Visão Computacional (CV)**:
-  - Incorporação do motor de reconhecimento facial de emoções (`d:\PI\visao_computacional`).
-  - Câmera tática de compostura no Minigame Arcade: cálculo do índice *Poker Face* do arremessador sob pressão.
-  - Laboratório de Visão Computacional (`pages/04_visao_computacional.py`) para análise de compostura e demonstração de zona de strike ótica.
+This project is licensed under the Apache 2.0 License.  
+Statcast telemetry and video footage are provided courtesy of MLB Advanced Media / Baseball Savant for analytical and research purposes.
