@@ -295,25 +295,38 @@ def _render_chiptune_audio(sound_type: str | None) -> str:
 
 
 @st.cache_data(ttl=300)
-def _load_pitcher_vision_samples(pitcher_id: int) -> pd.DataFrame:
-    """Carrega os lances reais calibrados do arremessador para o Desafio Olho Biônico."""
+def _load_all_vision_samples() -> pd.DataFrame:
+    """
+    Carrega os 60 lances reais calibrados dos 5 arremessadores da MLB de forma intercalada,
+    para que cada rodada do Desafio Olho Biônico alterne automaticamente o arremessador e o lance!
+    """
     bio_path = Path("src/pitch_predictor/vision/sample_data/biomechanical_features.csv")
     man_path = Path("src/pitch_predictor/vision/sample_data/manifest.csv")
     if bio_path.exists() and man_path.exists():
         bio_df = pd.read_csv(bio_path)
         man_df = pd.read_csv(man_path)
-        b_sub = bio_df[bio_df["pitcher_id"] == pitcher_id].copy()
-        m_sub = man_df[man_df["pitcher_id"] == pitcher_id][
-            ["game_pk", "at_bat_number", "pitch_number", "pitch_type", "video_path"]
+        m_sub = man_df[
+            [
+                "pitcher_id",
+                "pitcher_name",
+                "game_pk",
+                "at_bat_number",
+                "pitch_number",
+                "pitch_type",
+                "video_path",
+            ]
         ].copy()
         merged = pd.merge(
-            b_sub,
+            bio_df,
             m_sub,
-            on=["game_pk", "at_bat_number", "pitch_number"],
+            on=["pitcher_id", "game_pk", "at_bat_number", "pitch_number"],
             how="left",
         )
         if not merged.empty:
-            return merged.reset_index(drop=True)
+            # Intercala os 5 arremessadores (Skenes -> Burnes -> Webb -> Sale -> Yamamoto)
+            merged["_within_idx"] = merged.groupby("pitcher_id").cumcount()
+            interleaved = merged.sort_values(["_within_idx", "pitcher_id"]).drop(columns=["_within_idx"])
+            return interleaved.reset_index(drop=True)
     return pd.DataFrame()
 
 
@@ -656,14 +669,21 @@ with col_top_r:
 # MODO 2: DESAFIO OLHO BIÔNICO (ADIVINHE O ARREMESSO PELA POSE 3D VS. IA)
 # ===========================================================================
 if "Modo 2" in st.session_state.minigame_mode:
-    samples_df = _load_pitcher_vision_samples(pitcher_id)
+    samples_df = _load_all_vision_samples()
     total_samples = len(samples_df)
     if total_samples == 0:
-        st.warning("Dataset biomecânico não encontrado para este arremessador.")
+        st.warning("Dataset biomecânico não encontrado.")
         st.stop()
 
     clip_idx = int(st.session_state.bionic_clip_idx) % total_samples
     sample_row = samples_df.iloc[clip_idx]
+
+    cur_pid = int(sample_row["pitcher_id"])
+    cur_pname = str(sample_row.get("pitcher_name", pitcher_name))
+    cur_p_info = get_pitcher_tier_info(cur_pname)
+    cur_pitches = cur_p_info["pitches"]
+    cur_full_profile = get_pitcher_profile(cur_pname)
+    cur_p_throws = str(cur_p_info.get("p_throws", "R"))
 
     s_gpk = int(sample_row["game_pk"])
     s_ab = int(sample_row["at_bat_number"])
@@ -671,14 +691,19 @@ if "Modo 2" in st.session_state.minigame_mode:
     real_cat = str(sample_row["pitch_category"])
     real_type = str(sample_row.get("pitch_type", "FF"))
     r_frame = int(sample_row.get("release_frame", 180))
-    v_path = str(sample_row.get("video_path", f"data/videos/{pitcher_id}/{s_gpk}_{s_ab}_{s_pn}_{real_cat}.mp4"))
+    v_path = str(
+        sample_row.get(
+            "video_path",
+            f"data/videos/{cur_pid}/{s_gpk}_{s_ab}_{s_pn}_{real_cat}.mp4",
+        )
+    )
 
     arm_slot = float(sample_row.get("arm_slot_angle", 50.0))
     elbow_flex = float(sample_row.get("elbow_flexion_angle", 140.0))
     rel_ht = float(sample_row.get("release_height", 0.70))
     trunk_tilt = float(sample_row.get("trunk_tilt", 12.0))
 
-    base_bio = full_profile.get("bio_profile", {})
+    base_bio = cur_full_profile.get("bio_profile", {})
     slot_diff = arm_slot - float(base_bio.get("arm_slot_angle", 50.0))
     elbow_diff = elbow_flex - float(base_bio.get("elbow_flexion_angle", 140.0))
     ht_diff = rel_ht - float(base_bio.get("release_height", 0.70))
@@ -686,18 +711,39 @@ if "Modo 2" in st.session_state.minigame_mode:
 
     cv_ai_guess = _predict_cv_from_angles(arm_slot, elbow_flex, rel_ht, trunk_tilt, base_bio)
 
+    # Se houver resultado da rodada imediatamente anterior, exibe o veredito no topo
+    b_res = st.session_state.bionic_last_result
+    if b_res:
+        h_ok = b_res["human_ok"]
+        rounds = max(1, st.session_state.bionic_rounds)
+        h_acc = (st.session_state.bionic_human_hits / rounds) * 100.0
+        cv_acc = (st.session_state.bionic_cv_hits / rounds) * 100.0
+        verdict_icon = "🎯 ACERTOU NA MOSCA!" if h_ok else "❌ ENGANADO PELO DISFARCE!"
+        if h_ok:
+            st.success(
+                f"**Rodada Anterior ({b_res['pitcher_name']}) — {verdict_icon}** "
+                f"Você apostou `{b_res['user_guess']}` e o arremesso real foi **{b_res['real_cat']} ({b_res['pitch_name']} • {b_res['speed']})**! "
+                f"| Placar Acumulado: 👤 Você `{st.session_state.bionic_human_hits}/{rounds}` (`{h_acc:.0f}%`) vs. 🤖 IA `{st.session_state.bionic_cv_hits}/{rounds}` (`{cv_acc:.0f}%`)"
+            )
+        else:
+            st.error(
+                f"**Rodada Anterior ({b_res['pitcher_name']}) — {verdict_icon}** "
+                f"Você apostou `{b_res['user_guess']}`, mas {b_res['pitcher_name']} lançou **{b_res['real_cat']} ({b_res['pitch_name']} • {b_res['speed']})** (IA previu `{b_res['cv_guess']}`)! "
+                f"| Placar Acumulado: 👤 Você `{st.session_state.bionic_human_hits}/{rounds}` (`{h_acc:.0f}%`) vs. 🤖 IA `{st.session_state.bionic_cv_hits}/{rounds}` (`{cv_acc:.0f}%`)"
+            )
+
     st.markdown(
-        f"### 👁️ Desafio Olho Biônico — Lance Misterioso #{clip_idx + 1}/{total_samples} de {pitcher_name}"
+        f"### 👁️ Desafio Olho Biônico — Rodada #{clip_idx + 1}/{total_samples} • Arremessador: **{cur_pname}** ({cur_p_throws}HP)"
     )
     st.caption(
-        "Analise o **Print Real no Montinho**, o **Esqueleto 3D MediaPipe** e os **Desvios Angulares** no instante exato da soltura (Frame #"
-        f"{r_frame}) para descobrir qual arremesso está vindo antes de cruzar o home plate!"
+        f"Analise o **Print Real no Montinho**, o **Esqueleto 3D MediaPipe** e os **Desvios Angulares** de **{cur_pname}** no Frame #{r_frame}. "
+        "Ao chutar um arremesso, o jogo corrige sua resposta e já avança automaticamente para o próximo arremessador!"
     )
 
     bio_col1, bio_col2, bio_col3 = st.columns([1.15, 1.15, 1.1], gap="medium")
 
     with bio_col1:
-        st.markdown(f"**📸 1. Print Base no Montinho (Frame #{r_frame})**")
+        st.markdown(f"**📸 1. Print Base de {cur_pname} (Frame #{r_frame})**")
         base_img = extract_base_release_frame(
             video_path=v_path,
             release_frame_idx=r_frame,
@@ -705,11 +751,11 @@ if "Modo 2" in st.session_state.minigame_mode:
             game_pk=s_gpk,
             at_bat_number=s_ab,
             pitch_number=s_pn,
-            pitcher_id=pitcher_id,
+            pitcher_id=cur_pid,
         )
         _render_image_compat(
             base_img,
-            caption=f"Frame #{r_frame} capturado no ponto de soltura (Jogo #{s_gpk})",
+            caption=f"{cur_pname} no ponto de soltura (Frame #{r_frame} • Jogo #{s_gpk})",
         )
 
     with bio_col2:
@@ -717,7 +763,7 @@ if "Modo 2" in st.session_state.minigame_mode:
         pose_img = extract_and_annotate_release_frame(
             video_path=v_path,
             release_frame_idx=r_frame,
-            p_throws=p_throws,
+            p_throws=cur_p_throws,
             metrics={
                 "arm_slot_angle": arm_slot,
                 "elbow_flexion_angle": elbow_flex,
@@ -728,19 +774,19 @@ if "Modo 2" in st.session_state.minigame_mode:
             game_pk=s_gpk,
             at_bat_number=s_ab,
             pitch_number=s_pn,
-            pitcher_id=pitcher_id,
+            pitcher_id=cur_pid,
         )
         _render_image_compat(
             pose_img,
-            caption="Esqueleto 3D MediaPipe no ponto de soltura | Retículo na mão dominante",
+            caption=f"Esqueleto 3D MediaPipe de {cur_pname} ({cur_p_throws}HP) no Frame #{r_frame}",
         )
 
     with bio_col3:
-        st.markdown("**📐 3. Leitura Biomecânica & Palpite**")
+        st.markdown("**📐 3. Leitura Biomecânica & Seu Chute**")
         gauges_html = f"""
         <div class="retro-cabinet-card" style="padding: 12px;">
             <div class="arcade-font neon-cyan" style="font-size: 9.5px; margin-bottom: 8px;">
-                TELEMETRIA CORPORAL NO FRAME #{r_frame}:
+                TELEMETRIA DE {cur_pname.upper()} (FRAME #{r_frame}):
             </div>
             <div class="bio-gauge-row">
                 <span>📐 Arm Slot (Ângulo Braço):</span>
@@ -759,19 +805,22 @@ if "Modo 2" in st.session_state.minigame_mode:
                 <strong style="color: #F472B6;">{trunk_tilt:.1f}° ({tilt_diff:+.1f}° vs base)</strong>
             </div>
             <div style="margin-top: 8px; padding: 6px; background: rgba(0, 255, 204, 0.08); border-radius: 6px; font-size: 10.5px; color: #94A3B8;">
-                💡 <strong>Dica de Leitura:</strong> Arm Slot negativo/cotovelo mais dobrado indica <em>Breaking Ball</em>; Arm Slot mais alto indica <em>Offspeed</em>; alinhado à base indica <em>Fastball</em>.
+                💡 <strong>Dica:</strong> Arm Slot negativo/cotovelo mais dobrado indica <em>Breaking Ball</em>; Arm Slot mais alto indica <em>Offspeed</em>; alinhado à base indica <em>Fastball</em>.
             </div>
         </div>
         """
         st.markdown(_compact_html(gauges_html), unsafe_allow_html=True)
 
-        guess_fb = st.button("🔥 APOSTAR: FASTBALL (Bola Rápida)", use_container_width=True, type="primary")
-        guess_bb = st.button("🌀 APOSTAR: BREAKING BALL (Curva/Slider)", use_container_width=True)
-        guess_os = st.button("🛑 APOSTAR: OFFSPEED (Changeup/Splitter)", use_container_width=True)
-        next_clip = st.button("⏭️ Pular / Próximo Lance Misterioso", use_container_width=True)
+        guess_fb = st.button("🔥 CHUTAR: FASTBALL (Bola Rápida)", use_container_width=True, type="primary")
+        guess_bb = st.button("🌀 CHUTAR: BREAKING BALL (Curva/Slider)", use_container_width=True)
+        guess_os = st.button("🛑 CHUTAR: OFFSPEED (Changeup/Splitter)", use_container_width=True)
+        next_clip = st.button("⏭️ Pular para Próximo Arremessador", use_container_width=True)
 
         if next_clip:
-            st.session_state.bionic_clip_idx = (clip_idx + 1) % total_samples
+            next_idx = (clip_idx + 1) % total_samples
+            st.session_state.bionic_clip_idx = next_idx
+            next_pname = str(samples_df.iloc[next_idx].get("pitcher_name", cur_pname))
+            st.session_state.minigame_pitcher = next_pname
             st.session_state.bionic_last_result = None
             st.rerun()
 
@@ -800,9 +849,10 @@ if "Modo 2" in st.session_state.minigame_mode:
             if cv_ok:
                 st.session_state.bionic_cv_hits += 1
 
-            # Velocidade associada à categoria no perfil do arremessador
-            matched_p = next((p for p in pitches if p["category"] == real_cat), pitches[0])
+            matched_p = next((p for p in cur_pitches if p["category"] == real_cat), cur_pitches[0])
             st.session_state.bionic_last_result = {
+                "pitcher_name": cur_pname,
+                "p_throws": cur_p_throws,
                 "user_guess": user_guess,
                 "cv_guess": cv_ai_guess,
                 "real_cat": real_cat,
@@ -813,40 +863,12 @@ if "Modo 2" in st.session_state.minigame_mode:
                 "cv_ok": cv_ok,
                 "clip_idx": clip_idx,
             }
+            # Avança IMEDIATAMENTE para o próximo arremessador e próximo lance!
+            next_idx = (clip_idx + 1) % total_samples
+            st.session_state.bionic_clip_idx = next_idx
+            next_pname = str(samples_df.iloc[next_idx].get("pitcher_name", cur_pname))
+            st.session_state.minigame_pitcher = next_pname
             st.rerun()
-
-    # Revelação Visual com Animação 3D da Trajetória da Bola
-    b_res = st.session_state.bionic_last_result
-    if b_res:
-        h_ok = b_res["human_ok"]
-        verdict_txt = (
-            f"🎯 VOCÊ ACERTOU! ERA {b_res['real_cat'].upper()} ({b_res['real_type']})"
-            if h_ok
-            else f"❌ ENGANADO PELO DISFARCE! ERA {b_res['real_cat'].upper()} ({b_res['real_type']})"
-        )
-        zone_for_cat = 2 if b_res["real_cat"] == "Fastball" else (14 if b_res["real_cat"] == "Breaking Ball" else 8)
-        st.markdown(
-            render_pitch_flight_arena_svg(
-                pitch_category=b_res["real_cat"],
-                pitch_name=b_res["pitch_name"],
-                speed_mph=b_res["speed"],
-                target_zone=zone_for_cat,
-                p_throws=p_throws,
-                ai_category=b_res["user_guess"],
-                result_badge=verdict_txt,
-                is_success=h_ok,
-            ),
-            unsafe_allow_html=True,
-        )
-        rounds = max(1, st.session_state.bionic_rounds)
-        h_acc = (st.session_state.bionic_human_hits / rounds) * 100.0
-        cv_acc = (st.session_state.bionic_cv_hits / rounds) * 100.0
-        st.info(
-            f"**Placar de Leitura Biomecânica ({rounds} lances)** — "
-            f"👤 **Você**: `{st.session_state.bionic_human_hits}/{rounds}` (`{h_acc:.0f}%`) vs. "
-            f"🤖 **IA de Visão Computacional**: `{st.session_state.bionic_cv_hits}/{rounds}` (`{cv_acc:.0f}%`) | "
-            f"Palpite da IA neste lance: **{b_res['cv_guess']}**"
-        )
 
 
 # ===========================================================================
@@ -1084,30 +1106,10 @@ else:
                 icon=":material/sports_baseball:",
             )
 
-        # Exibe a Pose 3D Real no Ponto de Soltura do arremesso selecionado
-        samples_df = _load_pitcher_vision_samples(pitcher_id)
-        if not samples_df.empty:
-            cat_matches = samples_df[samples_df["pitch_category"] == target_category]
-            s_row = cat_matches.iloc[0] if not cat_matches.empty else samples_df.iloc[0]
-            pose_preview = extract_and_annotate_release_frame(
-                video_path=str(s_row.get("video_path", "")),
-                release_frame_idx=int(s_row.get("release_frame", 180)),
-                p_throws=p_throws,
-                pitch_category=target_category,
-                game_pk=int(s_row["game_pk"]),
-                at_bat_number=int(s_row["at_bat_number"]),
-                pitch_number=int(s_row["pitch_number"]),
-                pitcher_id=pitcher_id,
-            )
-            _render_image_compat(
-                pose_preview,
-                caption=f"Mecânica 3D Real de {pitcher_name} ({target_category} — Frame #{int(s_row.get('release_frame', 180))})",
-            )
-        else:
-            st.markdown(
-                render_strike_zone_svg(target_zone, target_category),
-                unsafe_allow_html=True,
-            )
+        st.markdown(
+            render_strike_zone_svg(target_zone, target_category),
+            unsafe_allow_html=True,
+        )
 
         # Histórico dos últimos 3 lances
         st.markdown("#### 📜 Últimos Lances")

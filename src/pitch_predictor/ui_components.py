@@ -872,13 +872,13 @@ def render_pitch_flight_arena_svg(
     verdict_color = "#00FFCC" if is_success else "#FF007F"
 
     raw_svg = f"""
-    <div style="margin: 4px 0 10px 0; border-radius: 10px; overflow: hidden; border: 2px solid {primary_color}; box-shadow: 0 0 18px rgba(0, 255, 204, 0.22);">
-      <svg viewBox="0 0 640 300" width="100%" style="display: block; background: #070B14;">
+    <div style="margin: 6px 0 10px 0; border-radius: 10px; overflow: hidden; border: 2px solid {primary_color}; box-shadow: 0 0 18px rgba(0, 255, 204, 0.22);">
+      <svg viewBox="0 0 640 290" width="100%" style="display: block; background: #070B14;">
         <defs>
-          <linearGradient id="turfGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#0D2618" />
-            <stop offset="55%" stop-color="#133822" />
-            <stop offset="100%" stop-color="#0B1F13" />
+          <linearGradient id="tunnelBg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#070B14" />
+            <stop offset="50%" stop-color="#0D172A" />
+            <stop offset="100%" stop-color="#09131C" />
           </linearGradient>
           <radialGradient id="moundDirt" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stop-color="#7C4A2D" />
@@ -893,34 +893,30 @@ def render_pitch_flight_arena_svg(
           </filter>
         </defs>
 
-        <rect x="0" y="0" width="640" height="82" fill="#060913" />
-        <line x1="0" y1="82" x2="640" y2="82" stroke="#1E293B" stroke-width="2" />
+        <rect x="0" y="0" width="640" height="290" fill="url(#tunnelBg)" />
 
-        <rect x="0" y="82" width="640" height="218" fill="url(#turfGrad)" />
-        <polygon points="320,95 60,300 580,300" fill="#164228" fill-opacity="0.45" />
-        <line x1="320" y1="108" x2="45" y2="300" stroke="#E2E8F0" stroke-width="1.5" stroke-opacity="0.35" />
-        <line x1="320" y1="108" x2="595" y2="300" stroke="#E2E8F0" stroke-width="1.5" stroke-opacity="0.35" />
+        <polygon points="275,84 365,84 445,270 195,270" fill="#0F172A" fill-opacity="0.55" stroke="#1E293B" stroke-width="1.2" />
+        <line x1="275" y1="84" x2="257" y2="144" stroke="#334155" stroke-width="1" stroke-dasharray="3,3" />
+        <line x1="365" y1="84" x2="383" y2="144" stroke="#334155" stroke-width="1" stroke-dasharray="3,3" />
+        <line x1="275" y1="84" x2="257" y2="252" stroke="#334155" stroke-width="1" stroke-dasharray="3,3" />
+        <line x1="365" y1="84" x2="383" y2="252" stroke="#334155" stroke-width="1" stroke-dasharray="3,3" />
 
-        <ellipse cx="320" cy="112" rx="46" ry="13" fill="url(#moundDirt)" stroke="#9A5B37" stroke-width="1.2" />
-        <rect x="313" y="109" width="14" height="3" fill="#F8FAFC" />
+        <ellipse cx="320" cy="92" rx="42" ry="10" fill="url(#moundDirt)" stroke="#9A5B37" stroke-width="1.2" />
+        <rect x="313" y="89" width="14" height="3" fill="#F8FAFC" />
+        <circle cx="{rx}" cy="{ry}" r="6" fill="{primary_color}" fill-opacity="0.3" stroke="#00FFCC" stroke-width="1.8" />
+        <circle cx="{rx}" cy="{ry}" r="2.5" fill="#FFFFFF" />
+        <text x="{rx}" y="{ry - 10}" text-anchor="middle" fill="#00FFCC" font-size="8.5" font-weight="700" font-family="monospace">PONTO DE SOLTURA ({p_throws}HP)</text>
 
-        <circle cx="320" cy="76" r="5.5" fill="#E2E8F0" />
-        <line x1="320" y1="82" x2="320" y2="98" stroke="#E2E8F0" stroke-width="3.2" stroke-linecap="round" />
-        <line x1="320" y1="86" x2="{rx}" y2="{ry}" stroke="#00FFCC" stroke-width="2.8" stroke-linecap="round" />
-        <line x1="320" y1="98" x2="313" y2="111" stroke="#CBD5E1" stroke-width="2.5" stroke-linecap="round" />
-        <line x1="320" y1="98" x2="328" y2="111" stroke="#CBD5E1" stroke-width="2.5" stroke-linecap="round" />
-        <circle cx="{rx}" cy="{ry}" r="4.5" fill="none" stroke="#00FFCC" stroke-width="1.5" />
-
-        <ellipse cx="320" cy="284" rx="135" ry="24" fill="#5C3620" fill-opacity="0.85" />
-        <polygon points="295,274 345,274 336,284 320,292 304,284" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.5" />
+        <ellipse cx="320" cy="276" rx="115" ry="14" fill="#5C3620" fill-opacity="0.75" />
+        <polygon points="295,266 345,266 336,275 320,282 304,275" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.5" />
 
         {"".join(grid_cells)}
         <rect x="257" y="144" width="126" height="108" fill="none" stroke="#38BDF8" stroke-width="2.2" />
 
         {ghost_svg}
 
-        <circle cx="{tunnel_x}" cy="{tunnel_y}" r="3.5" fill="#FACC15" fill-opacity="0.85" />
-        <text x="{tunnel_x + (14 if p_throws == 'L' else -14)}" y="{tunnel_y - 6}" text-anchor="{'start' if p_throws == 'L' else 'end'}" fill="#FACC15" font-size="8" font-family="monospace">TÚNEL DE DISFARCE</text>
+        <circle cx="{tunnel_x}" cy="{tunnel_y}" r="3.5" fill="#FACC15" fill-opacity="0.9" />
+        <text x="{tunnel_x + (14 if p_throws == 'L' else -14)}" y="{tunnel_y - 6}" text-anchor="{'start' if p_throws == 'L' else 'end'}" fill="#FACC15" font-size="8" font-family="monospace">PONTO DE QUEBRA (DISFARCE)</text>
 
         <path id="mainPitchArc" d="{main_path}" fill="none" stroke="{primary_color}" stroke-width="4.2" stroke-linecap="round" filter="url(#pitchGlow)" stroke-dasharray="320" stroke-dashoffset="320">
           <animate attributeName="stroke-dashoffset" from="320" to="0" dur="{flight_dur}" fill="freeze" repeatCount="indefinite" />
@@ -929,18 +925,18 @@ def render_pitch_flight_arena_svg(
 
         <circle r="7.5" fill="#FFFFFF" stroke="{primary_color}" stroke-width="2.5" filter="url(#pitchGlow)">
           <animateMotion dur="{flight_dur}" repeatCount="indefinite" path="{main_path}" />
-          <animate attributeName="r" values="3.5;6.0;9.5" dur="{flight_dur}" repeatCount="indefinite" />
+          <animate attributeName="r" values="3.5;6.5;10.0" dur="{flight_dur}" repeatCount="indefinite" />
         </circle>
 
         <circle cx="{tx}" cy="{ty}" r="12" fill="none" stroke="#FEF08A" stroke-width="2.2" stroke-dasharray="3,2" />
         <circle cx="{tx}" cy="{ty}" r="4.5" fill="{primary_color}" />
 
-        <rect x="12" y="10" width="195" height="62" rx="6" fill="#0B1324" fill-opacity="0.92" stroke="{primary_color}" stroke-width="1.5" />
+        <rect x="12" y="10" width="200" height="62" rx="6" fill="#0B1324" fill-opacity="0.94" stroke="{primary_color}" stroke-width="1.5" />
         <text x="22" y="26" fill="#94A3B8" font-size="9" font-weight="700" font-family="monospace">STATCAST RADAR • {p_throws}HP</text>
-        <text x="22" y="47" fill="#FFFFFF" font-size="16" font-weight="800" font-family="monospace">{speed_mph.upper()} • {pitch_name[:15]}</text>
+        <text x="22" y="47" fill="#FFFFFF" font-size="15.5" font-weight="800" font-family="monospace">{speed_mph.upper()} • {pitch_name[:15]}</text>
         <text x="22" y="63" fill="{primary_color}" font-size="9.5" font-weight="700" font-family="monospace">{rpm_label}</text>
 
-        <rect x="405" y="10" width="223" height="62" rx="6" fill="#0B1324" fill-opacity="0.92" stroke="{verdict_color}" stroke-width="1.5" />
+        <rect x="405" y="10" width="223" height="62" rx="6" fill="#0B1324" fill-opacity="0.94" stroke="{verdict_color}" stroke-width="1.5" />
         <text x="415" y="26" fill="#94A3B8" font-size="9" font-weight="700" font-family="monospace">{traj_label}</text>
         <text x="415" y="47" fill="{verdict_color}" font-size="12.5" font-weight="800" font-family="monospace">{result_badge[:24]}</text>
         <text x="415" y="63" fill="#CBD5E1" font-size="9" font-weight="700" font-family="monospace">ZONA ALVO: #{target_zone} ({STATCAST_ZONES.get(target_zone, STATCAST_ZONES[5])['region'].upper()})</text>
