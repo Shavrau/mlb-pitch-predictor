@@ -2,11 +2,11 @@
 Página 4 — Laboratório de Visão Computacional & Predição pela Pose 3D (Pitch Tipping).
 
 Focada exclusivamente na predição de arremessos com base em Visão Computacional:
-1. Captura do Print Base no momento exato de soltura da bola (Release Point) a partir do vídeo.
+1. Captura do Print Base calibrado no montinho a partir do vídeo da transmissão.
 2. Extração e sobreposição do Modelo da Pose 3D (33 marcos anatômicos MediaPipe Pose) sobre o Print Base.
-3. Cálculo das métricas cinemáticas (Arm Slot, Flexão do Cotovelo, Altura de Soltura, Inclinação do Tronco).
+3. Cálculo das métricas cinemáticas e desvios em relação à postura base do arremessador.
 4. Predição da categoria do arremesso (Fastball, Breaking Ball, Offspeed) puramente pela postura corporal
-   e explicabilidade via SHAP TreeExplainer.
+   calibrada para a biomecânica individual do arremessador e explicabilidade via SHAP TreeExplainer.
 """
 
 from __future__ import annotations
@@ -29,7 +29,10 @@ from pitch_predictor.vision.overlay import (
     find_preloaded_release_frame,
 )
 from pitch_predictor.vision.pose_extractor import PoseExtractor
-from pitch_predictor.vision.tipping_model import PitchTippingClassifier
+from pitch_predictor.vision.tipping_model import (
+    BIOMECHANICAL_FEATURE_COLS,
+    PitchTippingClassifier,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,23 +46,6 @@ logger = logging.getLogger(__name__)
 def load_pose_extractor() -> PoseExtractor:
     """Carrega o extrator de pose MediaPipe em cache singleton."""
     return PoseExtractor()
-
-
-@st.cache_resource
-def load_tipping_model() -> PitchTippingClassifier:
-    """Carrega o classificador de Pitch Tipping treinado em features de Visão Computacional com SHAP."""
-    model_path = Path("models/pitch_tipping_model.joblib")
-    if model_path.exists():
-        try:
-            return PitchTippingClassifier.load(model_path)
-        except (FileNotFoundError, TypeError, OSError):
-            pass
-    # Fallback: cria e treina instância em memória
-    clf = PitchTippingClassifier(random_state=42)
-    from pitch_predictor.vision.tipping_model import generate_synthetic_biomechanics
-
-    clf.fit(generate_synthetic_biomechanics(n_samples_per_class=40, random_state=42))
-    return clf
 
 
 @st.cache_data
@@ -127,10 +113,10 @@ def load_sample_manifest(pitcher_id: int = 694973) -> pd.DataFrame:
 def load_biomechanical_dataset(pitcher_id: int = 694973) -> pd.DataFrame:
     """Carrega as features biomecânicas extraídas."""
     candidate_paths = [
-        Path(f"data/videos/{pitcher_id}/biomechanical_features.parquet"),
-        Path(f"data/videos/{pitcher_id}/biomechanical_features.csv"),
         Path(__file__).parent.parent / "src" / "pitch_predictor" / "vision" / "sample_data" / "biomechanical_features.csv",
         Path("/app/python/source_code/src/pitch_predictor/vision/sample_data/biomechanical_features.csv"),
+        Path(f"data/videos/{pitcher_id}/biomechanical_features.csv"),
+        Path(f"data/videos/{pitcher_id}/biomechanical_features.parquet"),
     ]
     for p in candidate_paths:
         if p.exists():
@@ -166,7 +152,7 @@ def load_biomechanical_dataset(pitcher_id: int = 694973) -> pd.DataFrame:
             "elbow_flexion_angle": base_elbow,
             "trunk_tilt": base_tilt,
             "stride_extension": base_stride,
-            "release_frame": 198,
+            "release_frame": 165,
         },
         {
             "game_pk": 745500,
@@ -180,7 +166,7 @@ def load_biomechanical_dataset(pitcher_id: int = 694973) -> pd.DataFrame:
             "elbow_flexion_angle": base_elbow - 20.0,
             "trunk_tilt": base_tilt + 2.0,
             "stride_extension": base_stride - 0.05,
-            "release_frame": 174,
+            "release_frame": 162,
         },
         {
             "game_pk": 745500,
@@ -194,9 +180,41 @@ def load_biomechanical_dataset(pitcher_id: int = 694973) -> pd.DataFrame:
             "elbow_flexion_angle": base_elbow - 10.0,
             "trunk_tilt": base_tilt + 3.0,
             "stride_extension": base_stride,
-            "release_frame": 174,
+            "release_frame": 162,
         },
     ])
+
+
+@st.cache_resource
+def load_tipping_model(pitcher_id: int = 694973) -> PitchTippingClassifier:
+    """
+    Carrega e calibra o classificador de Pitch Tipping especificamente para a
+    biomecânica individual do arremessador selecionado (com suporte SHAP TreeExplainer).
+    """
+    bio_df = load_biomechanical_dataset(pitcher_id)
+    rng = np.random.default_rng(pitcher_id)
+    synth_rows: list[dict[str, float | str]] = []
+
+    for cat in ("Fastball", "Breaking Ball", "Offspeed"):
+        cat_df = bio_df[bio_df["pitch_category"] == cat]
+        means = cat_df[BIOMECHANICAL_FEATURE_COLS].mean() if not cat_df.empty else bio_df[BIOMECHANICAL_FEATURE_COLS].mean()
+        for _ in range(32):
+            synth_rows.append({
+                "arm_slot_angle": float(means["arm_slot_angle"] + rng.normal(0.0, 1.6)),
+                "release_height": float(means["release_height"] + rng.normal(0.0, 0.007)),
+                "elbow_flexion_angle": float(means["elbow_flexion_angle"] + rng.normal(0.0, 2.2)),
+                "trunk_tilt": float(means["trunk_tilt"] + rng.normal(0.0, 0.7)),
+                "stride_extension": float(means["stride_extension"] + rng.normal(0.0, 0.012)),
+                "pitch_category": cat,
+            })
+
+    train_df = pd.concat(
+        [bio_df[BIOMECHANICAL_FEATURE_COLS + ["pitch_category"]], pd.DataFrame(synth_rows)],
+        ignore_index=True,
+    )
+    clf = PitchTippingClassifier(random_state=42)
+    clf.fit(train_df)
+    return clf
 
 
 @st.cache_data(show_spinner=False)
@@ -263,9 +281,9 @@ with st.container(border=True):
         denuncia involuntariamente o tipo de arremesso antes de a bola deixar sua mão.
         
         Esta página é **100% dedicada à predição baseada em Visão Computacional**:
-        1. **Captura do Print Base**: Extraímos o frame estático exato do ponto de soltura (*Release Point*) a partir do vídeo da transmissão.
+        1. **Captura do Print Base no Montinho**: Extraímos o frame estático exato da mecânica de arremesso no montinho antes de a bola chegar ao rebatedor.
         2. **Modelo da Pose 3D**: Aplicamos o **MediaPipe Pose** sobre o print base para mapear **33 articulações tridimensionais** e medir os ângulos anatômicos do corpo.
-        3. **Predição Biomecânica Pura**: Nosso classificador analisa exclusivamente a postura extraída da pose para prever se o arremesso é **Fastball**, **Breaking Ball** ou **Offspeed**.
+        3. **Predição Biomecânica Calibrada por Arremessador**: Nosso classificador compara a pose capturada com o padrão biomecânico individual do arremessador para prever se o arremesso é **Fastball**, **Breaking Ball** ou **Offspeed**.
         """
     )
 
@@ -298,10 +316,11 @@ with col_pitcher:
 pitcher_info = get_pitcher_profile(selected_pitcher_name)
 pitcher_id = pitcher_info["pitcher_id"]
 p_throws = pitcher_info["p_throws"]
+base_bio_profile = pitcher_info.get("bio_profile", {})
 
 manifest_df = load_sample_manifest(pitcher_id)
 bio_df = load_biomechanical_dataset(pitcher_id)
-tipping_model = load_tipping_model()
+tipping_model = load_tipping_model(pitcher_id)
 pose_extractor = load_pose_extractor()
 
 options_labels = []
@@ -387,8 +406,8 @@ video_col, base_print_col, pose_col = st.columns(3)
 
 video_path_str = str(selected_row.get("video_path", ""))
 video_file = Path(video_path_str)
-release_frame = int(bio_record.get("release_frame", 198))
-video_url = str(selected_row.get("video_url", ""))
+release_frame = int(bio_record.get("release_frame", 162))
+video_url = str(selected_row.get("video_url", "")).replace("&#x3D;", "=")
 
 # Baixa ou localiza o clipe MP4 sob demanda apenas se o snapshot calibrado não existir
 active_video_path = video_file
@@ -428,7 +447,7 @@ with base_print_col:
     )
     _render_image_compat(
         base_frame_img,
-        caption=f"Print Base Original (Frame #{release_frame}) — Imagem de entrada para extração da pose",
+        caption=f"Print Base no Montinho (Frame #{release_frame}) — Imagem de entrada para extração da pose",
     )
 
 with pose_col:
@@ -460,11 +479,10 @@ with pose_col:
     )
 
 # ---------------------------------------------------------------------------
-# Métricas Biomecânicas Extraídas da Pose
+# Métricas Biomecânicas Extraídas da Pose (com Desvio em relação ao Padrão do Arremessador)
 # ---------------------------------------------------------------------------
 
-st.markdown("##### 📐 Métricas Cinemáticas Extraídas do Modelo da Pose no Ponto de Soltura")
-m1, m2, m3, m4 = st.columns(4)
+st.markdown("##### 📐 Métricas Cinemáticas Extraídas do Modelo da Pose & Desvio Biomecânico")
 
 arm_slot_val = float(bio_record.get("arm_slot_angle", 50.0))
 elbow_flex_val = float(bio_record.get("elbow_flexion_angle", 145.0))
@@ -472,29 +490,106 @@ rel_ht_val = float(bio_record.get("release_height", 0.71))
 trunk_tilt_val = float(bio_record.get("trunk_tilt", 11.5))
 stride_ext_val = float(bio_record.get("stride_extension", 1.40))
 
+# Opção interativa para testar variações de postura ao vivo no modelo de visão
+with st.expander("🎛️ Simulador Interativo de Pose: Ajustar Ângulos Corporais Manualmente", expanded=False):
+    st.caption(
+        "Experimente alterar os ângulos extraídos da pose para observar em tempo real como o "
+        "classificador de Visão Computacional e os valores SHAP reagem a mudanças na mecânica do arremessador."
+    )
+    use_custom_pose = st.checkbox(
+        "Ativar ajuste manual de ângulos da pose para simulação",
+        value=False,
+        key="vision_use_custom_pose",
+    )
+    sim_c1, sim_c2, sim_c3 = st.columns(3)
+    with sim_c1:
+        custom_arm_slot = st.slider(
+            "Ângulo do Braço (Arm Slot °)",
+            min_value=10.0,
+            max_value=85.0,
+            value=arm_slot_val,
+            step=1.0,
+            disabled=not use_custom_pose,
+        )
+        custom_elbow = st.slider(
+            "Flexão do Cotovelo (°)",
+            min_value=75.0,
+            max_value=170.0,
+            value=elbow_flex_val,
+            step=1.0,
+            disabled=not use_custom_pose,
+        )
+    with sim_c2:
+        custom_rel_ht = st.slider(
+            "Altura de Soltura (normalizada)",
+            min_value=0.50,
+            max_value=0.85,
+            value=rel_ht_val,
+            step=0.005,
+            disabled=not use_custom_pose,
+        )
+        custom_trunk = st.slider(
+            "Inclinação do Tronco (°)",
+            min_value=5.0,
+            max_value=35.0,
+            value=trunk_tilt_val,
+            step=0.5,
+            disabled=not use_custom_pose,
+        )
+    with sim_c3:
+        custom_stride = st.slider(
+            "Extensão da Passada (m)",
+            min_value=1.10,
+            max_value=1.70,
+            value=stride_ext_val,
+            step=0.01,
+            disabled=not use_custom_pose,
+        )
+
+    if use_custom_pose:
+        arm_slot_val = float(custom_arm_slot)
+        elbow_flex_val = float(custom_elbow)
+        rel_ht_val = float(custom_rel_ht)
+        trunk_tilt_val = float(custom_trunk)
+        stride_ext_val = float(custom_stride)
+
+base_slot = float(base_bio_profile.get("arm_slot_angle", arm_slot_val))
+base_elbow = float(base_bio_profile.get("elbow_flexion_angle", elbow_flex_val))
+base_ht = float(base_bio_profile.get("release_height", rel_ht_val))
+base_tilt = float(base_bio_profile.get("trunk_tilt", trunk_tilt_val))
+
+slot_diff = arm_slot_val - base_slot
+elbow_diff = elbow_flex_val - base_elbow
+ht_diff = rel_ht_val - base_ht
+tilt_diff = trunk_tilt_val - base_tilt
+
+m1, m2, m3, m4 = st.columns(4)
+
 with m1:
+    slot_type = "3/4 Slot" if 35 <= arm_slot_val <= 65 else ("Sidearm" if arm_slot_val < 35 else "Overhand")
     st.metric(
         label="Ângulo do Braço (Arm Slot)",
         value=f"{arm_slot_val:.1f}°",
-        delta="3/4 Slot" if 35 <= arm_slot_val <= 65 else ("Sidearm" if arm_slot_val < 35 else "Overhand"),
+        delta=f"{slot_diff:+.1f}° vs base ({slot_type})",
     )
 with m2:
+    elbow_type = "Estendido" if elbow_flex_val >= 130 else "Flexionado"
     st.metric(
         label="Flexão do Cotovelo",
         value=f"{elbow_flex_val:.1f}°",
-        delta="Braço Estendido" if elbow_flex_val >= 130 else "Cotovelo Flexionado",
+        delta=f"{elbow_diff:+.1f}° vs base ({elbow_type})",
     )
 with m3:
     st.metric(
         label="Altura de Soltura",
         value=f"{rel_ht_val:.3f}",
-        delta="Ponto Alto" if rel_ht_val >= 0.70 else "Ponto Rebaixado",
+        delta=f"{ht_diff:+.3f} vs base",
     )
 with m4:
     st.metric(
         label="Inclinação do Tronco",
         value=f"{trunk_tilt_val:.1f}°",
-        delta="Alinhado",
+        delta=f"{tilt_diff:+.1f}° vs base",
     )
 
 st.divider()
@@ -522,7 +617,7 @@ vision_pred_col, vision_prob_col = st.columns([1, 1.3], gap="medium")
 
 with vision_pred_col, st.container(border=True):
     st.markdown("#### 👁️ Predição do Modelo de Visão (Pitch Tipping)")
-    st.caption("Inferência gerada exclusivamente a partir dos ângulos 3D extraídos do print da pose")
+    st.caption(f"Modelo calibrado para a biomecânica de {pitcher_info['name']}")
 
     st.metric(
         label="Arremesso Previsto pela Pose",
@@ -533,13 +628,13 @@ with vision_pred_col, st.container(border=True):
     if bio_pred == selected_cat:
         st.success(
             f"**Leitura Corporal Confirmada**: O modelo de Visão Computacional previu **{bio_pred}** "
-            f"com **{bio_conf * 100:.1f}%** de confiança, acertando a categoria real do lance (`{selected_cat}`).",
+            f"com **{bio_conf * 100:.1f}%** de confiança a partir do print da pose, acertando a categoria real (`{selected_cat}`).",
             icon=":material/verified:",
         )
     else:
         st.info(
-            f"**Disfarce Mecânico Detectado**: A postura corporal indicou padrão de **{bio_pred}** "
-            f"({bio_conf * 100:.1f}%), enquanto o arremesso real foi `{selected_cat}`.",
+            f"**Variação de Postura**: A pose analisada indicou **{bio_pred}** "
+            f"({bio_conf * 100:.1f}%), enquanto o arremesso registrado no clipe foi `{selected_cat}`.",
             icon=":material/visibility:",
         )
 
@@ -556,8 +651,8 @@ with vision_prob_col, st.container(border=True):
     st.progress(os_prob, text=f"🛑 Offspeed (Mudança de Velocidade): {os_prob * 100:.1f}%")
 
     st.caption(
-        f"**Vetor de Entrada do Modelo de Visão**: Arm Slot `{arm_slot_val:.1f}°` • "
-        f"Cotovelo `{elbow_flex_val:.1f}°` • Altura `{rel_ht_val:.3f}` • "
+        f"**Vetor de Entrada do Modelo de Visão**: Arm Slot `{arm_slot_val:.1f}°` ({slot_diff:+.1f}°) • "
+        f"Cotovelo `{elbow_flex_val:.1f}°` ({elbow_diff:+.1f}°) • Altura `{rel_ht_val:.3f}` • "
         f"Tronco `{trunk_tilt_val:.1f}°` • Passada `{stride_ext_val:.2f}m`"
     )
 
@@ -600,16 +695,16 @@ with shap_col2, st.container(border=True):
     if bio_pred == "Fastball":
         speed_text = "100+ mph" if pitcher_id == 694973 else "alta velocidade"
         st.markdown(
-            f"💡 **Leitura Visual para o Rebatedor**: No print capturado, o braço de {p_last_name} estende-se em amplitude máxima ({elbow_flex_val:.0f}°), "
-            f"sem flexão excessiva no cotovelo. **Prepare o swing rápido para {speed_text}**."
+            f"💡 **Leitura Visual para o Rebatedor**: No print capturado, o braço de {p_last_name} estende-se em amplitude alta ({elbow_flex_val:.0f}°, `{elbow_diff:+.1f}°` vs base), "
+            f"com arm slot de {arm_slot_val:.0f}°. **Prepare o swing rápido para {speed_text}**."
         )
     elif bio_pred == "Breaking Ball":
         st.markdown(
-            f"💡 **Leitura Visual para o Rebatedor**: O cotovelo flexionado em {elbow_flex_val:.0f}° e a soltura ajustada ({arm_slot_val:.0f}°) no modelo da pose denunciam "
-            "que ele está 'envelopando' a bola para imprimir giro horizontal. **Atenção à bola de efeito quebrando para fora da zona**."
+            f"💡 **Leitura Visual para o Rebatedor**: O cotovelo em {elbow_flex_val:.0f}° (`{elbow_diff:+.1f}°` vs base) e a queda no arm slot para {arm_slot_val:.0f}° (`{slot_diff:+.1f}°` vs base) denunciam "
+            "que ele está 'envelopando' a bola para imprimir giro lateral. **Atenção à bola de efeito quebrando para fora da zona**."
         )
     else:
         st.markdown(
-            f"💡 **Leitura Visual para o Rebatedor**: O arm slot em {arm_slot_val:.0f}° com soltura firme na pose indica desaceleração e ação descendente. "
+            f"💡 **Leitura Visual para o Rebatedor**: O arm slot elevado em {arm_slot_val:.0f}° (`{slot_diff:+.1f}°` vs base) na pose indica pronação para desaceleração e queda vertical. "
             "**Atenção ao arremesso em mudança afundando na parte baixa da zona**."
         )
