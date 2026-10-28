@@ -15,6 +15,7 @@ Oferece:
 
 from __future__ import annotations
 
+import random
 from pathlib import Path
 
 import pandas as pd
@@ -294,11 +295,32 @@ def _render_chiptune_audio(sound_type: str | None) -> str:
     return _compact_html(raw_js)
 
 
+PID_TO_NAME: dict[int, str] = {
+    694973: "Paul Skenes",
+    669203: "Corbin Burnes",
+    657277: "Logan Webb",
+    519242: "Chris Sale",
+    808967: "Yoshinobu Yamamoto",
+}
+
+PITCH_CODE_LABEL: dict[str, str] = {
+    "FF": "4-Seam Fastball",
+    "SI": "Sinker",
+    "FC": "Cutter",
+    "SL": "Slider",
+    "ST": "Sweeper",
+    "CU": "Curveball",
+    "KC": "Knuckle Curve",
+    "CH": "Changeup",
+    "FS": "Splitter",
+}
+
+
 @st.cache_data(ttl=300)
 def _load_all_vision_samples() -> pd.DataFrame:
     """
-    Carrega os 60 lances reais calibrados dos 5 arremessadores da MLB de forma intercalada,
-    para que cada rodada do Desafio Olho Biônico alterne automaticamente o arremessador e o lance!
+    Carrega os 60 lances reais calibrados dos 5 arremessadores da MLB preservando
+    pitcher_name e pitch_type sem colisão de sufixos (_x/_y).
     """
     bio_path = Path("src/pitch_predictor/vision/sample_data/biomechanical_features.csv")
     man_path = Path("src/pitch_predictor/vision/sample_data/manifest.csv")
@@ -308,11 +330,9 @@ def _load_all_vision_samples() -> pd.DataFrame:
         m_sub = man_df[
             [
                 "pitcher_id",
-                "pitcher_name",
                 "game_pk",
                 "at_bat_number",
                 "pitch_number",
-                "pitch_type",
                 "video_path",
             ]
         ].copy()
@@ -323,11 +343,182 @@ def _load_all_vision_samples() -> pd.DataFrame:
             how="left",
         )
         if not merged.empty:
-            # Intercala os 5 arremessadores (Skenes -> Burnes -> Webb -> Sale -> Yamamoto)
-            merged["_within_idx"] = merged.groupby("pitcher_id").cumcount()
-            interleaved = merged.sort_values(["_within_idx", "pitcher_id"]).drop(columns=["_within_idx"])
-            return interleaved.reset_index(drop=True)
+            merged["pitcher_name"] = (
+                merged["pitcher_id"]
+                .map(PID_TO_NAME)
+                .fillna(merged.get("pitcher_name", "Paul Skenes"))
+            )
+            return merged.reset_index(drop=True)
     return pd.DataFrame()
+
+
+def _build_shuffled_bionic_deck(samples_df: pd.DataFrame) -> list[int]:
+    """
+    Gera um baralho embaralhado de índices dos 60 lances garantindo:
+    1. Ordem aleatória de categorias (Fastball, Breaking Ball, Offspeed misturados);
+    2. Alternância real de arremessador a cada rodada (nunca repete o mesmo arremessador em sequência).
+    """
+    if samples_df.empty:
+        return []
+    rng = random.SystemRandom()
+    by_pitcher: dict[int, list[int]] = {}
+    for idx, row in samples_df.iterrows():
+        pid = int(row["pitcher_id"])
+        by_pitcher.setdefault(pid, []).append(int(idx))
+    for pool_list in by_pitcher.values():
+        rng.shuffle(pool_list)
+
+    pids = list(by_pitcher.keys())
+    max_len = max(len(v) for v in by_pitcher.values())
+    deck: list[int] = []
+    last_pid: int | None = None
+    last_cat: str | None = None
+
+    for round_i in range(max_len):
+        round_pids = pids[:]
+        rng.shuffle(round_pids)
+        if last_pid is not None and len(round_pids) > 1 and round_pids[0] == last_pid:
+            swap_idx = rng.randint(1, len(round_pids) - 1)
+            round_pids[0], round_pids[swap_idx] = round_pids[swap_idx], round_pids[0]
+        for pid in round_pids:
+            pool = by_pitcher[pid]
+            if round_i < len(pool):
+                if last_cat is not None and round_i + 1 < len(pool):
+                    cur_cat = str(samples_df.iloc[pool[round_i]]["pitch_category"])
+                    if cur_cat == last_cat:
+                        for alt_pos in range(round_i + 1, len(pool)):
+                            if str(samples_df.iloc[pool[alt_pos]]["pitch_category"]) != last_cat:
+                                pool[round_i], pool[alt_pos] = pool[alt_pos], pool[round_i]
+                                break
+                chosen_idx = pool[round_i]
+                deck.append(chosen_idx)
+                last_pid = pid
+                last_cat = str(samples_df.iloc[chosen_idx]["pitch_category"])
+    return deck
+
+
+def _resolve_pitch_label_and_speed(
+    cur_pitches: list[dict[str, str]],
+    real_cat: str,
+    real_type: str,
+) -> tuple[str, str]:
+    """Retorna o nome real do arremesso e a velocidade calibrada do arremessador da rodada."""
+    by_code = next((p for p in cur_pitches if p.get("code") == real_type), None)
+    if by_code:
+        return by_code["name"], by_code["speed"]
+    by_cat = next((p for p in cur_pitches if p.get("category") == real_cat), cur_pitches[0])
+    specific_label = PITCH_CODE_LABEL.get(real_type, by_cat["name"])
+    return specific_label, by_cat["speed"]
+
+
+def _render_bionic_verdict_html(
+    b_res: dict,
+    human_hits: int,
+    cv_hits: int,
+    rounds: int,
+) -> str:
+    """Renderiza um painel visual Arcade de alto impacto com o resultado da rodada anterior."""
+    h_ok = bool(b_res.get("human_ok", False))
+    cv_ok = bool(b_res.get("cv_ok", False))
+    safe_rounds = max(1, rounds)
+    h_acc = (human_hits / safe_rounds) * 100.0
+    cv_acc = (cv_hits / safe_rounds) * 100.0
+
+    border_col = "#00FFCC" if h_ok else "#FF007F"
+    bg_grad = (
+        "linear-gradient(90deg, rgba(0, 255, 204, 0.18) 0%, rgba(15, 23, 42, 0.96) 65%)"
+        if h_ok
+        else "linear-gradient(90deg, rgba(255, 0, 127, 0.20) 0%, rgba(15, 23, 42, 0.96) 65%)"
+    )
+    glow = (
+        "0 0 18px rgba(0, 255, 204, 0.28)"
+        if h_ok
+        else "0 0 18px rgba(255, 0, 127, 0.28)"
+    )
+    pts = int(b_res.get("points_earned", 0))
+    combo = int(b_res.get("combo", 1))
+    round_num = int(b_res.get("round_num", safe_rounds))
+
+    verdict_title = (
+        f"✅ VOCÊ ACERTOU NA MOSCA! (+{pts} PTS • COMBO x{combo})"
+        if h_ok
+        else "❌ ENGANADO PELO DISFARCE! (COMBO RESETADO)"
+    )
+    verdict_color = "#00FFCC" if h_ok else "#FF007F"
+
+    user_badge_bg = "rgba(0, 255, 204, 0.22)" if h_ok else "rgba(255, 0, 127, 0.25)"
+    user_badge_col = "#00FFCC" if h_ok else "#FF6B9D"
+    user_badge_txt = "✓ ACERTOU" if h_ok else "✗ ERROU"
+
+    cv_badge_bg = "rgba(96, 165, 250, 0.22)" if cv_ok else "rgba(249, 115, 22, 0.22)"
+    cv_badge_col = "#60A5FA" if cv_ok else "#FB923C"
+    cv_badge_txt = "✓ IA ACERTOU" if cv_ok else "✗ IA ERROU"
+
+    if human_hits > cv_hits:
+        leader_txt = "🏆 VOCÊ LIDERA CONTRA A IA!"
+        leader_col = "#FACC15"
+    elif human_hits < cv_hits:
+        leader_txt = "🤖 IA BIOMECÂNICA NA LIDERANÇA"
+        leader_col = "#FF007F"
+    else:
+        leader_txt = "⚖️ EMPATE TÉCNICO HUMANO VS. IA"
+        leader_col = "#00FFCC"
+
+    raw_html = f"""
+    <div style="background: {bg_grad}; border: 2px solid {border_col}; border-radius: 12px; padding: 14px 18px; margin-bottom: 14px; box-shadow: {glow};">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 8px; margin-bottom: 10px;">
+            <div class="arcade-font" style="font-size: 11.5px; color: {verdict_color};">
+                {verdict_title}
+            </div>
+            <div style="font-size: 11.5px; color: #E2E8F0; font-weight: 700;">
+                📋 RESULTADO DA RODADA ANTERIOR (#{round_num}) — <span style="color: #FACC15;">{b_res['pitcher_name'].upper()}</span> ({b_res['p_throws']}HP • {b_res.get('pitcher_team', 'MLB')})
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; align-items: stretch;">
+            <div style="background: rgba(9, 13, 22, 0.78); border: 1px solid rgba(250, 204, 21, 0.45); border-radius: 8px; padding: 10px 12px;">
+                <div style="font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px;">
+                    ⚾ O QUE {b_res['pitcher_name'].upper()} LANÇOU:
+                </div>
+                <div style="font-size: 16px; font-weight: 800; color: #FACC15; margin-bottom: 2px;">
+                    {b_res['real_cat']} — {b_res['pitch_name']} ({b_res['speed']})
+                </div>
+                <div style="font-size: 11px; color: #CBD5E1;">
+                    Frame #{b_res.get('frame_idx', 180)} • Arm Slot: <strong>{b_res.get('arm_slot', 50.0):.1f}°</strong> ({b_res.get('slot_diff', 0.0):+.1f}° vs base) | Cotovelo: <strong>{b_res.get('elbow_flex', 140.0):.1f}°</strong>
+                </div>
+            </div>
+            <div style="background: rgba(9, 13, 22, 0.78); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; justify-content: center; gap: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px; color: #E2E8F0;">👤 <strong>Seu Chute:</strong> <code style="color: #FFFFFF;">{b_res['user_guess']}</code></span>
+                    <span style="background: {user_badge_bg}; color: {user_badge_col}; border: 1px solid {user_badge_col}; padding: 2px 8px; border-radius: 99px; font-size: 10.5px; font-weight: 800;">{user_badge_txt}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px; color: #E2E8F0;">🤖 <strong>Chute da IA 3D:</strong> <code style="color: #FFFFFF;">{b_res['cv_guess']}</code></span>
+                    <span style="background: {cv_badge_bg}; color: {cv_badge_col}; border: 1px solid {cv_badge_col}; padding: 2px 8px; border-radius: 99px; font-size: 10.5px; font-weight: 800;">{cv_badge_txt}</span>
+                </div>
+            </div>
+            <div style="background: rgba(9, 13, 22, 0.78); border: 1px solid rgba(0, 255, 204, 0.30); border-radius: 8px; padding: 10px 12px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #E2E8F0; margin-bottom: 3px;">
+                    <span>👤 <strong>Você:</strong> {human_hits}/{safe_rounds}</span>
+                    <strong style="color: #00FFCC;">{h_acc:.0f}%</strong>
+                </div>
+                <div style="width: 100%; height: 6px; background: #1E293B; border-radius: 99px; overflow: hidden; margin-bottom: 6px;">
+                    <div style="width: {min(100.0, h_acc):.1f}%; height: 100%; background: #00FFCC;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #E2E8F0; margin-bottom: 3px;">
+                    <span>🤖 <strong>IA 3D:</strong> {cv_hits}/{safe_rounds}</span>
+                    <strong style="color: #60A5FA;">{cv_acc:.0f}%</strong>
+                </div>
+                <div style="width: 100%; height: 6px; background: #1E293B; border-radius: 99px; overflow: hidden; margin-bottom: 4px;">
+                    <div style="width: {min(100.0, cv_acc):.1f}%; height: 100%; background: #60A5FA;"></div>
+                </div>
+                <div style="font-size: 10px; font-weight: 800; color: {leader_col}; text-align: right;">
+                    {leader_txt}
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    return _compact_html(raw_html)
 
 
 def _predict_cv_from_angles(
@@ -616,6 +807,7 @@ if st.session_state.minigame_step == "selection":
                 st.session_state.minigame_pitcher = p_name
                 st.session_state.arcade_state.pitcher_name = p_name
                 st.session_state.bionic_clip_idx = 0
+                st.session_state.bionic_deck = None
                 st.session_state.bionic_last_result = None
                 st.session_state.minigame_step = "duel"
                 st.rerun()
@@ -675,11 +867,19 @@ if "Modo 2" in st.session_state.minigame_mode:
         st.warning("Dataset biomecânico não encontrado.")
         st.stop()
 
-    clip_idx = int(st.session_state.bionic_clip_idx) % total_samples
-    sample_row = samples_df.iloc[clip_idx]
+    if (
+        "bionic_deck" not in st.session_state
+        or not isinstance(st.session_state.bionic_deck, list)
+        or len(st.session_state.bionic_deck) != total_samples
+    ):
+        st.session_state.bionic_deck = _build_shuffled_bionic_deck(samples_df)
+
+    deck_pos = int(st.session_state.bionic_clip_idx) % total_samples
+    row_idx = int(st.session_state.bionic_deck[deck_pos])
+    sample_row = samples_df.iloc[row_idx]
 
     cur_pid = int(sample_row["pitcher_id"])
-    cur_pname = str(sample_row.get("pitcher_name", pitcher_name))
+    cur_pname = PID_TO_NAME.get(cur_pid, str(sample_row.get("pitcher_name", pitcher_name)))
     cur_p_info = get_pitcher_tier_info(cur_pname)
     cur_pitches = cur_p_info["pitches"]
     cur_full_profile = get_pitcher_profile(cur_pname)
@@ -711,33 +911,26 @@ if "Modo 2" in st.session_state.minigame_mode:
 
     cv_ai_guess = _predict_cv_from_angles(arm_slot, elbow_flex, rel_ht, trunk_tilt, base_bio)
 
-    # Se houver resultado da rodada imediatamente anterior, exibe o veredito no topo
+    # Se houver resultado da rodada imediatamente anterior, exibe o Painel Visual de Veredito no topo
     b_res = st.session_state.bionic_last_result
     if b_res:
-        h_ok = b_res["human_ok"]
-        rounds = max(1, st.session_state.bionic_rounds)
-        h_acc = (st.session_state.bionic_human_hits / rounds) * 100.0
-        cv_acc = (st.session_state.bionic_cv_hits / rounds) * 100.0
-        verdict_icon = "🎯 ACERTOU NA MOSCA!" if h_ok else "❌ ENGANADO PELO DISFARCE!"
-        if h_ok:
-            st.success(
-                f"**Rodada Anterior ({b_res['pitcher_name']}) — {verdict_icon}** "
-                f"Você apostou `{b_res['user_guess']}` e o arremesso real foi **{b_res['real_cat']} ({b_res['pitch_name']} • {b_res['speed']})**! "
-                f"| Placar Acumulado: 👤 Você `{st.session_state.bionic_human_hits}/{rounds}` (`{h_acc:.0f}%`) vs. 🤖 IA `{st.session_state.bionic_cv_hits}/{rounds}` (`{cv_acc:.0f}%`)"
-            )
-        else:
-            st.error(
-                f"**Rodada Anterior ({b_res['pitcher_name']}) — {verdict_icon}** "
-                f"Você apostou `{b_res['user_guess']}`, mas {b_res['pitcher_name']} lançou **{b_res['real_cat']} ({b_res['pitch_name']} • {b_res['speed']})** (IA previu `{b_res['cv_guess']}`)! "
-                f"| Placar Acumulado: 👤 Você `{st.session_state.bionic_human_hits}/{rounds}` (`{h_acc:.0f}%`) vs. 🤖 IA `{st.session_state.bionic_cv_hits}/{rounds}` (`{cv_acc:.0f}%`)"
-            )
+        st.markdown(
+            _render_bionic_verdict_html(
+                b_res=b_res,
+                human_hits=int(st.session_state.bionic_human_hits),
+                cv_hits=int(st.session_state.bionic_cv_hits),
+                rounds=int(st.session_state.bionic_rounds),
+            ),
+            unsafe_allow_html=True,
+        )
 
+    current_round_num = int(st.session_state.bionic_rounds) + 1
     st.markdown(
-        f"### 👁️ Desafio Olho Biônico — Rodada #{clip_idx + 1}/{total_samples} • Arremessador: **{cur_pname}** ({cur_p_throws}HP)"
+        f"### 🎯 Agora no Montinho (Rodada #{current_round_num}) • Arremessador: **{cur_pname}** ({cur_p_throws}HP — *{cur_p_info['team']}*)"
     )
     st.caption(
         f"Analise o **Print Real no Montinho**, o **Esqueleto 3D MediaPipe** e os **Desvios Angulares** de **{cur_pname}** no Frame #{r_frame}. "
-        "Ao chutar um arremesso, o jogo corrige sua resposta e já avança automaticamente para o próximo arremessador!"
+        "Ordem 100% aleatória de arremessos e arremessadores: chute abaixo para revelar o resultado e avançar automaticamente!"
     )
 
     bio_col1, bio_col2, bio_col3 = st.columns([1.15, 1.15, 1.1], gap="medium")
@@ -814,13 +1007,16 @@ if "Modo 2" in st.session_state.minigame_mode:
         guess_fb = st.button("🔥 CHUTAR: FASTBALL (Bola Rápida)", use_container_width=True, type="primary")
         guess_bb = st.button("🌀 CHUTAR: BREAKING BALL (Curva/Slider)", use_container_width=True)
         guess_os = st.button("🛑 CHUTAR: OFFSPEED (Changeup/Splitter)", use_container_width=True)
-        next_clip = st.button("⏭️ Pular para Próximo Arremessador", use_container_width=True)
+        next_clip = st.button("🎲 Sortear Outro Lance / Arremessador", use_container_width=True)
 
         if next_clip:
-            next_idx = (clip_idx + 1) % total_samples
-            st.session_state.bionic_clip_idx = next_idx
-            next_pname = str(samples_df.iloc[next_idx].get("pitcher_name", cur_pname))
-            st.session_state.minigame_pitcher = next_pname
+            next_pos = (deck_pos + 1) % total_samples
+            if next_pos == 0:
+                st.session_state.bionic_deck = _build_shuffled_bionic_deck(samples_df)
+            st.session_state.bionic_clip_idx = next_pos
+            next_row = samples_df.iloc[int(st.session_state.bionic_deck[next_pos])]
+            next_pid = int(next_row["pitcher_id"])
+            st.session_state.minigame_pitcher = PID_TO_NAME.get(next_pid, cur_pname)
             st.session_state.bionic_last_result = None
             st.rerun()
 
@@ -836,6 +1032,7 @@ if "Modo 2" in st.session_state.minigame_mode:
             human_ok = user_guess == real_cat
             cv_ok = cv_ai_guess == real_cat
             st.session_state.bionic_rounds += 1
+            pts = 0
             if human_ok:
                 st.session_state.bionic_human_hits += 1
                 pts = 250 * game.combo_multiplier
@@ -849,25 +1046,35 @@ if "Modo 2" in st.session_state.minigame_mode:
             if cv_ok:
                 st.session_state.bionic_cv_hits += 1
 
-            matched_p = next((p for p in cur_pitches if p["category"] == real_cat), cur_pitches[0])
+            p_label, p_speed = _resolve_pitch_label_and_speed(cur_pitches, real_cat, real_type)
             st.session_state.bionic_last_result = {
+                "round_num": int(st.session_state.bionic_rounds),
                 "pitcher_name": cur_pname,
+                "pitcher_team": cur_p_info["team"],
                 "p_throws": cur_p_throws,
+                "frame_idx": r_frame,
                 "user_guess": user_guess,
                 "cv_guess": cv_ai_guess,
                 "real_cat": real_cat,
                 "real_type": real_type,
-                "pitch_name": matched_p["name"],
-                "speed": matched_p["speed"],
+                "pitch_name": p_label,
+                "speed": p_speed,
+                "arm_slot": arm_slot,
+                "slot_diff": slot_diff,
+                "elbow_flex": elbow_flex,
                 "human_ok": human_ok,
                 "cv_ok": cv_ok,
-                "clip_idx": clip_idx,
+                "points_earned": pts,
+                "combo": int(game.combo_multiplier),
             }
-            # Avança IMEDIATAMENTE para o próximo arremessador e próximo lance!
-            next_idx = (clip_idx + 1) % total_samples
-            st.session_state.bionic_clip_idx = next_idx
-            next_pname = str(samples_df.iloc[next_idx].get("pitcher_name", cur_pname))
-            st.session_state.minigame_pitcher = next_pname
+            # Avança IMEDIATAMENTE para o próximo lance e próximo arremessador aleatório!
+            next_pos = (deck_pos + 1) % total_samples
+            if next_pos == 0:
+                st.session_state.bionic_deck = _build_shuffled_bionic_deck(samples_df)
+            st.session_state.bionic_clip_idx = next_pos
+            next_row = samples_df.iloc[int(st.session_state.bionic_deck[next_pos])]
+            next_pid = int(next_row["pitcher_id"])
+            st.session_state.minigame_pitcher = PID_TO_NAME.get(next_pid, cur_pname)
             st.rerun()
 
 
