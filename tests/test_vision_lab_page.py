@@ -28,7 +28,7 @@ def test_vision_lab_page_renders_without_exceptions() -> None:
 
 
 def test_vision_lab_page_elements_and_metrics() -> None:
-    """Verify presence of pitch selector, kinematic metrics, and dual predictor containers."""
+    """Verify presence of pitch selector, kinematic metrics, base print, and vision-only predictor."""
     at = AppTest.from_file(PAGE_PATH, default_timeout=60).run()
     assert not at.exception
 
@@ -38,12 +38,29 @@ def test_vision_lab_page_elements_and_metrics() -> None:
     assert pitch_selector is not None
     assert len(pitch_selector.options) >= 3
 
-    # Metrics (Arm slot, elbow flexion, release height, trunk tilt)
+    # Metrics (Arm slot, elbow flexion, release height, trunk tilt, plus vision prediction metric)
     metric_labels = [m.label for m in at.metric]
     assert any("Arm Slot" in lbl for lbl in metric_labels)
     assert any("Cotovelo" in lbl for lbl in metric_labels)
     assert any("Soltura" in lbl for lbl in metric_labels)
     assert any("Tronco" in lbl for lbl in metric_labels)
+    assert any("Pose" in lbl or "Previsto" in lbl for lbl in metric_labels)
+
+
+def test_vision_lab_page_base_print_and_vision_only_focus() -> None:
+    """Verify base print image is shown for the pose model and page focuses solely on computer vision."""
+    at = AppTest.from_file(PAGE_PATH, default_timeout=60).run()
+    assert not at.exception
+
+    all_markdown = "\n".join(m.value for m in at.markdown)
+    # Must show the Base Print and 3D Pose Model sections
+    assert "Print Base" in all_markdown
+    assert "Modelo da Pose" in all_markdown
+
+    # Must be exclusively focused on Computer Vision (no Statcast contextual / Tri-Modal comparator)
+    assert "Comparador Tri-Modal" not in all_markdown
+    assert "Modelo Statcast (Contextual)" not in all_markdown
+    assert "Fusão Multimodal" not in all_markdown
 
 
 def test_vision_lab_page_switching_pitch_selection() -> None:
@@ -52,12 +69,13 @@ def test_vision_lab_page_switching_pitch_selection() -> None:
     assert not at.exception
 
     pitch_selector = at.selectbox(key="vision_pitch_selector")
-    # Switch to second option (Breaking Ball)
-    pitch_selector.select_index(1).run()
+    # Switch to fifth option (Breaking Ball)
+    pitch_selector.select_index(4).run()
     assert not at.exception
 
+    all_info = "\n".join(i.value for i in at.info)
     all_markdown = "\n".join(m.value for m in at.markdown)
-    assert "Breaking Ball" in all_markdown or "Sweeper" in all_markdown
+    assert "Breaking Ball" in all_info or "Breaking Ball" in all_markdown
 
 
 def test_vision_lab_page_switching_pitcher_selection() -> None:
@@ -85,5 +103,3 @@ def test_vision_lab_page_switching_pitcher_selection() -> None:
     all_info = "\n".join(i.value for i in at.info)
     assert "Yoshinobu Yamamoto" in all_info
     assert "Los Angeles Dodgers" in all_info or "LAD" in all_info
-
-

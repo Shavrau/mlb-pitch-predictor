@@ -48,6 +48,67 @@ def _to_pixel_coords(point: dict[str, float] | None, width: int, height: int) ->
     return x, y
 
 
+def find_preloaded_base_frame(
+    video_path: str | Path | None = None,
+    pitch_category: str | None = None,
+    game_pk: int | str | None = None,
+    at_bat_number: int | str | None = None,
+    pitch_number: int | str | None = None,
+    pitcher_id: int | str | None = None,
+    exact_match_only: bool = False,
+) -> np.ndarray | None:
+    """
+    Looks for a pre-generated clean broadcast release frame (the base print before pose annotation).
+    Returns RGB image array or None if not found.
+    """
+    candidate_dirs = [
+        Path(__file__).parent / "sample_data" / "release_frames",
+        Path("src/pitch_predictor/vision/sample_data/release_frames"),
+        Path("/app/python/source_code/src/pitch_predictor/vision/sample_data/release_frames"),
+    ]
+
+    names_to_try: list[str] = []
+    if game_pk and at_bat_number and pitch_number and pitch_category:
+        clean_cat = str(pitch_category).strip().replace(" ", "_")
+        if pitcher_id:
+            names_to_try.append(f"base_{pitcher_id}_{game_pk}_{at_bat_number}_{pitch_number}_{clean_cat}.jpg")
+        names_to_try.append(f"base_{game_pk}_{at_bat_number}_{pitch_number}_{clean_cat}.jpg")
+
+    if video_path:
+        stem = Path(video_path).stem
+        if pitcher_id:
+            names_to_try.append(f"base_{pitcher_id}_{stem}.jpg")
+        names_to_try.append(f"base_{stem}.jpg")
+
+    if not exact_match_only:
+        if pitch_category:
+            clean_cat = str(pitch_category).strip().replace(" ", "_")
+            if pitcher_id:
+                names_to_try.append(f"base_{pitcher_id}_{clean_cat}.jpg")
+            names_to_try.append(f"base_{clean_cat}.jpg")
+
+        if pitcher_id:
+            names_to_try.append(f"base_{pitcher_id}_Fastball.jpg")
+        names_to_try.append("base_Fastball.jpg")
+
+    for d in candidate_dirs:
+        if not d.exists():
+            continue
+        for name in names_to_try:
+            target = d / name
+            if target.exists() and target.is_file():
+                try:
+                    if HAS_CV2:
+                        bgr = cv2.imread(str(target))
+                        if bgr is not None:
+                            return cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+                    return np.array(Image.open(target).convert("RGB"))
+                except Exception as exc:  # noqa: BLE001
+                    logger.debug("Failed reading base frame candidate %s: %s", target, exc)
+
+    return None
+
+
 def find_preloaded_release_frame(
     video_path: str | Path | None = None,
     pitch_category: str | None = None,
@@ -413,3 +474,65 @@ def extract_and_annotate_release_frame(
     mock_landmarks = mock_extractor.extract_frame_landmarks(synth_canvas)
 
     return draw_pitcher_skeleton(synth_canvas, mock_landmarks, p_throws=p_throws, metrics=metrics)
+
+
+def extract_base_release_frame(
+    video_path: str | Path,
+    release_frame_idx: int = 0,
+    mock_mode: bool = False,
+    pitch_category: str | None = None,
+    game_pk: int | str | None = None,
+    at_bat_number: int | str | None = None,
+    pitch_number: int | str | None = None,
+    pitcher_id: int | str | None = None,
+) -> np.ndarray:
+    """
+    Extracts the raw broadcast release frame (the base print used as input to the pose model)
+    before skeletal annotations are drawn.
+    """
+    path = Path(video_path) if video_path else Path("")
+
+    # 1. Exact pre-rendered base frame file match
+    if not mock_mode:
+        preloaded = find_preloaded_base_frame(
+            video_path=video_path,
+            pitch_category=pitch_category,
+            game_pk=game_pk,
+            at_bat_number=at_bat_number,
+            pitch_number=pitch_number,
+            pitcher_id=pitcher_id,
+            exact_match_only=True,
+        )
+        if preloaded is not None:
+            return preloaded
+
+    # 2. Extract raw frame from video clip if available
+    if not mock_mode and path.exists() and HAS_CV2:
+        try:
+            cap = cv2.VideoCapture(str(path))
+            cap.set(cv2.CAP_PROP_POS_FRAMES, release_frame_idx)
+            ret, frame = cap.read()
+            cap.release()
+            if ret and frame is not None:
+                return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Could not extract base frame from %s: %s. Using fallback.", path, exc)
+
+    # 3. Fallback to generic preloaded base frame by category
+    if not mock_mode:
+        preloaded = find_preloaded_base_frame(
+            video_path=video_path,
+            pitch_category=pitch_category,
+            game_pk=game_pk,
+            at_bat_number=at_bat_number,
+            pitch_number=pitch_number,
+            pitcher_id=pitcher_id,
+            exact_match_only=False,
+        )
+        if preloaded is not None:
+            return preloaded
+
+    # 4. Synthetic Broadcast Base Frame Fallback
+    synth_canvas = np.full((540, 720, 3), 28, dtype=np.uint8)
+    synth_canvas[320:, :] = (38, 55, 35)
+    return synth_canvas

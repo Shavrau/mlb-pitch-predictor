@@ -1,5 +1,5 @@
 """
-Unit tests for Statcast Biomechanical Skeleton Overlay (Passo 4).
+Unit tests for Statcast Biomechanical Skeleton Overlay and Base Print Extraction.
 """
 
 from __future__ import annotations
@@ -9,6 +9,8 @@ import numpy as np
 from pitch_predictor.vision.overlay import (
     draw_pitcher_skeleton,
     extract_and_annotate_release_frame,
+    extract_base_release_frame,
+    find_preloaded_base_frame,
 )
 from pitch_predictor.vision.pose_extractor import PoseExtractor
 
@@ -46,3 +48,24 @@ def test_extract_and_annotate_release_frame_mock():
     assert annotated is not None
     assert isinstance(annotated, np.ndarray)
     assert annotated.shape[2] == 3  # RGB channels
+
+
+def test_extract_base_release_frame_preloaded_and_mock():
+    """Verify base print frame extraction returns valid RGB numpy arrays."""
+    preloaded = find_preloaded_base_frame(
+        pitch_category="Fastball",
+        pitcher_id=694973,
+        exact_match_only=False,
+    )
+    assert preloaded is not None
+    assert isinstance(preloaded, np.ndarray)
+    assert preloaded.shape[2] == 3
+
+    mock_base = extract_base_release_frame(
+        video_path="non_existent.mp4",
+        release_frame_idx=20,
+        mock_mode=True,
+    )
+    assert mock_base is not None
+    assert isinstance(mock_base, np.ndarray)
+    assert mock_base.shape[2] == 3
