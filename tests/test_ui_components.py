@@ -292,3 +292,25 @@ def test_render_pitcher_photo_html_loads_official_headshots() -> None:
         assert "\n" not in html
 
 
+
+def test_render_pitch_flight_arena_svg_renders_animated_trajectory_and_ghost_tunnel() -> None:
+    """Verify render_pitch_flight_arena_svg renders 3D animated trajectory and ghost AI comparison."""
+    from pitch_predictor.ui_components import render_pitch_flight_arena_svg
+
+    for cat in ("Fastball", "Breaking Ball", "Offspeed"):
+        svg = render_pitch_flight_arena_svg(
+            pitch_category=cat,
+            pitch_name=f"Test {cat}",
+            speed_mph="98 mph",
+            target_zone=5,
+            p_throws="R",
+            ai_category="Fastball" if cat != "Fastball" else "Breaking Ball",
+            result_badge="WHIFF!",
+            is_success=True,
+        )
+        assert "<svg" in svg
+        assert "<animateMotion" in svg
+        assert "STATCAST RADAR" in svg
+        assert "IA ESPERAVA:" in svg
+        assert "\n" not in svg
+        assert "<!--" not in svg

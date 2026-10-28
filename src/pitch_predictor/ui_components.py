@@ -757,3 +757,194 @@ def render_pitcher_photo_html(pitcher_name: str) -> str:
 
 
 
+
+def render_pitch_flight_arena_svg(
+    pitch_category: str = "Fastball",
+    pitch_name: str = "4-Seam Fastball",
+    speed_mph: str = "100 mph",
+    target_zone: int = 5,
+    p_throws: str = "R",
+    ai_category: str | None = None,
+    result_badge: str = "PRONTO PARA O ARREMESSO",
+    is_success: bool = True,
+) -> str:
+    """
+    Renderiza a Arena Broadcast 3D em perspectiva (visão do rebatedor/catcher para o montinho)
+    com animação vetorial contínua da trajetória da bola (reta/subida da Fastball, curva acentuada
+    da Breaking Ball e queda tardia do Offspeed) rumo à Zona de Strike.
+    """
+    cat_style = PITCH_CATEGORY_STYLES.get(pitch_category, PITCH_CATEGORY_STYLES["Fastball"])
+    primary_color = cat_style["primary"]
+
+    # Coordenadas dos 13 alvos na Zona de Strike em perspectiva (x: 250..390, y: 140..255)
+    zone_coords: dict[int, tuple[int, int]] = {
+        1: (278, 162),
+        2: (320, 162),
+        3: (362, 162),
+        4: (278, 198),
+        5: (320, 198),
+        6: (362, 198),
+        7: (278, 234),
+        8: (320, 234),
+        9: (362, 234),
+        11: (238, 138),
+        12: (402, 138),
+        13: (238, 260),
+        14: (402, 260),
+    }
+    tx, ty = zone_coords.get(target_zone, (320, 198))
+
+    # Ponto de soltura (Release Point) no montinho ao fundo conforme lateralidade (RHP vs LHP)
+    rx = 298 if p_throws == "R" else 342
+    ry = 86
+
+    # Direção de quebra lateral (+1 para destro quebrando para o lado da luva, -1 para canhoto)
+    hand_sign = 1 if p_throws == "R" else -1
+
+    # Ponto inicial de túnel (Disfarce de Trajetória nos primeiros 45% do voo)
+    tunnel_x = int(rx + (tx - rx) * 0.42 - hand_sign * 8)
+    tunnel_y = int(ry + (ty - ry) * 0.35 - 14)
+
+    if pitch_category == "Breaking Ball":
+        # Curva acentuada no terço final (Sweep + Drop)
+        c2x = int(tx - hand_sign * 54)
+        c2y = int(ty - 46)
+        flight_dur = "0.62s"
+        rpm_label = "2,880 RPM • SWEEP"
+        traj_label = "CURVA ACENTUADA (BREAKING)"
+    elif pitch_category == "Offspeed":
+        # Disfarce de Fastball seguido de queda brusca tardia (Splitter / Changeup)
+        c2x = int(tx + hand_sign * 26)
+        c2y = int(ty - 38)
+        flight_dur = "0.56s"
+        rpm_label = "1,650 RPM • DROP TARDIO"
+        traj_label = "QUEDA TARDIA (OFFSPEED)"
+    else:
+        # Fastball: linha explosiva com sustentação vertical (Ride)
+        c2x = int(rx + (tx - rx) * 0.72)
+        c2y = int(ry + (ty - ry) * 0.68 - 10)
+        flight_dur = "0.42s"
+        rpm_label = "2,450 RPM • HIGH RIDE"
+        traj_label = "LINHA EXPLOSIVA (FASTBALL)"
+
+    main_path = f"M {rx} {ry} C {tunnel_x} {tunnel_y}, {c2x} {c2y}, {tx} {ty}"
+
+    # Trajetória fantasma da previsão da IA (quando diferente do arremesso real)
+    ghost_svg = ""
+    if ai_category and ai_category != pitch_category:
+        ai_style = PITCH_CATEGORY_STYLES.get(ai_category, PITCH_CATEGORY_STYLES["Fastball"])
+        ai_color = ai_style["primary"]
+        if ai_category == "Breaking Ball":
+            gx, gy = tx + hand_sign * 34, ty + 24
+            gc2x, gc2y = tx - hand_sign * 40, ty - 35
+        elif ai_category == "Offspeed":
+            gx, gy = tx - hand_sign * 20, ty + 28
+            gc2x, gc2y = tx + hand_sign * 18, ty - 30
+        else:
+            gx, gy = 320, 172
+            gc2x, gc2y = int(rx + (gx - rx) * 0.72), int(ry + (gy - ry) * 0.68 - 10)
+        ghost_path = f"M {rx} {ry} C {tunnel_x} {tunnel_y}, {gc2x} {gc2y}, {gx} {gy}"
+        ghost_svg = (
+            f'<path d="{ghost_path}" fill="none" stroke="{ai_color}" stroke-width="2.2" '
+            f'stroke-dasharray="5,5" stroke-opacity="0.65" />'
+            f'<circle cx="{gx}" cy="{gy}" r="7" fill="none" stroke="{ai_color}" '
+            f'stroke-width="1.8" stroke-dasharray="3,2" stroke-opacity="0.75" />'
+            f'<text x="{gx}" y="{gy - 10}" text-anchor="middle" fill="{ai_color}" '
+            f'font-size="8.5" font-weight="700" font-family="monospace">IA ESPERAVA: {ai_category.upper()}</text>'
+        )
+
+    # Células 3x3 da Zona de Strike
+    grid_cells = []
+    for idx, z_id in enumerate(range(1, 10)):
+        r_idx = idx // 3
+        c_idx = idx % 3
+        gx_cell = 257 + c_idx * 42
+        gy_cell = 144 + r_idx * 36
+        is_sel = z_id == target_zone
+        cell_fill = primary_color if is_sel else "#0F172A"
+        cell_opac = "0.42" if is_sel else "0.28"
+        cell_stroke = "#FFFFFF" if is_sel else "#38BDF8"
+        grid_cells.append(
+            f'<rect x="{gx_cell}" y="{gy_cell}" width="42" height="36" '
+            f'fill="{cell_fill}" fill-opacity="{cell_opac}" stroke="{cell_stroke}" stroke-width="1.2" />'
+        )
+
+    verdict_color = "#00FFCC" if is_success else "#FF007F"
+
+    raw_svg = f"""
+    <div style="margin: 4px 0 10px 0; border-radius: 10px; overflow: hidden; border: 2px solid {primary_color}; box-shadow: 0 0 18px rgba(0, 255, 204, 0.22);">
+      <svg viewBox="0 0 640 300" width="100%" style="display: block; background: #070B14;">
+        <defs>
+          <linearGradient id="turfGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0D2618" />
+            <stop offset="55%" stop-color="#133822" />
+            <stop offset="100%" stop-color="#0B1F13" />
+          </linearGradient>
+          <radialGradient id="moundDirt" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#7C4A2D" />
+            <stop offset="100%" stop-color="#4A2B18" />
+          </radialGradient>
+          <filter id="pitchGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        <rect x="0" y="0" width="640" height="82" fill="#060913" />
+        <line x1="0" y1="82" x2="640" y2="82" stroke="#1E293B" stroke-width="2" />
+
+        <rect x="0" y="82" width="640" height="218" fill="url(#turfGrad)" />
+        <polygon points="320,95 60,300 580,300" fill="#164228" fill-opacity="0.45" />
+        <line x1="320" y1="108" x2="45" y2="300" stroke="#E2E8F0" stroke-width="1.5" stroke-opacity="0.35" />
+        <line x1="320" y1="108" x2="595" y2="300" stroke="#E2E8F0" stroke-width="1.5" stroke-opacity="0.35" />
+
+        <ellipse cx="320" cy="112" rx="46" ry="13" fill="url(#moundDirt)" stroke="#9A5B37" stroke-width="1.2" />
+        <rect x="313" y="109" width="14" height="3" fill="#F8FAFC" />
+
+        <circle cx="320" cy="76" r="5.5" fill="#E2E8F0" />
+        <line x1="320" y1="82" x2="320" y2="98" stroke="#E2E8F0" stroke-width="3.2" stroke-linecap="round" />
+        <line x1="320" y1="86" x2="{rx}" y2="{ry}" stroke="#00FFCC" stroke-width="2.8" stroke-linecap="round" />
+        <line x1="320" y1="98" x2="313" y2="111" stroke="#CBD5E1" stroke-width="2.5" stroke-linecap="round" />
+        <line x1="320" y1="98" x2="328" y2="111" stroke="#CBD5E1" stroke-width="2.5" stroke-linecap="round" />
+        <circle cx="{rx}" cy="{ry}" r="4.5" fill="none" stroke="#00FFCC" stroke-width="1.5" />
+
+        <ellipse cx="320" cy="284" rx="135" ry="24" fill="#5C3620" fill-opacity="0.85" />
+        <polygon points="295,274 345,274 336,284 320,292 304,284" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.5" />
+
+        {"".join(grid_cells)}
+        <rect x="257" y="144" width="126" height="108" fill="none" stroke="#38BDF8" stroke-width="2.2" />
+
+        {ghost_svg}
+
+        <circle cx="{tunnel_x}" cy="{tunnel_y}" r="3.5" fill="#FACC15" fill-opacity="0.85" />
+        <text x="{tunnel_x + (14 if p_throws == 'L' else -14)}" y="{tunnel_y - 6}" text-anchor="{'start' if p_throws == 'L' else 'end'}" fill="#FACC15" font-size="8" font-family="monospace">TÚNEL DE DISFARCE</text>
+
+        <path id="mainPitchArc" d="{main_path}" fill="none" stroke="{primary_color}" stroke-width="4.2" stroke-linecap="round" filter="url(#pitchGlow)" stroke-dasharray="320" stroke-dashoffset="320">
+          <animate attributeName="stroke-dashoffset" from="320" to="0" dur="{flight_dur}" fill="freeze" repeatCount="indefinite" />
+        </path>
+        <path d="{main_path}" fill="none" stroke="#FFFFFF" stroke-width="1.4" stroke-opacity="0.55" stroke-dasharray="4,4" />
+
+        <circle r="7.5" fill="#FFFFFF" stroke="{primary_color}" stroke-width="2.5" filter="url(#pitchGlow)">
+          <animateMotion dur="{flight_dur}" repeatCount="indefinite" path="{main_path}" />
+          <animate attributeName="r" values="3.5;6.0;9.5" dur="{flight_dur}" repeatCount="indefinite" />
+        </circle>
+
+        <circle cx="{tx}" cy="{ty}" r="12" fill="none" stroke="#FEF08A" stroke-width="2.2" stroke-dasharray="3,2" />
+        <circle cx="{tx}" cy="{ty}" r="4.5" fill="{primary_color}" />
+
+        <rect x="12" y="10" width="195" height="62" rx="6" fill="#0B1324" fill-opacity="0.92" stroke="{primary_color}" stroke-width="1.5" />
+        <text x="22" y="26" fill="#94A3B8" font-size="9" font-weight="700" font-family="monospace">STATCAST RADAR • {p_throws}HP</text>
+        <text x="22" y="47" fill="#FFFFFF" font-size="16" font-weight="800" font-family="monospace">{speed_mph.upper()} • {pitch_name[:15]}</text>
+        <text x="22" y="63" fill="{primary_color}" font-size="9.5" font-weight="700" font-family="monospace">{rpm_label}</text>
+
+        <rect x="405" y="10" width="223" height="62" rx="6" fill="#0B1324" fill-opacity="0.92" stroke="{verdict_color}" stroke-width="1.5" />
+        <text x="415" y="26" fill="#94A3B8" font-size="9" font-weight="700" font-family="monospace">{traj_label}</text>
+        <text x="415" y="47" fill="{verdict_color}" font-size="12.5" font-weight="800" font-family="monospace">{result_badge[:24]}</text>
+        <text x="415" y="63" fill="#CBD5E1" font-size="9" font-weight="700" font-family="monospace">ZONA ALVO: #{target_zone} ({STATCAST_ZONES.get(target_zone, STATCAST_ZONES[5])['region'].upper()})</text>
+      </svg>
+    </div>
+    """
+    return _compact_html(raw_svg)
