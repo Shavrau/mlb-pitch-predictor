@@ -1,18 +1,22 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v1.9.7 Checkpoint (Revisão Geral de Escrita & Polimento Idiomático em Todas as Telas)  
+> **Versão do Projeto:** v2.0.0 Checkpoint (Front-End Broadcast Dual-Mode & Visão Computacional 3D Cinemática v2)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
-> **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit.
+> **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit 1.66.1.
 
 Este documento é a referência técnica primária para agentes autônomos de IA e desenvolvedores que operam neste repositório. Ele sintetiza os achados da auditoria da base de código, as regras de arquitetura invioláveis, a estrutura dos componentes e as especificações para o próximo ciclo de desenvolvimento.
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v1.9.7)
+## 1. Estado Atual da Base de Código (Checkpoint v2.0.0)
 
-Após revisão editorial completa e deploy da versão polida no Databricks Apps:
-- **Suíte de Testes**: **208 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
-- **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python`, `mediapipe`, `shap`, `mlflow` e `databricks-sdk` instalados.
+Após implementação da Desgenericalização do Front-End (Broadcast Editorial Dual-Mode + Streamlit Custom Components v2) e do Motor de Visão Computacional Biomecânica 3D v2:
+- **Suíte de Testes**: **223 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+- **Ambiente de Execução**: Python virtual environment localizado em `.\.venv\Scripts\python.exe` com `opencv-python-headless`, `mediapipe`, `shap`, `mlflow`, `scipy` e `databricks-sdk` instalados.
+- **Aplicação em Nuvem Operacional (Databricks Apps)**:
+  - App `pitch-predictor-app-dev` em estado **`RUNNING` / `ACTIVE`**.
+  - URL Corporativa Pública: **`https://pitch-predictor-app-dev-7474645845452998.aws.databricksapps.com`**.
+  - Deploy **`01f1d3ac8bfd147d85ff22ff6a35383e`** ativo com **`SUCCEEDED`** e Streamlit `1.66.1`.
 - **Revisão Geral de Escrita & Redação Esportiva**:
   - **Correções Gramaticais e Semânticas**: Correção da regência preposicional diante de sujeitos no infinitivo (*"antes de ele acontecer"*, *"tempo de o olho processar"*, *"antes de a bola deixar sua mão"*).
   - **Acentuação e Termos Técnicos**: Inclusão de acentos em relatórios gerados por modelos (*"afastando a hipótese de"*), substituição de termos de pôquer por esportivos (*"Sinais Físicos"* em vez de *"Tells Físicos"*).
