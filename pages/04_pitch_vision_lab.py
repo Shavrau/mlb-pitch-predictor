@@ -827,6 +827,28 @@ with st.expander("Simulador Interativo de Pose: Ajustar Ângulos e Vetores 3D Ma
 
 # Baselines do arremessador (calculadas sobre o histórico real do atleta)
 p_means = bio_df[[c for c in EXTENDED_BIOMECHANICAL_FEATURE_COLS if c in bio_df.columns]].mean(numeric_only=True)
+p_stds = bio_df[[c for c in EXTENDED_BIOMECHANICAL_FEATURE_COLS if c in bio_df.columns]].std(numeric_only=True)
+
+# Limiares Adaptativos de Z-Score: desvios padrões reais por arremessador com fallback seguro
+DEFAULT_BIO_STDS: dict[str, float] = {
+    "arm_slot_angle": 3.5,
+    "elbow_flexion_angle": 5.0,
+    "release_height": 0.025,
+    "trunk_tilt": 2.0,
+    "stride_extension": 0.05,
+    "glove_tuck_distance": 0.03,
+    "hip_shoulder_separation": 3.0,
+    "arm_angular_velocity": 40.0,
+    "delivery_tempo_s": 0.025,
+    "forward_release_extension": 0.03,
+}
+
+def _resolve_safe_std(col: str) -> float:
+    raw_s = float(p_stds.get(col, float("nan")))
+    if pd.isna(raw_s) or raw_s < 1e-4:
+        return DEFAULT_BIO_STDS.get(col, 1.0)
+    return raw_s
+
 base_slot = float(p_means.get("arm_slot_angle", base_bio_profile.get("arm_slot_angle", arm_slot_val)))
 base_elbow = float(p_means.get("elbow_flexion_angle", base_bio_profile.get("elbow_flexion_angle", elbow_flex_val)))
 base_ht = float(p_means.get("release_height", base_bio_profile.get("release_height", rel_ht_val)))
@@ -835,6 +857,7 @@ base_glove = float(p_means.get("glove_tuck_distance", glove_tuck_val))
 base_sep = float(p_means.get("hip_shoulder_separation", hip_sep_val))
 base_vel = float(p_means.get("arm_angular_velocity", arm_vel_val))
 base_tempo = float(p_means.get("delivery_tempo_s", tempo_val))
+base_stride = float(p_means.get("stride_extension", stride_ext_val))
 
 slot_diff = arm_slot_val - base_slot
 elbow_diff = elbow_flex_val - base_elbow
@@ -844,6 +867,59 @@ glove_diff = glove_tuck_val - base_glove
 sep_diff = hip_sep_val - base_sep
 vel_diff = arm_vel_val - base_vel
 tempo_diff = tempo_val - base_tempo
+stride_diff = stride_ext_val - base_stride
+
+z_slot = slot_diff / _resolve_safe_std("arm_slot_angle")
+z_elbow = elbow_diff / _resolve_safe_std("elbow_flexion_angle")
+z_ht = ht_diff / _resolve_safe_std("release_height")
+z_tilt = tilt_diff / _resolve_safe_std("trunk_tilt")
+z_glove = glove_diff / _resolve_safe_std("glove_tuck_distance")
+z_sep = sep_diff / _resolve_safe_std("hip_shoulder_separation")
+z_vel = vel_diff / _resolve_safe_std("arm_angular_velocity")
+z_tempo = tempo_diff / _resolve_safe_std("delivery_tempo_s")
+z_stride = stride_diff / _resolve_safe_std("stride_extension")
+
+# Alertas adaptativos de Pitch Tipping baseados no desvio padronizado (|Z| >= 1.75)
+Z_SCORE_TIPPING_THRESHOLD = 1.75
+tipping_alerts: list[dict[str, Any]] = []
+
+tracked_signals = [
+    ("Ângulo do Braço (Arm Slot)", slot_diff, z_slot, "°"),
+    ("Flexão do Cotovelo", elbow_diff, z_elbow, "°"),
+    ("Altura de Soltura", ht_diff, z_ht, " norm"),
+    ("Inclinação do Tronco", tilt_diff, z_tilt, "°"),
+    ("Recolhimento da Luva (Glove Tuck)", glove_diff, z_glove, " m"),
+    ("Separação Quadril-Ombro", sep_diff, z_sep, "°"),
+    ("Velocidade Angular do Braço", vel_diff, z_vel, " °/s"),
+    ("Cadência do Movimento (Tempo)", tempo_diff, z_tempo, " s"),
+    ("Extensão da Passada", stride_diff, z_stride, "x"),
+]
+
+for label, delta_v, z_v, unit in tracked_signals:
+    if abs(z_v) >= Z_SCORE_TIPPING_THRESHOLD:
+        tipping_alerts.append({
+            "label": label,
+            "delta": delta_v,
+            "z": z_v,
+            "unit": unit,
+        })
+
+if tipping_alerts:
+    alert_details = " • ".join(
+        f"**{a['label']}**: {a['delta']:+.2f}{a['unit']} (|Z| = {abs(a['z']):.2f})"
+        for a in tipping_alerts
+    )
+    st.warning(
+        f"**Alerta Adaptativo de Pitch Tipping (|Z| ≥ {Z_SCORE_TIPPING_THRESHOLD:.2f})**: "
+        f"Desvio mecânico estatisticamente anômalo detectado em relação à baseline de {pitcher_info['name']}:  \n{alert_details}",
+        icon=":material/warning:",
+    )
+elif use_custom_pose:
+    st.success(
+        f"**Mecânica Consistente (|Z| < {Z_SCORE_TIPPING_THRESHOLD:.2f})**: "
+        f"Nenhum microdesvio articular ultrapassou o limiar adaptativo de Pitch Tipping para este arremessador.",
+        icon=":material/verified:",
+    )
 
 m1, m2, m3, m4 = st.columns(4)
 with m1:
@@ -851,26 +927,26 @@ with m1:
     st.metric(
         label="Ângulo do Braço (Arm Slot)",
         value=f"{arm_slot_val:.1f}°",
-        delta=f"{slot_diff:+.1f}° vs base ({slot_type})",
+        delta=f"{slot_diff:+.1f}° vs base ({slot_type}) • Z={z_slot:+.2f}",
     )
 with m2:
     elbow_type = "Estendido" if elbow_flex_val >= 130 else "Flexionado"
     st.metric(
         label="Flexão do Cotovelo",
         value=f"{elbow_flex_val:.1f}°",
-        delta=f"{elbow_diff:+.1f}° vs base ({elbow_type})",
+        delta=f"{elbow_diff:+.1f}° vs base ({elbow_type}) • Z={z_elbow:+.2f}",
     )
 with m3:
     st.metric(
         label="Altura de Soltura",
         value=f"{rel_ht_val:.3f}",
-        delta=f"{ht_diff:+.3f} vs base",
+        delta=f"{ht_diff:+.3f} vs base • Z={z_ht:+.2f}",
     )
 with m4:
     st.metric(
         label="Inclinação do Tronco",
         value=f"{trunk_tilt_val:.1f}°",
-        delta=f"{tilt_diff:+.1f}° vs base",
+        delta=f"{tilt_diff:+.1f}° vs base • Z={z_tilt:+.2f}",
     )
 
 m5, m6, m7, m8 = st.columns(4)
@@ -878,25 +954,25 @@ with m5:
     st.metric(
         label="Recolhimento da Luva (Glove Tuck)",
         value=f"{glove_tuck_val:.3f} m",
-        delta=f"{glove_diff:+.3f} m vs base",
+        delta=f"{glove_diff:+.3f} m vs base • Z={z_glove:+.2f}",
     )
 with m6:
     st.metric(
         label="Separação Quadril-Ombro",
         value=f"{hip_sep_val:.1f}°",
-        delta=f"{sep_diff:+.1f}° vs base",
+        delta=f"{sep_diff:+.1f}° vs base • Z={z_sep:+.2f}",
     )
 with m7:
     st.metric(
         label="Velocidade Angular do Braço",
         value=f"{arm_vel_val:.0f} °/s",
-        delta=f"{vel_diff:+.0f} °/s vs base",
+        delta=f"{vel_diff:+.0f} °/s vs base • Z={z_vel:+.2f}",
     )
 with m8:
     st.metric(
         label="Cadência do Movimento (Tempo)",
         value=f"{tempo_val:.3f} s",
-        delta=f"{tempo_diff:+.3f} s vs base",
+        delta=f"{tempo_diff:+.3f} s vs base • Z={z_tempo:+.2f}",
     )
 
 st.divider()

@@ -103,3 +103,19 @@ def test_vision_lab_page_switching_pitcher_selection() -> None:
     all_info = "\n".join(i.value for i in at.info)
     assert "Yoshinobu Yamamoto" in all_info
     assert "Los Angeles Dodgers" in all_info or "LAD" in all_info
+
+
+def test_vision_lab_page_adaptive_z_score_tipping_threshold() -> None:
+    """Verify adaptive Z-score calculation on biomechanical features and telemetry metrics."""
+    at = AppTest.from_file(PAGE_PATH, default_timeout=60).run()
+    assert not at.exception
+
+    # Metrics should reflect Z-score in their deltas
+    deltas = [m.delta for m in at.metric if m.delta]
+    assert any("Z=" in d for d in deltas)
+
+    # Enable custom pose simulator to verify adaptive tipping behavior
+    custom_cb = at.checkbox(key="vision_use_custom_pose")
+    assert custom_cb is not None
+    custom_cb.check().run()
+    assert not at.exception

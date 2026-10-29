@@ -191,25 +191,38 @@ def render_baseball_diamond_svg(
 
 
 def render_strike_zone_svg(
-    selected_zone: int, prev_category: str = "First Pitch"
+    selected_zone: int,
+    prev_category: str = "First Pitch",
+    theme_mode: str | None = None,
 ) -> str:
     """
     Render the official MLB Statcast Strike Zone SVG from the catcher's perspective.
+
+    Dual-Mode adaptive: in Light Mode or consuming theme variables, the 3x3 inner grid lines
+    use `#94A3B8` (1.5px stroke width) and the target impact reticle is rendered in
+    stadium amber `#D97706` for maximum contrast across dark and light surfaces.
     """
+    is_light = resolve_ui_theme_mode(theme_mode) == "light"
     cat_style = PITCH_CATEGORY_STYLES.get(prev_category, {})
     active_color = cat_style.get("primary", "#38BDF8")
 
     def _chase_style(zone_id: int) -> tuple[str, str, str]:
         if selected_zone == zone_id:
             return (active_color, "#F8FAFC", "0.68")
+        if is_light:
+            return ("#E2E8F0", "#94A3B8", "0.40")
         return ("#334155", "#64748B", "0.18")
 
     def _strike_style(zone_id: int) -> tuple[str, str, str]:
         if selected_zone == zone_id:
             return (active_color, "#FFFFFF", "0.82")
+        if is_light:
+            if zone_id == 5:
+                return ("#E1E8F0", "#94A3B8", "0.55")
+            return ("#F1F5F9", "#94A3B8", "0.45")
         if zone_id == 5:
-            return ("#1E293B", "#38BDF8", "0.42")
-        return ("#0F172A", "#38BDF8", "0.30")
+            return ("#1E293B", "#94A3B8", "0.42")
+        return ("#0F172A", "#94A3B8", "0.30")
 
     zone_centers = {
         1: (75, 65),
@@ -239,11 +252,12 @@ def render_strike_zone_svg(
         x = 52 + col * 45
         y = 42 + row * 45
         fill_c, stroke_c, opac = _strike_style(z_id)
-        text_c = "#FFFFFF" if selected_zone == z_id else "#94A3B8"
+        stroke_color = "#94A3B8" if selected_zone != z_id else stroke_c
+        text_c = "#FFFFFF" if selected_zone == z_id else ("#334155" if is_light else "#94A3B8")
         font_w = "800" if selected_zone == z_id else "600"
         strike_cells_svg.append(
             f'<rect x="{x}" y="{y}" width="45" height="45" fill="{fill_c}" '
-            f'fill-opacity="{opac}" stroke="{stroke_c}" stroke-width="1.2" />\n'
+            f'fill-opacity="{opac}" stroke="{stroke_color}" stroke-width="1.5" />\n'
             f'<text x="{x + 22.5}" y="{y + 27}" text-anchor="middle" fill="{text_c}" '
             f'font-size="12" font-weight="{font_w}" font-family="JetBrains Mono, monospace">{z_id}</text>'
         )
@@ -252,13 +266,15 @@ def render_strike_zone_svg(
     if selected_zone in zone_centers:
         cx, cy = zone_centers[selected_zone]
         marker_svg = (
-            f'<circle cx="{cx}" cy="{cy}" r="13" fill="none" stroke="#F59E0B" '
-            f'stroke-width="2" stroke-dasharray="3,2" />\n'
-            f'<circle cx="{cx}" cy="{cy}" r="4.5" fill="#F59E0B" />'
+            f'<circle cx="{cx}" cy="{cy}" r="13" fill="none" stroke="#D97706" '
+            f'stroke-width="2.2" stroke-dasharray="3,2" />\n'
+            f'<circle cx="{cx}" cy="{cy}" r="4.5" fill="#D97706" stroke="#FFFFFF" stroke-width="1.2" />'
         )
 
     zone_meta = STATCAST_ZONES.get(selected_zone, STATCAST_ZONES[0])
     caption_text = zone_meta["label"]
+    outer_zone_stroke = "#0284C7" if is_light else "#38BDF8"
+    caption_color = "#0369A1" if is_light else "#0284C7"
 
     raw_svg = f"""
     <div style="display:flex;justify-content:center;align-items:center;margin:4px 0;">
@@ -272,14 +288,52 @@ def render_strike_zone_svg(
         <rect x="120" y="110" width="100" height="96" rx="5" fill="{f14}" fill-opacity="{o14}" stroke="{s14}" stroke-width="1.2" stroke-dasharray="4,3" />
         <text x="204" y="196" text-anchor="middle" fill="#94A3B8" font-size="10.5" font-weight="700" font-family="JetBrains Mono, monospace">14</text>
         {chr(10).join(strike_cells_svg)}
-        <rect x="52" y="42" width="135" height="135" fill="none" stroke="#38BDF8" stroke-width="2.2" />
+        <rect x="52" y="42" width="135" height="135" fill="none" stroke="{outer_zone_stroke}" stroke-width="2.2" />
         {marker_svg}
         <polygon points="85,216 155,216 142,226 120,233 98,226" fill="#E2E8F0" stroke="#64748B" stroke-width="1.4" />
-        <text x="120" y="242" text-anchor="middle" fill="#0284C7" font-size="8.2" font-weight="700" font-family="JetBrains Mono, monospace">{caption_text}</text>
+        <text x="120" y="242" text-anchor="middle" fill="{caption_color}" font-size="8.2" font-weight="700" font-family="JetBrains Mono, monospace">{caption_text}</text>
       </svg>
     </div>
     """
     return _compact_html(raw_svg)
+
+
+def render_kinematic_card_html(label: str, value: str, delta: str, is_warning: bool = False) -> str:
+    """
+    Renderiza um card de telemetria cinemática 3D com contraste rigoroso em Light e Dark mode.
+    Garante legibilidade absoluta da label técnica, valor mono e badge de delta.
+    """
+    delta_clean = delta.strip()
+    is_neg = "-" in delta_clean or "↓" in delta_clean
+    is_pos = "+" in delta_clean or "↑" in delta_clean
+
+    if is_warning:
+        badge_bg = "rgba(239, 68, 68, 0.14)"
+        badge_border = "rgba(239, 68, 68, 0.35)"
+        badge_color = "#DC2626"
+    elif is_pos:
+        badge_bg = "rgba(16, 185, 129, 0.14)"
+        badge_border = "rgba(16, 185, 129, 0.35)"
+        badge_color = "#059669"
+    elif is_neg:
+        badge_bg = "rgba(239, 68, 68, 0.14)"
+        badge_border = "rgba(239, 68, 68, 0.35)"
+        badge_color = "#DC2626"
+    else:
+        badge_bg = "var(--pp-surface-alt, #E1E8F0)"
+        badge_border = "var(--pp-border, #C2CFDD)"
+        badge_color = "var(--pp-muted, #475569)"
+
+    raw_html = f"""
+    <div style="background:var(--pp-surface,#F1F5F9);border:1px solid var(--pp-border,#C2CFDD);border-radius:8px;padding:12px 14px;box-sizing:border-box;margin-bottom:8px;">
+      <div style="font-size:11px;font-weight:700;color:var(--pp-muted,#475569);text-transform:uppercase;letter-spacing:0.04em;line-height:1.2;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{label}</div>
+      <div style="font-size:24px;font-weight:800;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;color:var(--pp-text,#0F172A);line-height:1.15;margin-bottom:6px;">{value}</div>
+      <div style="display:inline-flex;align-items:center;background:{badge_bg};border:1px solid {badge_border};border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700;color:{badge_color};font-family:'JetBrains Mono',monospace;line-height:1.2;">
+        {delta_clean}
+      </div>
+    </div>
+    """
+    return " ".join(line.strip() for line in raw_html.splitlines() if line.strip())
 
 
 def render_prediction_card_html(
@@ -425,16 +479,17 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
     """
     resolved = resolve_ui_theme_mode(theme_mode)
     if resolved == "light":
-        pp_bg = "#F8FAFC"
-        pp_surface = "#FFFFFF"
-        pp_surface_alt = "#F1F5F9"
-        pp_border = "#CBD5E1"
+        pp_bg = "#E6ECF2"
+        pp_surface = "#F1F5F9"
+        pp_surface_alt = "#E1E8F0"
+        pp_border = "#C2CFDD"
         pp_text = "#0F172A"
         pp_muted = "#475569"
-        pp_sidebar_bg = "#F1F5F9"
+        pp_sidebar_bg = "#DCE4EC"
         color_scheme = "light"
         scroll_thumb = "#94A3B8"
-        scroll_track = "#F1F5F9"
+        scroll_track = "#E1E8F0"
+        metric_label_color = "#1E293B"
     else:
         pp_bg = "#0A0B0E"
         pp_surface = "#12141A"
@@ -446,6 +501,7 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         color_scheme = "dark"
         scroll_thumb = "#334155"
         scroll_track = "#0E1015"
+        metric_label_color = "#CBD5E1"
 
     raw_css = f"""
     <style>
@@ -518,6 +574,123 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         border-bottom: 1px solid var(--pp-border);
         border-left: 3px solid var(--pp-accent);
         padding: 2px 0 5px 9px;
+      }}
+      h1, h2, h3, h4, h5, h6,
+      .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {{
+        color: var(--pp-text) !important;
+        font-family: 'Barlow Condensed', 'Space Grotesk', sans-serif !important;
+        letter-spacing: 0.02em;
+      }}
+      div[data-testid="stExpander"] {{
+        background-color: var(--pp-surface) !important;
+        border: 1px solid var(--pp-border) !important;
+        border-radius: 8px !important;
+        margin-bottom: 12px;
+      }}
+      div[data-testid="stExpander"] details {{
+        border-color: transparent !important;
+        background-color: var(--pp-surface) !important;
+        border-radius: 8px !important;
+      }}
+      summary[data-testid="stExpanderSummary"],
+      summary[data-testid="stExpanderSummary"] *,
+      div[data-testid="stExpander"] summary,
+      div[data-testid="stExpander"] summary * {{
+        color: var(--pp-text) !important;
+        font-weight: 700 !important;
+        font-size: 14.5px !important;
+      }}
+      summary[data-testid="stExpanderSummary"]:hover,
+      summary[data-testid="stExpanderSummary"]:hover * {{
+        color: var(--pp-accent) !important;
+      }}
+      div[data-testid="stExpanderDetails"] {{
+        background-color: var(--pp-surface) !important;
+        color: var(--pp-text) !important;
+        padding-top: 6px !important;
+      }}
+      div[data-testid="stMetric"] {{
+        background-color: var(--pp-surface) !important;
+        border: 1px solid var(--pp-border) !important;
+        border-radius: 8px !important;
+        padding: 12px 14px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }}
+      div[data-testid="stMetric"] label,
+      div[data-testid="stMetricLabel"],
+      div[data-testid="stMetricLabel"] p,
+      div[data-testid="stMetricLabel"] span,
+      div[data-testid="stMetricLabel"] * {{
+        color: {metric_label_color} !important;
+        font-size: 11.5px !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+      }}
+      div[data-testid="stMetricValue"],
+      div[data-testid="stMetricValue"] * {{
+        color: var(--pp-text) !important;
+        font-size: 24px !important;
+        font-weight: 800 !important;
+      }}
+      div[data-testid="stMetricDelta"],
+      div[data-testid="stMetricDelta"] * {{
+        font-weight: 700 !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 12px !important;
+      }}
+      div[data-testid="stSlider"] label,
+      div[data-testid="stCheckbox"] label,
+      div[data-testid="stSelectbox"] label,
+      div[data-testid="stRadio"] label,
+      div[data-testid="stTextInput"] label,
+      div[data-testid="stFileUploader"] label,
+      div[data-testid="stWidgetLabel"] label,
+      div[data-testid="stWidgetLabel"] p {{
+        color: var(--pp-text) !important;
+        font-weight: 700 !important;
+        font-size: 13.5px !important;
+        letter-spacing: 0.02em !important;
+      }}
+      div[data-testid="stRadio"] div[role="radiogroup"] label p {{
+        color: var(--pp-text) !important;
+        font-weight: 600 !important;
+      }}
+      div[data-baseweb="select"] > div {{
+        background-color: var(--pp-surface) !important;
+        border-color: var(--pp-border) !important;
+        color: var(--pp-text) !important;
+      }}
+      div[data-baseweb="select"] * {{
+        color: var(--pp-text) !important;
+      }}
+      button[kind="secondary"] {{
+        background-color: var(--pp-surface) !important;
+        border: 1px solid var(--pp-border) !important;
+        color: var(--pp-text) !important;
+      }}
+      div[data-testid="stSegmentedControl"] button {{
+        font-weight: 700 !important;
+      }}
+      .pp-editorial-card {{
+        background: var(--pp-surface);
+        border: 1px solid var(--pp-border);
+        border-radius: 8px;
+        padding: 14px 18px;
+      }}
+      .pp-kicker {{
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        font-weight: 800;
+        color: var(--pp-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 4px;
+      }}
+      .pp-text-primary {{
+        color: var(--pp-text) !important;
       }}
       div.stButton > button {{
         border-radius: 6px;

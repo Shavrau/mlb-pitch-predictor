@@ -96,23 +96,28 @@ def _resolve_bases(base_label: str) -> tuple[int, int, int]:
     return (0, 0, 0)
 
 
-def _render_compact_12_count_ribbon_html(predictions_by_count: dict[str, str]) -> str:
+def _render_compact_12_count_ribbon_html(
+    predictions_by_count: dict[str, str], theme_mode: str = "dark"
+) -> str:
     """Render a compact horizontal telemetry strip summarizing all 12 count calls."""
+    is_light = str(theme_mode).strip().lower().startswith("light")
     pills: list[str] = []
     for b, s in MLB_12_COUNTS:
         c_key = f"{b}-{s}"
         cat = predictions_by_count.get(c_key, "Fastball")
         style = PITCH_CATEGORY_STYLES.get(cat, PITCH_CATEGORY_STYLES["Fastball"])
-        prim = style["primary"]
+        prim = style.get("secondary", style["primary"]) if is_light else style["primary"]
         code = style.get("code_badge", "FF").split("[")[-1].rstrip("]")
+        pill_border = "var(--pp-border,#C2CFDD)" if is_light else "var(--pp-border,#222631)"
         pills.append(
-            f'<span style="display:inline-flex;align-items:center;gap:4px;background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3px solid {prim};border-radius:4px;padding:2px 7px;font-family:\'JetBrains Mono\',monospace;font-variant-numeric:tabular-nums;font-size:10.5px;">'
+            f'<span style="display:inline-flex;align-items:center;gap:4px;background:var(--pp-surface-alt,#181B23);border:1px solid {pill_border};border-left:3px solid {prim};border-radius:4px;padding:2px 7px;font-family:\'JetBrains Mono\',monospace;font-variant-numeric:tabular-nums;font-size:10.5px;">'
             f'<strong style="color:var(--pp-text,#F1F5F9);">{c_key}</strong>'
             f'<span style="color:{prim};font-weight:700;">{code}</span>'
             f"</span>"
         )
+    div_border = "var(--pp-border,#C2CFDD)" if is_light else "var(--pp-border,#222631)"
     raw = (
-        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--pp-border,#222631);">'
+        f'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid {div_border};">'
         + "".join(pills)
         + "</div>"
     )

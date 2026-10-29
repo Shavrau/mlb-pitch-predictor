@@ -45,6 +45,9 @@ with st.sidebar:
     else:
         st.session_state.ui_theme_mode = "dark"
 
+    from pitch_predictor.ui_components import get_custom_css
+    st.markdown(get_custom_css(theme_mode=st.session_state.ui_theme_mode), unsafe_allow_html=True)
+
 home_page = st.Page(
     "pages/00_home_apresentacao.py",
     title="Visão Geral & Apresentação",

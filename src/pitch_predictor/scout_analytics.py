@@ -268,27 +268,36 @@ def generate_batter_game_plan(
     }
 
 
-def render_count_matrix_html(predictions_by_count: dict[str, str]) -> str:
+def render_count_matrix_html(
+    predictions_by_count: dict[str, str],
+    theme_mode: str = "dark",
+    active_count: str | None = None,
+) -> str:
     """
     Render the 4x3 MLB Tactical Count Matrix HTML (Balls 0..3 rows x Strikes 0..2 columns).
 
     Strictly CommonMark-safe (single line, no 4-space indentation, no HTML comments)
     and Dual-Mode adaptive via `--pp-*` CSS custom properties.
     """
+    is_light = str(theme_mode).strip().lower().startswith("light")
+    muted_color = "var(--pp-muted, #475569)" if is_light else "var(--pp-muted, #94A3B8)"
+    border_color = "var(--pp-border, #C2CFDD)" if is_light else "var(--pp-border, #222631)"
+
+    putaway_color = "#D97706" if is_light else "#F59E0B"
     header_cells = [
-        '<div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:10.5px;font-weight:700;letter-spacing:0.04em;color:var(--pp-muted,#94A3B8);">BALLS \\ STRIKES</div>',
-        '<div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--pp-text,#F1F5F9);">0 STRIKES</div>',
-        '<div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--pp-text,#F1F5F9);">1 STRIKE</div>',
-        '<div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;letter-spacing:0.04em;color:#F59E0B;">2 STRIKES [PUTAWAY]</div>',
+        f'<div style="background:var(--pp-surface-alt,#181B23);border:1px solid {border_color};border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:10.5px;font-weight:700;letter-spacing:0.04em;color:{muted_color};">BALLS \\ STRIKES</div>',
+        f'<div style="background:var(--pp-surface-alt,#181B23);border:1px solid {border_color};border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--pp-text,#F1F5F9);">0 STRIKES</div>',
+        f'<div style="background:var(--pp-surface-alt,#181B23);border:1px solid {border_color};border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--pp-text,#F1F5F9);">1 STRIKE</div>',
+        f'<div style="background:var(--pp-surface-alt,#181B23);border:1px solid {border_color};border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;letter-spacing:0.04em;color:{putaway_color};">2 STRIKES [PUTAWAY]</div>',
     ]
 
     grid_items: list[str] = list(header_cells)
 
     for balls in range(4):
         grid_items.append(
-            f'<div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-radius:6px;padding:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:\'JetBrains Mono\',monospace;font-variant-numeric:tabular-nums;">'
+            f'<div style="background:var(--pp-surface-alt,#181B23);border:1px solid {border_color};border-radius:6px;padding:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:\'JetBrains Mono\',monospace;font-variant-numeric:tabular-nums;">'
             f'<span style="font-size:12.5px;font-weight:800;color:var(--pp-text,#F1F5F9);">{balls} BALL{"S" if balls != 1 else ""}</span>'
-            f'<span style="font-size:9.5px;color:var(--pp-muted,#94A3B8);font-weight:700;">LINHA {balls}-X</span>'
+            f'<span style="font-size:9.5px;color:{muted_color};font-weight:700;">LINHA {balls}-X</span>'
             f"</div>"
         )
         for strikes in range(3):
@@ -298,34 +307,55 @@ def render_count_matrix_html(predictions_by_count: dict[str, str]) -> str:
                 pred_cat, PITCH_CATEGORY_STYLES["Fastball"]
             )
             primary = style["primary"]
+            secondary = style.get("secondary", primary)
+            badge_color = secondary if is_light else primary
             bg_tint = style["bg_tint"]
             icon = style["icon"]
             code_badge = style.get("code_badge", style["arsenal"].split("•")[0].strip())
 
             if count_key in PITCHER_AHEAD_COUNTS:
-                lev_label = "Pitcher Ahead"
-                lev_color = "#10B981"
+                lev_label = "AHEAD"
+                lev_color = "#059669" if is_light else "#10B981"
             elif count_key in PITCHER_BEHIND_COUNTS:
-                lev_label = "Pitcher Behind"
-                lev_color = "#F59E0B"
+                lev_label = "BEHIND"
+                lev_color = "#D97706" if is_light else "#F59E0B"
             else:
-                lev_label = "Neutral"
-                lev_color = "var(--pp-muted,#94A3B8)"
+                lev_label = "EVEN"
+                lev_color = "var(--pp-muted, #475569)" if is_light else "var(--pp-muted, #94A3B8)"
+
+            is_active = active_count == count_key
+            if is_active:
+                cell_border = f"2px solid {primary}"
+                cell_shadow = (
+                    "box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18), 0 0 0 1.5px var(--pp-accent, #0284C7);"
+                    if is_light
+                    else "box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--pp-accent, #38BDF8);"
+                )
+            else:
+                cell_border = f"1px solid {border_color}"
+                cell_shadow = (
+                    "box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);"
+                    if is_light
+                    else "box-shadow: 0 1px 3px rgba(0, 0, 0, 0.20);"
+                )
+
+            pill_bg = "var(--pp-surface-alt, #E1E8F0)" if is_light else "var(--pp-bg, #0A0B0E)"
+            pill_text = "var(--pp-text, #0F172A)" if is_light else "var(--pp-text, #F1F5F9)"
 
             cell_html = (
-                f'<div style="background:{bg_tint};border:1px solid var(--pp-border,#222631);border-left:3px solid {primary};border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;">'
+                f'<div style="background:{bg_tint};border:{cell_border};border-left:4px solid {primary};border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;{cell_shadow}">'
                 f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
-                f'<span style="background:var(--pp-bg,#0A0B0E);color:var(--pp-text,#F1F5F9);font-family:\'JetBrains Mono\',monospace;font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:800;padding:2px 7px;border-radius:4px;border:1px solid var(--pp-border,#222631);">{count_key}</span>'
+                f'<span style="background:{pill_bg};color:{pill_text};font-family:\'JetBrains Mono\',monospace;font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:800;padding:2px 7px;border-radius:4px;border:1px solid {border_color};">{count_key}</span>'
                 f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9.5px;font-weight:700;color:{lev_color};text-transform:uppercase;letter-spacing:0.04em;">{lev_label}</span>'
                 f"</div>"
                 f'<div style="font-size:14px;font-weight:800;color:var(--pp-text,#F1F5F9);margin:2px 0;">{icon} {pred_cat}</div>'
-                f'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:{primary};font-weight:700;letter-spacing:0.04em;">{code_badge}</div>'
+                f'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:{badge_color};font-weight:700;letter-spacing:0.04em;">{code_badge}</div>'
                 f"</div>"
             )
             grid_items.append(cell_html)
 
     raw_html = f"""
-    <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-radius:8px;padding:12px;margin:6px 0;">
+    <div style="background:var(--pp-surface,#12141A);border:1px solid {border_color};border-radius:8px;padding:12px;margin:6px 0;">
       <div style="display:grid;grid-template-columns:108px repeat(3,1fr);gap:8px;align-items:stretch;">
         {"".join(grid_items)}
       </div>

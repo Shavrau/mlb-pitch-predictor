@@ -27,16 +27,16 @@ primaryColor = "#38BDF8"
 
 [theme.light]
 primaryColor = "#0369A1"
-backgroundColor = "#F8FAFC"
-secondaryBackgroundColor = "#FFFFFF"
+backgroundColor = "#E6ECF2"
+secondaryBackgroundColor = "#F1F5F9"
 textColor = "#0F172A"
-borderColor = "#CBD5E1"
-codeBackgroundColor = "#F1F5F9"
+borderColor = "#C2CFDD"
+codeBackgroundColor = "#E1E8F0"
 chartCategoricalColors = ["#DC2626", "#2563EB", "#059669", "#D97706", "#475569"]
 
 [theme.light.sidebar]
-backgroundColor = "#F1F5F9"
-secondaryBackgroundColor = "#FFFFFF"
+backgroundColor = "#DCE4EC"
+secondaryBackgroundColor = "#F1F5F9"
 textColor = "#0F172A"
-borderColor = "#CBD5E1"
+borderColor = "#C2CFDD"
 primaryColor = "#0369A1"

@@ -234,7 +234,8 @@ _COUNT_MATRIX_CSS = """
   flex-direction: column;
   justify-content: space-between;
   gap: 5px;
-  transition: border-color 0.14s ease, transform 0.12s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transition: border-color 0.14s ease, transform 0.12s ease, box-shadow 0.14s ease;
 }
 .pp-cell-btn:hover {
   border-color: var(--cell-cat-color, #38BDF8);
@@ -248,6 +249,7 @@ _COUNT_MATRIX_CSS = """
   border: 2px solid var(--accent-hex, #38BDF8);
   border-left: 4px solid var(--cell-cat-color, #EF4444);
   background: color-mix(in oklab, var(--st-secondary-background-color, #12141A) 88%, var(--cell-cat-color, #38BDF8) 12%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.32), 0 0 0 1px var(--accent-hex, #38BDF8);
 }
 .pp-cell-top {
   display: flex;
@@ -271,7 +273,7 @@ _COUNT_MATRIX_CSS = """
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  opacity: 0.82;
+  opacity: 0.95;
 }
 .pp-cat-line {
   font-size: 13.5px;
@@ -285,6 +287,71 @@ _COUNT_MATRIX_CSS = """
   color: var(--cell-cat-color, #EF4444);
   letter-spacing: 0.04em;
 }
+
+/* Polimento do Dark Mode (independente de variáveis de tema injetadas pelo host) */
+.pp-matrix-wrap:not(.pp-light) .pp-cell-btn {
+  background: #12141A;
+  color: #F1F5F9;
+  border: 1px solid #222631;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+.pp-matrix-wrap:not(.pp-light) .pp-cell-btn[aria-selected="true"] {
+  border: 2px solid var(--accent-hex, #38BDF8);
+  border-left: 4px solid var(--cell-cat-color, #EF4444);
+  background: color-mix(in oklab, #12141A 88%, var(--cell-cat-color, #38BDF8) 12%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--accent-hex, #38BDF8);
+}
+.pp-matrix-wrap:not(.pp-light) .pp-count-pill {
+  border: 1px solid #222631;
+  color: #F1F5F9;
+  background: #0A0B0E;
+}
+.pp-matrix-wrap:not(.pp-light) .pp-hdr,
+.pp-matrix-wrap:not(.pp-light) .pp-row-lbl {
+  border: 1px solid #222631;
+  background: #0A0B0E;
+  color: #F1F5F9;
+}
+.pp-matrix-wrap:not(.pp-light) .pp-row-main {
+  color: #F1F5F9;
+}
+.pp-matrix-wrap:not(.pp-light) .pp-row-sub {
+  color: #94A3B8;
+}
+
+/* Polimento do Light Mode */
+.pp-matrix-wrap.pp-light .pp-cell-btn {
+  background: #F1F5F9;
+  color: #0F172A;
+  border: 1px solid var(--st-border-color, #C2CFDD);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+.pp-matrix-wrap.pp-light .pp-cell-btn[aria-selected="true"] {
+  border: 2px solid var(--accent-hex, #0284C7);
+  border-left: 4px solid var(--cell-cat-color, #DC2626);
+  background: color-mix(in oklab, #F1F5F9 90%, var(--cell-cat-color, #0284C7) 10%);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18), 0 0 0 1.5px var(--accent-hex, #0284C7);
+}
+.pp-matrix-wrap.pp-light .pp-count-pill {
+  border: 1px solid var(--st-border-color, #C2CFDD);
+  color: var(--st-text-color, #0F172A);
+  background: var(--st-background-color, #E1E8F0);
+}
+.pp-matrix-wrap.pp-light .pp-hdr,
+.pp-matrix-wrap.pp-light .pp-row-lbl {
+  border: 1px solid var(--st-border-color, #C2CFDD);
+  background: #F8FAFC;
+  color: #0F172A;
+}
+.pp-matrix-wrap.pp-light .pp-row-main {
+  color: #0F172A;
+}
+.pp-matrix-wrap.pp-light .pp-row-sub {
+  color: #475569;
+  opacity: 1;
+  font-weight: 700;
+}
+
 @media (forced-colors: active) {
   .pp-cell-btn[aria-selected="true"] {
     outline: 2px solid Highlight;
@@ -292,11 +359,22 @@ _COUNT_MATRIX_CSS = """
 }
 """
 
+
 _COUNT_MATRIX_JS = """
 export default function (component) {
   const { data, parentElement, setStateValue } = component;
   const grid = parentElement.querySelector("#pp-matrix-grid");
   if (!grid || !data) return () => {};
+
+  const wrap = parentElement.querySelector(".pp-matrix-wrap");
+  const isLight = Boolean(data.is_light);
+  if (wrap) {
+    if (isLight) {
+      wrap.classList.add("pp-light");
+    } else {
+      wrap.classList.remove("pp-light");
+    }
+  }
 
   const cells = Array.isArray(data.cells) ? data.cells : [];
   const selected = data.selected_count || "0-0";
@@ -335,6 +413,7 @@ export default function (component) {
         shape: "▲",
         color: "#EF4444",
         leverage_short: "EVEN",
+        leverage_color: isLight ? "#475569" : "#94A3B8",
       };
 
       const btn = document.createElement("button");
@@ -353,6 +432,9 @@ export default function (component) {
       const lev = document.createElement("span");
       lev.className = "pp-lev-tag";
       lev.textContent = cellMeta.leverage_short;
+      if (cellMeta.leverage_color) {
+        lev.style.color = cellMeta.leverage_color;
+      }
       topRow.appendChild(pill);
       topRow.appendChild(lev);
 
@@ -363,6 +445,9 @@ export default function (component) {
       const badgeLine = document.createElement("div");
       badgeLine.className = "pp-code-badge";
       badgeLine.textContent = cellMeta.code_badge;
+      if (cellMeta.color) {
+        badgeLine.style.color = cellMeta.color;
+      }
 
       btn.appendChild(topRow);
       btn.appendChild(catLine);
@@ -381,6 +466,7 @@ export default function (component) {
   };
 }
 """
+
 
 _COUNT_MATRIX_CCV2 = st.components.v2.component(
     "pp_interactive_count_matrix_v2",
@@ -401,6 +487,7 @@ def interactive_count_matrix_ccv2(
 ) -> str:
     """
     Mount the bidirectional 4x3 MLB Count Matrix Custom Component v2 and return the active count (`"0-0"`..`"3-2"`).
+    Dual-Mode adaptive: Light Mode reinforces high-contrast borders, active cell glow, and crisp `#475569` tags.
     """
     safe_initial = initial_count if initial_count in VALID_COUNTS else "0-0"
     is_light = str(theme_mode).lower().startswith("light")
@@ -411,10 +498,13 @@ def interactive_count_matrix_ccv2(
         meta = CATEGORY_TELEMETRY_META.get(cat, CATEGORY_TELEMETRY_META["Fastball"])
         if c_key in PITCHER_AHEAD_COUNTS:
             lev_short = "AHEAD"
+            lev_color = "#059669" if is_light else "#10B981"
         elif c_key in PITCHER_BEHIND_COUNTS:
             lev_short = "BEHIND"
+            lev_color = "#D97706" if is_light else "#F59E0B"
         else:
             lev_short = "EVEN"
+            lev_color = "#475569" if is_light else "#94A3B8"
         cells_payload.append(
             {
                 "count_key": c_key,
@@ -423,6 +513,7 @@ def interactive_count_matrix_ccv2(
                 "shape": meta["shape"],
                 "color": meta["light_hex"] if is_light else meta["dark_hex"],
                 "leverage_short": lev_short,
+                "leverage_color": lev_color,
             }
         )
 
@@ -439,6 +530,7 @@ def interactive_count_matrix_ccv2(
             "cells": cells_payload,
             "selected_count": current_selected,
             "accent_hex": accent_hex,
+            "is_light": is_light,
         },
         default={"selected_count": safe_initial},
         key=key,

@@ -62,9 +62,11 @@ def test_dual_mode_css_defaults_to_dark_broadcast_and_supports_light_editorial()
     assert "--PP-BG" in dark_css.upper()
     assert "TABULAR-NUMS" in dark_css.upper()
 
-    assert "#F8FAFC" in light_css.upper()
-    assert "#FFFFFF" in light_css.upper()
+    assert "#E6ECF2" in light_css.upper()
+    assert "#F1F5F9" in light_css.upper()
     assert "#0F172A" in light_css.upper()
+    assert "STEXPANDER" in light_css.upper()
+    assert "PP-EDITORIAL-CARD" in light_css.upper()
 
 
 def test_analytical_components_are_free_of_decorative_ai_emojis() -> None:
@@ -175,3 +177,28 @@ def test_ccv2_count_inspection_detail_and_component_mount() -> None:
     combined = "\n".join(m.value for m in at.markdown)
     assert "SELECTED_COUNT=1-2" in combined
     assert "SELECTED_ZONE=14" in combined
+
+
+def test_light_mode_count_matrix_and_strike_zone_contrast() -> None:
+    """Verify Light Mode contrast improvements: AHEAD/BEHIND/EVEN tags, #94A3B8 1.5px grid, #D97706 reticle."""
+    from pitch_predictor.ui_components import render_strike_zone_svg
+    from pitch_predictor.scout_analytics import render_count_matrix_html
+
+    # 1. Strike Zone SVG
+    sz_light = render_strike_zone_svg(selected_zone=5, prev_category="Fastball", theme_mode="light")
+    assert "#94A3B8" in sz_light
+    assert 'stroke-width="1.5"' in sz_light
+    assert "#D97706" in sz_light  # Stadium amber target reticle
+
+    sz_dark = render_strike_zone_svg(selected_zone=5, prev_category="Fastball", theme_mode="dark")
+    assert "#D97706" in sz_dark
+
+    # 2. 4x3 Tactical Count Matrix HTML
+    p_map = {f"{b}-{s}": ("Breaking Ball" if s == 2 else "Fastball") for b in range(4) for s in range(3)}
+    p_map["2-0"] = "Offspeed"
+    matrix_light = render_count_matrix_html(p_map, theme_mode="light", active_count="0-2")
+    assert "AHEAD" in matrix_light
+    assert "BEHIND" in matrix_light
+    assert "EVEN" in matrix_light
+    assert "#475569" in matrix_light  # Crisp --pp-muted in Light Mode
+    assert "box-shadow:" in matrix_light
