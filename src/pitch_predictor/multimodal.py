@@ -1,15 +1,9 @@
 """
-Multimodal Fusion Module (Passo 5) for MLB Pitch Predictor.
+Multimodal Fusion Module for MLB Pitch Predictor.
 
 Fuses pre-pitch contextual Statcast features with pre-release biomechanical pose
-features to build a unified multimodal pitch classification pipeline.
-
-Key Capabilities:
-1. Deterministic join on composite primary key (game_pk, at_bat_number, pitch_number).
-2. Missing biomechanics imputation with zero-leakage fallback indicators.
-3. MultimodalPitchClassifier uniting situational context and physical tipping signals.
-4. Ablation study framework quantifying multimodal performance lift over unimodal baselines.
-5. Modality comparison and tactical vs tipping alignment diagnosis.
+features (5 core + optional 10 extended 3D/temporal features) to build a unified
+multimodal pitch classification pipeline.
 """
 
 from __future__ import annotations
@@ -56,7 +50,7 @@ STATCAST_NUMERIC_COLS: list[str] = [
 
 STATCAST_FEATURE_COLS: list[str] = STATCAST_CATEGORICAL_COLS + STATCAST_NUMERIC_COLS
 
-# Biomechanical Pose Features
+# Biomechanical Pose Features (Core 5 + Extended 10)
 BIOMECHANICAL_FEATURE_COLS: list[str] = [
     "arm_slot_angle",
     "release_height",
@@ -65,8 +59,17 @@ BIOMECHANICAL_FEATURE_COLS: list[str] = [
     "stride_extension",
 ]
 
-# Combined Multimodal Feature Set
+EXTENDED_BIOMECHANICAL_FEATURE_COLS: list[str] = BIOMECHANICAL_FEATURE_COLS + [
+    "glove_tuck_distance",
+    "hip_shoulder_separation",
+    "arm_angular_velocity",
+    "delivery_tempo_s",
+    "forward_release_extension",
+]
+
+# Combined Multimodal Feature Set (Core contract used by MLflow Serving PyFunc)
 MULTIMODAL_FEATURE_COLS: list[str] = STATCAST_FEATURE_COLS + BIOMECHANICAL_FEATURE_COLS
+EXTENDED_MULTIMODAL_FEATURE_COLS: list[str] = STATCAST_FEATURE_COLS + EXTENDED_BIOMECHANICAL_FEATURE_COLS
 
 # League / Pitcher Fallback Medians for Missing Biomechanics
 DEFAULT_BIOMECHANICS_IMPUTATION: dict[str, float] = {
@@ -75,6 +78,11 @@ DEFAULT_BIOMECHANICS_IMPUTATION: dict[str, float] = {
     "elbow_flexion_angle": 135.0,
     "trunk_tilt": 11.5,
     "stride_extension": 1.40,
+    "glove_tuck_distance": 0.25,
+    "hip_shoulder_separation": 38.0,
+    "arm_angular_velocity": 760.0,
+    "delivery_tempo_s": 0.57,
+    "forward_release_extension": 0.61,
 }
 
 
@@ -85,19 +93,8 @@ def create_multimodal_dataset(
     fill_missing_biomechanics: bool = True,
 ) -> pd.DataFrame:
     """
-    Join Statcast and Biomechanical dataframes on composite primary key.
-
-    Parameters:
-    -----------
-    statcast_df: DataFrame with Silver Statcast features.
-    biomechanics_df: DataFrame with extracted pose features.
-    how: 'inner' or 'left' join type.
-    fill_missing_biomechanics: If True on left join, fills NaN biomechanics with
-                               baseline defaults and adds 'has_biomechanics' flag.
-
-    Returns:
-    --------
-    Merged DataFrame with multimodal features.
+    Join Statcast and Biomechanical dataframes on composite primary key,
+    preserving both core and extended 3D/temporal biomechanical columns.
     """
     missing_statcast_keys = [k for k in MULTIMODAL_JOIN_KEYS if k not in statcast_df.columns]
     if missing_statcast_keys:
@@ -107,9 +104,8 @@ def create_multimodal_dataset(
     if missing_bio_keys:
         raise ValueError(f"Biomechanics DataFrame missing join keys: {missing_bio_keys}")
 
-    # Deduplicate right dataframe on join keys before merging
-    bio_cols_to_keep = [k for k in MULTIMODAL_JOIN_KEYS] + [
-        c for c in BIOMECHANICAL_FEATURE_COLS if c in biomechanics_df.columns
+    bio_cols_to_keep = list(MULTIMODAL_JOIN_KEYS) + [
+        c for c in EXTENDED_BIOMECHANICAL_FEATURE_COLS if c in biomechanics_df.columns
     ]
     bio_clean = biomechanics_df[bio_cols_to_keep].drop_duplicates(subset=MULTIMODAL_JOIN_KEYS)
 
@@ -135,11 +131,6 @@ def generate_synthetic_multimodal_data(
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Generate synthetic paired Statcast and Biomechanics datasets for testing and calibration.
-    Synthesizes both count/prior tactical patterns and physical tipping mechanics.
-
-    Returns:
-    --------
-    (statcast_df, biomechanics_df, full_merged_df)
     """
     rng = np.random.default_rng(random_state)
     records_statcast = []
@@ -158,6 +149,11 @@ def generate_synthetic_multimodal_data(
             "elbow": (146.0, 4.0),
             "trunk": (12.0, 1.5),
             "stride": (1.45, 0.06),
+            "glove_tuck": (0.21, 0.02),
+            "hip_sep": (42.0, 3.0),
+            "arm_vel": (830.0, 40.0),
+            "tempo": (0.55, 0.03),
+            "fwd_ext": (0.64, 0.03),
         },
         "Breaking Ball": {
             "pitch_type": "ST",
@@ -171,6 +167,11 @@ def generate_synthetic_multimodal_data(
             "elbow": (98.0, 4.0),
             "trunk": (10.0, 1.5),
             "stride": (1.35, 0.06),
+            "glove_tuck": (0.33, 0.025),
+            "hip_sep": (33.0, 3.0),
+            "arm_vel": (740.0, 40.0),
+            "tempo": (0.58, 0.03),
+            "fwd_ext": (0.57, 0.03),
         },
         "Offspeed": {
             "pitch_type": "FS",
@@ -184,6 +185,11 @@ def generate_synthetic_multimodal_data(
             "elbow": (105.0, 4.0),
             "trunk": (12.0, 1.5),
             "stride": (1.40, 0.06),
+            "glove_tuck": (0.26, 0.02),
+            "hip_sep": (38.0, 3.0),
+            "arm_vel": (685.0, 40.0),
+            "tempo": (0.60, 0.03),
+            "fwd_ext": (0.60, 0.03),
         },
     }
 
@@ -229,6 +235,11 @@ def generate_synthetic_multimodal_data(
                 "elbow_flexion_angle": float(rng.normal(*cfg["elbow"])),
                 "trunk_tilt": float(rng.normal(*cfg["trunk"])),
                 "stride_extension": float(rng.normal(*cfg["stride"])),
+                "glove_tuck_distance": float(rng.normal(*cfg["glove_tuck"])),
+                "hip_shoulder_separation": float(rng.normal(*cfg["hip_sep"])),
+                "arm_angular_velocity": float(rng.normal(*cfg["arm_vel"])),
+                "delivery_tempo_s": float(rng.normal(*cfg["tempo"])),
+                "forward_release_extension": float(rng.normal(*cfg["fwd_ext"])),
             }
             records_bio.append(bio_record)
 
@@ -250,27 +261,45 @@ def generate_synthetic_multimodal_data(
 class MultimodalPitchClassifier:
     """
     Multimodal Pitch Predictor fusing Statcast game context with release biomechanics.
-
-    Offers:
-    - Independent pipelines: statcast_pipeline, vision_pipeline, and multimodal_pipeline.
-    - Ablation study evaluation measuring information gain / Lift.
-    - Situational modality comparison detecting pitch tipping vs tactical alignment.
+    Supports both the 5-feature MLflow Serving contract (default) and the 10-feature
+    extended 3D/temporal biomechanical feature set (`use_extended_biomechanics=True`).
     """
 
-    def __init__(self, n_estimators: int = 40, max_depth: int = 8, random_state: int = 42) -> None:
+    def __init__(
+        self,
+        n_estimators: int = 40,
+        max_depth: int = 8,
+        random_state: int = 42,
+        use_extended_biomechanics: bool = False,
+    ) -> None:
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.random_state = random_state
+        self.use_extended_biomechanics = use_extended_biomechanics
         self.classes_: list[str] = PITCH_CATEGORIES
+
+        self.bio_feature_cols_: list[str] = (
+            list(EXTENDED_BIOMECHANICAL_FEATURE_COLS)
+            if use_extended_biomechanics
+            else list(BIOMECHANICAL_FEATURE_COLS)
+        )
+        self.multimodal_feature_cols_: list[str] = STATCAST_FEATURE_COLS + self.bio_feature_cols_
 
         self.statcast_pipeline: Pipeline | None = None
         self.vision_pipeline: Pipeline | None = None
         self.multimodal_pipeline: Pipeline | None = None
         self.is_fitted: bool = False
 
+    def _active_bio_cols(self) -> list[str]:
+        return getattr(self, "bio_feature_cols_", BIOMECHANICAL_FEATURE_COLS)
+
+    def _active_multi_cols(self) -> list[str]:
+        return getattr(self, "multimodal_feature_cols_", MULTIMODAL_FEATURE_COLS)
+
     def _build_pipelines(self) -> None:
         """Construct scikit-learn pipelines with appropriate transformers."""
-        # 1. Statcast Preprocessor
+        bio_cols = self._active_bio_cols()
+
         statcast_transformer = ColumnTransformer(
             transformers=[
                 (
@@ -295,10 +324,9 @@ class MultimodalPitchClassifier:
             ]
         )
 
-        # 2. Vision Preprocessor
         vision_transformer = ColumnTransformer(
             transformers=[
-                ("num", StandardScaler(), BIOMECHANICAL_FEATURE_COLS),
+                ("num", StandardScaler(), bio_cols),
             ]
         )
         self.vision_pipeline = Pipeline(
@@ -315,7 +343,6 @@ class MultimodalPitchClassifier:
             ]
         )
 
-        # 3. Multimodal Preprocessor
         multimodal_transformer = ColumnTransformer(
             transformers=[
                 (
@@ -324,7 +351,7 @@ class MultimodalPitchClassifier:
                     STATCAST_CATEGORICAL_COLS,
                 ),
                 ("num_statcast", StandardScaler(), STATCAST_NUMERIC_COLS),
-                ("num_bio", StandardScaler(), BIOMECHANICAL_FEATURE_COLS),
+                ("num_bio", StandardScaler(), bio_cols),
             ]
         )
         self.multimodal_pipeline = Pipeline(
@@ -342,29 +369,28 @@ class MultimodalPitchClassifier:
         )
 
     def fit(self, df: pd.DataFrame, target_col: str = TARGET_COL) -> MultimodalPitchClassifier:
-        """
-        Fit all three internal pipelines (Statcast, Vision, and Multimodal) on a joined DataFrame.
-        """
+        """Fit all three internal pipelines (Statcast, Vision, and Multimodal) on a joined DataFrame."""
         if target_col not in df.columns:
             raise ValueError(f"Target column '{target_col}' not found in DataFrame.")
 
+        self.bio_feature_cols_ = (
+            list(EXTENDED_BIOMECHANICAL_FEATURE_COLS)
+            if self.use_extended_biomechanics
+            else list(BIOMECHANICAL_FEATURE_COLS)
+        )
+        self.multimodal_feature_cols_ = STATCAST_FEATURE_COLS + self.bio_feature_cols_
         self._build_pipelines()
         y = df[target_col].values
 
-        # Ensure all columns exist or impute missing
-        df_clean = df.copy()
-        for col in STATCAST_FEATURE_COLS + BIOMECHANICAL_FEATURE_COLS:
-            if col not in df_clean.columns:
-                df_clean[col] = DEFAULT_BIOMECHANICS_IMPUTATION.get(col, 0)
+        df_clean = self._prepare_eval_df(df)
 
-        # Fit sub-pipelines
         assert self.statcast_pipeline is not None
         assert self.vision_pipeline is not None
         assert self.multimodal_pipeline is not None
 
         self.statcast_pipeline.fit(df_clean[STATCAST_FEATURE_COLS], y)
-        self.vision_pipeline.fit(df_clean[BIOMECHANICAL_FEATURE_COLS], y)
-        self.multimodal_pipeline.fit(df_clean[MULTIMODAL_FEATURE_COLS], y)
+        self.vision_pipeline.fit(df_clean[self._active_bio_cols()], y)
+        self.multimodal_pipeline.fit(df_clean[self._active_multi_cols()], y)
 
         self.is_fitted = True
         return self
@@ -375,7 +401,7 @@ class MultimodalPitchClassifier:
             raise ValueError("Model is not fitted. Call fit() before predict().")
 
         X_eval = self._prepare_eval_df(X)
-        return self.multimodal_pipeline.predict(X_eval[MULTIMODAL_FEATURE_COLS])
+        return self.multimodal_pipeline.predict(X_eval[self._active_multi_cols()])
 
     def predict_proba(self, X: pd.DataFrame) -> list[dict[str, float]]:
         """Predict pitch category probabilities using the fused Multimodal pipeline."""
@@ -383,7 +409,7 @@ class MultimodalPitchClassifier:
             raise ValueError("Model is not fitted. Call fit() before predict_proba().")
 
         X_eval = self._prepare_eval_df(X)
-        probs_matrix = self.multimodal_pipeline.predict_proba(X_eval[MULTIMODAL_FEATURE_COLS])
+        probs_matrix = self.multimodal_pipeline.predict_proba(X_eval[self._active_multi_cols()])
         classes = self.multimodal_pipeline.classes_
 
         results = []
@@ -398,13 +424,13 @@ class MultimodalPitchClassifier:
         test_df: pd.DataFrame,
         target_col: str = TARGET_COL,
     ) -> dict[str, Any]:
-        """
-        Fit and evaluate all three modalities side-by-side to compute performance lift.
-        """
+        """Fit and evaluate all three modalities side-by-side to compute performance lift."""
         self.fit(train_df, target_col=target_col)
         y_test = test_df[target_col].values
 
         test_clean = self._prepare_eval_df(test_df)
+        bio_cols = self._active_bio_cols()
+        multi_cols = self._active_multi_cols()
 
         assert self.statcast_pipeline is not None
         assert self.vision_pipeline is not None
@@ -413,11 +439,11 @@ class MultimodalPitchClassifier:
         pred_sc = self.statcast_pipeline.predict(test_clean[STATCAST_FEATURE_COLS])
         prob_sc = self.statcast_pipeline.predict_proba(test_clean[STATCAST_FEATURE_COLS])
 
-        pred_vis = self.vision_pipeline.predict(test_clean[BIOMECHANICAL_FEATURE_COLS])
-        prob_vis = self.vision_pipeline.predict_proba(test_clean[BIOMECHANICAL_FEATURE_COLS])
+        pred_vis = self.vision_pipeline.predict(test_clean[bio_cols])
+        prob_vis = self.vision_pipeline.predict_proba(test_clean[bio_cols])
 
-        pred_multi = self.multimodal_pipeline.predict(test_clean[MULTIMODAL_FEATURE_COLS])
-        prob_multi = self.multimodal_pipeline.predict_proba(test_clean[MULTIMODAL_FEATURE_COLS])
+        pred_multi = self.multimodal_pipeline.predict(test_clean[multi_cols])
+        prob_multi = self.multimodal_pipeline.predict_proba(test_clean[multi_cols])
 
         def _metrics(y_true, y_pred, y_prob, classes):
             return {
@@ -430,11 +456,10 @@ class MultimodalPitchClassifier:
         vis_metrics = _metrics(y_test, pred_vis, prob_vis, self.vision_pipeline.classes_)
         multi_metrics = _metrics(y_test, pred_multi, prob_multi, self.multimodal_pipeline.classes_)
 
-        # Lift calculation over Statcast-only baseline
         lift = {
             "lift_accuracy": multi_metrics["accuracy"] - sc_metrics["accuracy"],
             "lift_f1_macro": multi_metrics["f1_macro"] - sc_metrics["f1_macro"],
-            "lift_log_loss": sc_metrics["log_loss"] - multi_metrics["log_loss"],  # lower log_loss is better
+            "lift_log_loss": sc_metrics["log_loss"] - multi_metrics["log_loss"],
         }
 
         return {
@@ -445,10 +470,7 @@ class MultimodalPitchClassifier:
         }
 
     def compare_modalities(self, row_or_df: pd.Series | pd.DataFrame | dict) -> dict[str, Any]:
-        """
-        Compare predictions across Statcast, Vision, and Multimodal for a single pitch.
-        Identifies whether mechanics corroborate tactical context or signal a pitch tipping override.
-        """
+        """Compare predictions across Statcast, Vision, and Multimodal for a single pitch."""
         if not self.is_fitted or self.multimodal_pipeline is None:
             raise ValueError("Model is not fitted. Call fit() before compare_modalities().")
 
@@ -458,6 +480,8 @@ class MultimodalPitchClassifier:
             df = row_or_df.iloc[[0]].copy()
 
         df_eval = self._prepare_eval_df(df)
+        bio_cols = self._active_bio_cols()
+        multi_cols = self._active_multi_cols()
 
         assert self.statcast_pipeline is not None
         assert self.vision_pipeline is not None
@@ -472,42 +496,41 @@ class MultimodalPitchClassifier:
             )
         }
 
-        vis_pred = str(self.vision_pipeline.predict(df_eval[BIOMECHANICAL_FEATURE_COLS])[0])
+        vis_pred = str(self.vision_pipeline.predict(df_eval[bio_cols])[0])
         vis_probs = {
             cls: float(p)
             for cls, p in zip(
                 self.vision_pipeline.classes_,
-                self.vision_pipeline.predict_proba(df_eval[BIOMECHANICAL_FEATURE_COLS])[0],
+                self.vision_pipeline.predict_proba(df_eval[bio_cols])[0],
             )
         }
 
-        multi_pred = str(self.multimodal_pipeline.predict(df_eval[MULTIMODAL_FEATURE_COLS])[0])
+        multi_pred = str(self.multimodal_pipeline.predict(df_eval[multi_cols])[0])
         multi_probs = {
             cls: float(p)
             for cls, p in zip(
                 self.multimodal_pipeline.classes_,
-                self.multimodal_pipeline.predict_proba(df_eval[MULTIMODAL_FEATURE_COLS])[0],
+                self.multimodal_pipeline.predict_proba(df_eval[multi_cols])[0],
             )
         }
 
-        # Status Diagnosis
         if sc_pred == vis_pred:
             alignment = "AGREEMENT"
             summary = (
-                f"✅ **Alinhamento Tático & Biomecânico**: O contexto situacional e os gestos físicos "
+                f"**Alinhamento Tático & Biomecânico**: O contexto situacional e os sinais físicos "
                 f"do arremessador concordam plenamente em **{multi_pred}** ({multi_probs.get(multi_pred, 0):.1%} de confiança)."
             )
         elif multi_pred == vis_pred:
             alignment = "TIPPING_OVERRIDE"
             summary = (
-                f"⚡ **Pitch Tipping Detectado**: Embora a contagem e os dados contextuais apontassem para "
+                f"**Pitch Tipping Detectado**: Embora a contagem e os dados contextuais apontassem para "
                 f"**{sc_pred}**, a postura física na fase de soltura denunciou **{multi_pred}** "
-                f"({vis_probs.get(multi_pred, 0):.1%} na visão). A fusão multimodal priorizou o gesto biomecânico."
+                f"({vis_probs.get(multi_pred, 0):.1%} na visão). A fusão multimodal priorizou o sinal biomecânico."
             )
         else:
             alignment = "CONTEXT_REINFORCED"
             summary = (
-                f"🎯 **Contexto Tático Prevalece**: A mecânica corporal sugeriu {vis_pred}, mas a alavancagem "
+                f"**Contexto Tático Prevalece**: A mecânica corporal sugeriu {vis_pred}, mas a alavancagem "
                 f"da contagem e as tendências históricas reforçaram a seleção de **{multi_pred}**."
             )
 
@@ -523,11 +546,13 @@ class MultimodalPitchClassifier:
         }
 
     def _prepare_eval_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Ensure all required features exist and are correctly formatted."""
+        """Ensure all required features exist and are imputed cleanly."""
         clean = df.copy()
-        for col in STATCAST_FEATURE_COLS + BIOMECHANICAL_FEATURE_COLS:
+        for col in STATCAST_FEATURE_COLS + self._active_bio_cols():
             if col not in clean.columns:
                 clean[col] = DEFAULT_BIOMECHANICS_IMPUTATION.get(col, 0.0)
+            elif col in DEFAULT_BIOMECHANICS_IMPUTATION and clean[col].isna().any():
+                clean[col] = clean[col].fillna(DEFAULT_BIOMECHANICS_IMPUTATION[col])
         return clean
 
     def save(self, filepath: str | Path) -> None:

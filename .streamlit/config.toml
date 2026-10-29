@@ -1,0 +1,42 @@
+[theme]
+base = "dark"
+baseRadius = "6px"
+buttonRadius = "6px"
+showWidgetBorder = true
+showSidebarBorder = true
+linkUnderline = false
+font = "Space Grotesk:https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+headingFont = "Barlow Condensed:https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+
+[theme.dark]
+primaryColor = "#38BDF8"
+backgroundColor = "#0A0B0E"
+secondaryBackgroundColor = "#12141A"
+textColor = "#F1F5F9"
+borderColor = "#222631"
+codeBackgroundColor = "#12141A"
+chartCategoricalColors = ["#EF4444", "#3B82F6", "#10B981", "#F59E0B", "#94A3B8"]
+
+[theme.dark.sidebar]
+backgroundColor = "#08090C"
+secondaryBackgroundColor = "#12141A"
+textColor = "#F1F5F9"
+borderColor = "#1E222D"
+primaryColor = "#38BDF8"
+
+[theme.light]
+primaryColor = "#0369A1"
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#0F172A"
+borderColor = "#CBD5E1"
+codeBackgroundColor = "#F1F5F9"
+chartCategoricalColors = ["#DC2626", "#2563EB", "#059669", "#D97706", "#475569"]
+
+[theme.light.sidebar]
+backgroundColor = "#F1F5F9"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#0F172A"
+borderColor = "#CBD5E1"
+primaryColor = "#0369A1"

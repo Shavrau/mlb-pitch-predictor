@@ -272,22 +272,23 @@ def render_count_matrix_html(predictions_by_count: dict[str, str]) -> str:
     """
     Render the 4x3 MLB Tactical Count Matrix HTML (Balls 0..3 rows x Strikes 0..2 columns).
 
-    Strictly CommonMark-safe (single line, no 4-space indentation, no HTML comments).
+    Strictly CommonMark-safe (single line, no 4-space indentation, no HTML comments)
+    and Dual-Mode adaptive via `--pp-*` CSS custom properties.
     """
     header_cells = [
-        '<div style="background:#0F172A;border:1px solid #26354A;border-radius:8px;padding:8px;text-align:center;font-size:11px;font-weight:800;color:#94A3B8;">BALLS \\ STRIKES</div>',
-        '<div style="background:#0F172A;border:1px solid #26354A;border-radius:8px;padding:8px;text-align:center;font-size:12px;font-weight:800;color:#38BDF8;">0 STRIKES</div>',
-        '<div style="background:#0F172A;border:1px solid #26354A;border-radius:8px;padding:8px;text-align:center;font-size:12px;font-weight:800;color:#38BDF8;">1 STRIKE</div>',
-        '<div style="background:#0F172A;border:1px solid #26354A;border-radius:8px;padding:8px;text-align:center;font-size:12px;font-weight:800;color:#F59E0B;">2 STRIKES (FINALIZAÇÃO)</div>',
+        '<div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:10.5px;font-weight:700;letter-spacing:0.04em;color:var(--pp-muted,#94A3B8);">BALLS \\ STRIKES</div>',
+        '<div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--pp-text,#F1F5F9);">0 STRIKES</div>',
+        '<div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--pp-text,#F1F5F9);">1 STRIKE</div>',
+        '<div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-radius:6px;padding:8px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;letter-spacing:0.04em;color:#F59E0B;">2 STRIKES [PUTAWAY]</div>',
     ]
 
     grid_items: list[str] = list(header_cells)
 
     for balls in range(4):
         grid_items.append(
-            f'<div style="background:#0F172A;border:1px solid #26354A;border-radius:8px;padding:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;">'
-            f'<span style="font-size:13px;font-weight:900;color:#F8FAFC;">{balls} BALL{"S" if balls != 1 else ""}</span>'
-            f'<span style="font-size:10px;color:#64748B;font-weight:700;">LINHA {balls}-X</span>'
+            f'<div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-radius:6px;padding:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:\'JetBrains Mono\',monospace;font-variant-numeric:tabular-nums;">'
+            f'<span style="font-size:12.5px;font-weight:800;color:var(--pp-text,#F1F5F9);">{balls} BALL{"S" if balls != 1 else ""}</span>'
+            f'<span style="font-size:9.5px;color:var(--pp-muted,#94A3B8);font-weight:700;">LINHA {balls}-X</span>'
             f"</div>"
         )
         for strikes in range(3):
@@ -297,9 +298,9 @@ def render_count_matrix_html(predictions_by_count: dict[str, str]) -> str:
                 pred_cat, PITCH_CATEGORY_STYLES["Fastball"]
             )
             primary = style["primary"]
-            secondary = style["secondary"]
             bg_tint = style["bg_tint"]
             icon = style["icon"]
+            code_badge = style.get("code_badge", style["arsenal"].split("•")[0].strip())
 
             if count_key in PITCHER_AHEAD_COUNTS:
                 lev_label = "Pitcher Ahead"
@@ -309,23 +310,23 @@ def render_count_matrix_html(predictions_by_count: dict[str, str]) -> str:
                 lev_color = "#F59E0B"
             else:
                 lev_label = "Neutral"
-                lev_color = "#94A3B8"
+                lev_color = "var(--pp-muted,#94A3B8)"
 
             cell_html = (
-                f'<div style="background:{bg_tint};border:2px solid {primary};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 4px 12px rgba(0,0,0,0.25);">'
+                f'<div style="background:{bg_tint};border:1px solid var(--pp-border,#222631);border-left:3px solid {primary};border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;">'
                 f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
-                f'<span style="background:#0B0F19;color:#F8FAFC;font-size:13px;font-weight:900;padding:2px 8px;border-radius:5px;border:1px solid {secondary};">{count_key}</span>'
-                f'<span style="font-size:10px;font-weight:700;color:{lev_color};text-transform:uppercase;">{lev_label}</span>'
+                f'<span style="background:var(--pp-bg,#0A0B0E);color:var(--pp-text,#F1F5F9);font-family:\'JetBrains Mono\',monospace;font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:800;padding:2px 7px;border-radius:4px;border:1px solid var(--pp-border,#222631);">{count_key}</span>'
+                f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9.5px;font-weight:700;color:{lev_color};text-transform:uppercase;letter-spacing:0.04em;">{lev_label}</span>'
                 f"</div>"
-                f'<div style="font-size:15px;font-weight:900;color:#F8FAFC;margin:2px 0;">{icon} {pred_cat}</div>'
-                f'<div style="font-size:10.5px;color:{primary};font-weight:700;">{style["arsenal"].split("•")[0].strip()}</div>'
+                f'<div style="font-size:14px;font-weight:800;color:var(--pp-text,#F1F5F9);margin:2px 0;">{icon} {pred_cat}</div>'
+                f'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:{primary};font-weight:700;letter-spacing:0.04em;">{code_badge}</div>'
                 f"</div>"
             )
             grid_items.append(cell_html)
 
     raw_html = f"""
-    <div style="background:#151E2E;border:1px solid #26354A;border-radius:12px;padding:14px;margin:8px 0;">
-      <div style="display:grid;grid-template-columns:110px repeat(3,1fr);gap:10px;align-items:stretch;">
+    <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-radius:8px;padding:12px;margin:6px 0;">
+      <div style="display:grid;grid-template-columns:108px repeat(3,1fr);gap:8px;align-items:stretch;">
         {"".join(grid_items)}
       </div>
     </div>
@@ -355,11 +356,11 @@ def render_radar_chart_svg(
 ) -> str:
     """
     Render a 3-axis SVG Radar Chart comparing:
-    1. MLB League Average (`#64748B` dashed)
+    1. MLB League Average (`#94A3B8` dashed)
     2. Pitcher Historical Prior (`#F59E0B` amber)
-    3. AI Situational Matrix Call (`#38BDF8` neon cyan)
+    3. AI Situational Matrix Call (`#38BDF8` sky blue)
 
-    Strictly CommonMark-safe via `_compact_html`.
+    Strictly CommonMark-safe via `_compact_html` and XML-valid.
     """
     l_fb, l_bb, l_os = _extract_dist_triplet(league_dist)
     p_fb, p_bb, p_os = _extract_dist_triplet(pitcher_dist)
@@ -367,11 +368,9 @@ def render_radar_chart_svg(
 
     cx, cy = 190.0, 142.0
     max_r = 92.0
-    # Angles in radians: Top (-90 deg), Bottom-Right (+30 deg), Bottom-Left (+150 deg)
     angles = (-math.pi / 2.0, math.pi / 6.0, 5.0 * math.pi / 6.0)
 
     def _pt(val: float, angle: float, scale: float = 1.0) -> str:
-        # Scale 0..1 value onto radar radius (using 0.85 as full outer ring so 65%-80% stands out clearly)
         norm_r = min(1.0, max(0.08, val / 0.80)) * max_r * scale
         x = cx + norm_r * math.cos(angle)
         y = cy + norm_r * math.sin(angle)
@@ -401,26 +400,26 @@ def render_radar_chart_svg(
 
     raw_svg = f"""
     <div style="display:flex;justify-content:center;align-items:center;margin:6px 0;">
-      <svg viewBox="0 0 380 285" width="100%" style="max-width:390px;background:#0B0F19;border-radius:12px;border:1px solid #26354A;padding:8px;display:block;">
-        <polygon points="{_ring_points(1.0)}" fill="#0F172A" stroke="#26354A" stroke-width="1.5" />
-        <polygon points="{_ring_points(0.75)}" fill="none" stroke="#1E293B" stroke-width="1" stroke-dasharray="3,3" />
-        <polygon points="{_ring_points(0.50)}" fill="none" stroke="#1E293B" stroke-width="1" stroke-dasharray="3,3" />
-        <polygon points="{_ring_points(0.25)}" fill="none" stroke="#1E293B" stroke-width="1" stroke-dasharray="3,3" />
-        <line x1="{cx}" y1="{cy}" x2="{top_x:.1f}" y2="{top_y:.1f}" stroke="#334155" stroke-width="1.2" />
-        <line x1="{cx}" y1="{cy}" x2="{br_x:.1f}" y2="{br_y:.1f}" stroke="#334155" stroke-width="1.2" />
-        <line x1="{cx}" y1="{cy}" x2="{bl_x:.1f}" y2="{bl_y:.1f}" stroke="#334155" stroke-width="1.2" />
-        <polygon points="{league_pts}" fill="rgba(148,163,184,0.12)" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4,3" />
-        <polygon points="{pitcher_pts}" fill="rgba(245,158,11,0.18)" stroke="#F59E0B" stroke-width="2.4" />
-        <polygon points="{model_pts}" fill="rgba(56,189,248,0.26)" stroke="#38BDF8" stroke-width="2.8" />
-        <text x="{cx}" y="24" text-anchor="middle" fill="#EF4444" font-size="11.5" font-weight="800" font-family="sans-serif">⚡ Fastball ({m_fb * 100:.0f}%)</text>
-        <text x="312" y="212" text-anchor="middle" fill="#3B82F6" font-size="11.5" font-weight="800" font-family="sans-serif">🌀 Breaking Ball ({m_bb * 100:.0f}%)</text>
-        <text x="68" y="212" text-anchor="middle" fill="#10B981" font-size="11.5" font-weight="800" font-family="sans-serif">🛑 Offspeed ({m_os * 100:.0f}%)</text>
+      <svg viewBox="0 0 380 285" width="100%" style="max-width:390px;background:var(--pp-surface,#12141A);border-radius:8px;border:1px solid var(--pp-border,#222631);padding:8px;display:block;">
+        <polygon points="{_ring_points(1.0)}" fill="none" stroke="#475569" stroke-opacity="0.45" stroke-width="1.4" />
+        <polygon points="{_ring_points(0.75)}" fill="none" stroke="#475569" stroke-opacity="0.32" stroke-width="1" stroke-dasharray="3,3" />
+        <polygon points="{_ring_points(0.50)}" fill="none" stroke="#475569" stroke-opacity="0.32" stroke-width="1" stroke-dasharray="3,3" />
+        <polygon points="{_ring_points(0.25)}" fill="none" stroke="#475569" stroke-opacity="0.32" stroke-width="1" stroke-dasharray="3,3" />
+        <line x1="{cx}" y1="{cy}" x2="{top_x:.1f}" y2="{top_y:.1f}" stroke="#64748B" stroke-opacity="0.45" stroke-width="1.1" />
+        <line x1="{cx}" y1="{cy}" x2="{br_x:.1f}" y2="{br_y:.1f}" stroke="#64748B" stroke-opacity="0.45" stroke-width="1.1" />
+        <line x1="{cx}" y1="{cy}" x2="{bl_x:.1f}" y2="{bl_y:.1f}" stroke="#64748B" stroke-opacity="0.45" stroke-width="1.1" />
+        <polygon points="{league_pts}" fill="rgba(148,163,184,0.12)" stroke="#94A3B8" stroke-width="1.8" stroke-dasharray="4,3" />
+        <polygon points="{pitcher_pts}" fill="rgba(245,158,11,0.16)" stroke="#F59E0B" stroke-width="2.2" />
+        <polygon points="{model_pts}" fill="rgba(56,189,248,0.22)" stroke="#38BDF8" stroke-width="2.6" />
+        <text x="{cx}" y="24" text-anchor="middle" fill="#EF4444" font-size="11" font-weight="800" font-family="JetBrains Mono, monospace">▲ Fastball ({m_fb * 100:.0f}%)</text>
+        <text x="312" y="212" text-anchor="middle" fill="#3B82F6" font-size="11" font-weight="800" font-family="JetBrains Mono, monospace">◆ Breaking Ball ({m_bb * 100:.0f}%)</text>
+        <text x="68" y="212" text-anchor="middle" fill="#10B981" font-size="11" font-weight="800" font-family="JetBrains Mono, monospace">● Offspeed ({m_os * 100:.0f}%)</text>
         <rect x="24" y="246" width="12" height="4" fill="#94A3B8" />
-        <text x="42" y="251" fill="#CBD5E1" font-size="10" font-weight="600" font-family="sans-serif">Média MLB</text>
+        <text x="42" y="251" fill="#94A3B8" font-size="10" font-weight="600" font-family="sans-serif">Média MLB</text>
         <rect x="122" y="246" width="12" height="4" fill="#F59E0B" />
         <text x="140" y="251" fill="#F59E0B" font-size="10" font-weight="700" font-family="sans-serif">Prior Pitcher</text>
         <rect x="234" y="246" width="12" height="4" fill="#38BDF8" />
-        <text x="252" y="251" fill="#38BDF8" font-size="10" font-weight="800" font-family="sans-serif">Matriz IA (12 Contagens)</text>
+        <text x="252" y="251" fill="#0284C7" font-size="10" font-weight="800" font-family="sans-serif">Matriz IA (12 Contagens)</text>
       </svg>
     </div>
     """
@@ -430,7 +429,7 @@ def render_radar_chart_svg(
 def render_game_plan_cards_html(game_plan: dict[str, dict[str, str]]) -> str:
     """
     Render the 3 Batter Tactical Approach Cards (`early_counts`, `hitter_counts`,
-    `two_strike_protection`) as a CommonMark-safe responsive HTML grid.
+    `two_strike_protection`) as a CommonMark-safe Dual-Mode responsive HTML grid.
     """
     cards_markup: list[str] = []
     section_order = ("early_counts", "hitter_counts", "two_strike_protection")
@@ -447,27 +446,31 @@ def render_game_plan_cards_html(game_plan: dict[str, dict[str, str]]) -> str:
         primary = style["primary"]
         bg_tint = style["bg_tint"]
         icon = style["icon"]
+        code_badge = style.get("code_badge", "")
 
         card_html = (
-            f'<div style="background:#151E2E;border:1px solid #26354A;border-top:4px solid {primary};border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;">'
+            f'<div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-top:3px solid {primary};border-radius:8px;padding:15px;display:flex;flex-direction:column;justify-content:space-between;">'
             f"<div>"
-            f'<div style="font-size:13px;font-weight:800;color:#F8FAFC;margin-bottom:8px;">{title}</div>'
-            f'<div style="background:{bg_tint};border-left:4px solid {primary};padding:8px 10px;border-radius:6px;margin-bottom:10px;">'
-            f'<span style="font-size:10px;color:#94A3B8;display:block;font-weight:700;text-transform:uppercase;">FOCO PRINCIPAL DO PLANO</span>'
-            f'<strong style="font-size:16px;color:#F8FAFC;">{icon} {dom_pitch}</strong>'
+            f'<div style="font-size:13px;font-weight:800;color:var(--pp-text,#F1F5F9);margin-bottom:8px;">{title}</div>'
+            f'<div style="background:{bg_tint};border-left:3px solid {primary};padding:8px 10px;border-radius:4px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">'
+            f"<div>"
+            f'<span style="font-size:9.5px;color:var(--pp-muted,#94A3B8);display:block;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">FOCO PRINCIPAL DO PLANO</span>'
+            f'<strong style="font-size:15px;color:var(--pp-text,#F1F5F9);">{icon} {dom_pitch}</strong>'
             f"</div>"
-            f'<div style="font-size:11px;color:#38BDF8;font-weight:700;margin-bottom:8px;">{covered}</div>'
-            f'<p style="font-size:12px;color:#CBD5E1;line-height:1.45;margin:0 0 10px 0;">{strategy}</p>'
+            f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;font-weight:700;color:{primary};">{code_badge}</span>'
             f"</div>"
-            f'<div style="background:#0B0F19;border:1px solid #334155;border-radius:8px;padding:8px 10px;font-size:11px;color:#F59E0B;">'
-            f"<strong>⚠️ Alerta de Disciplina:</strong> {warning}"
+            f'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10.5px;color:var(--pp-muted,#94A3B8);font-weight:700;margin-bottom:8px;">{covered}</div>'
+            f'<p style="font-size:12.5px;color:var(--pp-text,#F1F5F9);opacity:0.9;line-height:1.45;margin:0 0 10px 0;">{strategy}</p>'
+            f"</div>"
+            f'<div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3px solid #F59E0B;border-radius:4px;padding:8px 10px;font-size:11px;color:var(--pp-text,#F1F5F9);">'
+            f'<strong style="font-family:\'JetBrains Mono\',monospace;color:#F59E0B;letter-spacing:0.03em;">[DISCIPLINA DE PLACA]</strong> {warning}'
             f"</div>"
             f"</div>"
         )
         cards_markup.append(card_html)
 
     raw_html = f"""
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:8px 0;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:6px 0;">
       {"".join(cards_markup)}
     </div>
     """

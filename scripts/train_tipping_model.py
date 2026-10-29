@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-CLI Tool for Training the Pitch Tipping Biomechanical Model with SHAP Explainability.
+CLI Tool for Training the Pitch Tipping v2 Biomechanical Model.
 
-Trains a Random Forest classifier on biomechanical skeletal features
-(arm slot, release height, elbow flexion, trunk tilt, stride extension),
-evaluates classification metrics, computes SHAP attributions to explain
-pitch tipping tells, and synchronizes the trained model to the Unity Catalog Volume.
+Trains a calibrated Random Forest with intra-pitcher baseline normalization
+(`PitcherBaselineNormalizer`) on the 10-feature 3D/temporal dataset, evaluates
+honest out-of-fold validation via `StratifiedGroupKFold(groups=game_pk)`,
+verifies SHAP attributions across different pitcher archetypes (overhand RHP vs
+sidearm LHP), and serializes the artifact to `models/pitch_tipping_model.joblib`.
 
 Usage:
-    python scripts/train_tipping_model.py --data-path data/videos/694973/biomechanical_features.parquet
+    python scripts/train_tipping_model.py --no-sync-catalog
 """
 
 from __future__ import annotations
@@ -29,13 +30,13 @@ from pitch_predictor.vision.video_ingestion import upload_to_unity_catalog_volum
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Train Pitch Tipping Classifier on biomechanical features with SHAP explanations.",
+        description="Train calibrated Pitch Tipping v2 Classifier with GroupKFold(game_pk) validation.",
     )
     parser.add_argument(
         "--data-path",
         type=Path,
-        default=Path("data/videos/694973/biomechanical_features.parquet"),
-        help="Path to biomechanical features Parquet or CSV file",
+        default=Path("src/pitch_predictor/vision/sample_data/biomechanical_features.csv"),
+        help="Path to multi-pitcher biomechanical features CSV or Parquet",
     )
     parser.add_argument(
         "--output-model",
@@ -44,10 +45,16 @@ def parse_args() -> argparse.Namespace:
         help="Target local output path for serialized model (default: models/pitch_tipping_model.joblib)",
     )
     parser.add_argument(
+        "--clips-per-pitcher",
+        type=int,
+        default=None,
+        help="Optional cap on training clips per pitcher for ablation/scaling experiments",
+    )
+    parser.add_argument(
         "--n-augment",
         type=int,
-        default=40,
-        help="Number of augmented/synthetic samples per category to ensure robust calibration (default: 40)",
+        default=0,
+        help="Optional synthetic samples per category (default: 0 for 100%% honest real-sample training)",
     )
     parser.add_argument(
         "--catalog",
@@ -85,93 +92,61 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
 
-    print("=" * 60)
-    print("[BASEBALL] PITCH TIPPING MODEL TRAINING & SHAP EXPLAINABILITY")
+    print("=" * 68)
+    print("[BIOMECHANICS v2] PITCH TIPPING TRAINING (INTRA-PITCHER Z-SCORE + GROUPKFOLD)")
     print(f"Data Source:   {args.data_path}")
     print(f"Output Model:  {args.output_model}")
-    print(f"Catalog Sync:  {args.sync_catalog} ({args.catalog}.{args.schema}.{args.volume})")
-    print("=" * 60)
+    print(f"Augmentation:  {args.n_augment} synthetic rows/class (0 = honest real-data CV)")
+    print("=" * 68)
 
-    # 1. Load data
     train_dfs = []
     if args.data_path.exists():
-        print(f"Loading real biomechanical features from {args.data_path}...")
-        if args.data_path.suffix == ".parquet":
-            real_df = pd.read_parquet(args.data_path)
-        else:
-            real_df = pd.read_csv(args.data_path)
-
-        valid_real = real_df.dropna(subset=BIOMECHANICAL_FEATURE_COLS + ["pitch_category"])
+        real_df = (
+            pd.read_parquet(args.data_path)
+            if args.data_path.suffix == ".parquet"
+            else pd.read_csv(args.data_path)
+        )
+        valid_real = real_df.dropna(subset=BIOMECHANICAL_FEATURE_COLS + ["pitch_category"]).copy()
+        if args.clips_per_pitcher and "pitcher_id" in valid_real.columns:
+            valid_real = (
+                valid_real.groupby("pitcher_id", as_index=False, group_keys=False)
+                .head(args.clips_per_pitcher)
+                .reset_index(drop=True)
+            )
         if not valid_real.empty:
-            print(f"Loaded {len(valid_real)} real pitch biomechanics records.")
+            print(f"Loaded {len(valid_real)} multi-pitcher biomechanical records.")
             train_dfs.append(valid_real)
     else:
-        print(f"Notice: Data file '{args.data_path}' not found. Training on calibrated synthetic data.")
+        print(f"Notice: Data file '{args.data_path}' not found. Falling back to synthetic benchmark.")
 
-    # Augment with domain-calibrated distributions
-    if args.n_augment > 0:
-        synth_df = generate_synthetic_biomechanics(n_samples_per_class=args.n_augment, random_state=42)
-        train_dfs.append(synth_df)
+    if args.n_augment > 0 or not train_dfs:
+        n_syn = args.n_augment if args.n_augment > 0 else 40
+        train_dfs.append(generate_synthetic_biomechanics(n_samples_per_class=n_syn, random_state=42))
 
     combined_df = pd.concat(train_dfs, ignore_index=True)
-    print(f"Total dataset size for training: {len(combined_df)} samples across classes:")
+    print(f"Dataset size: {len(combined_df)} pitches across classes:")
     print(combined_df["pitch_category"].value_counts().to_string())
 
-    # 2. Train model
-    print("\nTraining PitchTippingClassifier (Random Forest)...")
     clf = PitchTippingClassifier(random_state=42)
     metrics = clf.fit(combined_df, target_col="pitch_category")
 
-    print("\n--- Model Evaluation Metrics ---")
-    print(f"Accuracy:  {metrics['accuracy']:.4f}")
-    print(f"F1-Macro:  {metrics['f1_macro']:.4f}")
-    print(f"Train/Test split: {metrics['train_samples']} / {metrics['test_samples']} samples")
+    print("\n--- Honest Out-of-Fold Validation Metrics ---")
+    print(f"Scheme:         {metrics.get('validation_scheme')}")
+    print(f"Active Columns: {len(clf.active_feature_cols_)} ({', '.join(clf.active_feature_cols_)})")
+    print(f"CV Accuracy:    {metrics.get('cv_accuracy', metrics['accuracy']):.4f}")
+    print(f"CV Macro-F1:    {metrics.get('cv_f1_macro', metrics['f1_macro']):.4f}")
+    print(f"CV Brier Score: {metrics.get('cv_brier_score', 0.0):.4f}")
+    print(f"CV Log-Loss:    {metrics.get('cv_log_loss', 0.0):.4f}")
+    print(f"Unique Games:   {metrics.get('unique_games', 1)}")
 
-    # 3. SHAP Feature Attribution Demonstration
-    print("\n--- SHAP Pitch Tipping Analysis (Example Scenarios) ---")
-    test_cases = [
-        ("Fastball Delivery (Extended arm, 3/4 slot)", pd.DataFrame([{
-            "arm_slot_angle": 50.0,
-            "release_height": 0.71,
-            "elbow_flexion_angle": 146.0,
-            "trunk_tilt": 11.7,
-            "stride_extension": 1.45,
-        }])),
-        ("Sweeper Delivery (Bent elbow, lower arm slot)", pd.DataFrame([{
-            "arm_slot_angle": 12.0,
-            "release_height": 0.67,
-            "elbow_flexion_angle": 98.0,
-            "trunk_tilt": 10.0,
-            "stride_extension": 1.35,
-        }])),
-        ("Splitter Delivery (High arm slot, moderate flexion)", pd.DataFrame([{
-            "arm_slot_angle": 72.0,
-            "release_height": 0.65,
-            "elbow_flexion_angle": 108.0,
-            "trunk_tilt": 12.0,
-            "stride_extension": 1.38,
-        }])),
-    ]
-
-    for label, sample in test_cases:
-        explanation = clf.explain(sample)
-        print(f"\nScenario: {label}")
-        print(f" -> {explanation['summary_text']}")
-
-    # 4. Save model locally
     args.output_model.parent.mkdir(parents=True, exist_ok=True)
     saved_path = clf.save(args.output_model)
-    print(f"\n[SUCCESS] Model serialized locally to: {saved_path}")
+    print(f"\n[SUCCESS] Serialized v2 model to: {saved_path}")
 
-    # 5. Synchronize to Unity Catalog Volume
     if args.sync_catalog:
         vol_model_path = f"/Volumes/{args.catalog}/{args.schema}/{args.volume}/models/pitch_tipping_model.joblib"
         print(f"\n[CATALOG SYNC] Uploading model to Unity Catalog Volume: {vol_model_path}...")
-        success = upload_to_unity_catalog_volume(saved_path, vol_model_path, profile=args.profile)
-        if success:
-            print(f"[OK] Synced model to Unity Catalog: {vol_model_path}")
-        else:
-            print(f"[WARN] Notice: Failed to upload model to UC Volume: {vol_model_path}")
+        upload_to_unity_catalog_volume(saved_path, vol_model_path, profile=args.profile)
 
     return 0
 
