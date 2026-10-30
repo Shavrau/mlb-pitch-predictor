@@ -91,18 +91,18 @@ def test_vision_lab_page_switching_pitcher_selection() -> None:
     pitcher_selector.select_index(3).run()
     assert not at.exception
 
-    all_info = "\n".join(i.value for i in at.info)
-    assert "Chris Sale" in all_info
-    assert "LHP" in all_info or "Canhoto" in all_info
+    all_content = "\n".join(i.value for i in at.info) + "\n" + "\n".join(m.value for m in at.markdown)
+    assert "Chris Sale" in all_content
+    assert "LHP" in all_content or "Canhoto" in all_content
 
     # Switch to Yoshinobu Yamamoto (index 4 - Dodgers)
     pitcher_selector = at.selectbox(key="vision_pitcher_selector")
     pitcher_selector.select_index(4).run()
     assert not at.exception
 
-    all_info = "\n".join(i.value for i in at.info)
-    assert "Yoshinobu Yamamoto" in all_info
-    assert "Los Angeles Dodgers" in all_info or "LAD" in all_info
+    all_content = "\n".join(i.value for i in at.info) + "\n" + "\n".join(m.value for m in at.markdown)
+    assert "Yoshinobu Yamamoto" in all_content
+    assert "Los Angeles Dodgers" in all_content or "LAD" in all_content
 
 
 def test_vision_lab_page_adaptive_z_score_tipping_threshold() -> None:

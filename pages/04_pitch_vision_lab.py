@@ -30,6 +30,7 @@ from pitch_predictor.scenarios import (
 )
 from pitch_predictor.ui_components import (
     PITCH_CATEGORY_STYLES,
+    _compact_html,
     get_custom_css,
     render_pitcher_photo_html,
     resolve_ui_theme_mode,
@@ -589,16 +590,31 @@ bio_record = matched_bio.iloc[0].to_dict()
 # Athlete Telemetry Strip (Photo + Official Franchise Strip + Structured Telemetry Summary)
 strip_photo_col, strip_meta_col = st.columns([0.28, 0.72], gap="medium")
 with strip_photo_col:
-    st.markdown(render_pitcher_photo_html(selected_pitcher_name, height_px=138), unsafe_allow_html=True)
+    st.markdown(
+        render_pitcher_photo_html(selected_pitcher_name, height_px=138, theme_mode=theme_mode),
+        unsafe_allow_html=True,
+    )
 
 with strip_meta_col:
     hand_label = "Destro" if p_throws == "R" else "Canhoto"
-    st.info(
-        f"**Atleta**: {pitcher_info['name']} (`{pitcher_info['team_abbr']} #{pitcher_info['jersey_number']}` • {pitcher_info['team']})  \n"
-        f"**Lateralidade & Slot**: `{p_throws}HP` ({hand_label}) • Slot `{pitcher_info.get('arm_slot_type', '3/4')}` • Arsenal: {pitcher_info['signature_arsenal']}  \n"
-        f"**Lance Selecionado**: Categoria Real `{selected_cat}` (`{selected_row.get('pitch_type', 'FF')}`) • Game `{sel_g_pk}` | AB `#{sel_ab}` | Pitch `#{sel_pn}`",
-        icon=":material/analytics:",
-    )
+    meta_card_html = f"""
+    <div style="background:var(--pp-surface);border:1px solid var(--pp-border);border-top:3px solid {team_hex};border-radius:6px;padding:12px 16px;height:138px;box-sizing:border-box;margin:2px auto 6px auto;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:var(--pp-muted);letter-spacing:0.06em;text-transform:uppercase;">PERFIL DO ARREMESSADOR &amp; BIOMECÂNICA</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:{team_hex};">{pitcher_info['team_abbr']} #{pitcher_info['jersey_number']}</span>
+        </div>
+        <div style="font-size:16px;font-weight:800;color:var(--pp-text);line-height:1.2;margin-bottom:6px;">{pitcher_info['name']} <span style="font-size:12px;font-weight:600;color:var(--pp-muted);">({pitcher_info['team']})</span></div>
+        <div style="font-size:12px;color:var(--pp-text);line-height:1.4;">
+          <strong>Lateralidade &amp; Slot:</strong> <code>{p_throws}HP</code> ({hand_label}) • Slot <code>{pitcher_info.get('arm_slot_type', '3/4')}</code> • Arsenal: {pitcher_info['signature_arsenal']}
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:var(--pp-muted);border-top:1px solid var(--pp-border);padding-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        <strong style="color:var(--pp-text);">Lance:</strong> Categoria <code>{selected_cat}</code> (<code>{selected_row.get('pitch_type', 'FF')}</code>) • Game <code>{sel_g_pk}</code> | AB <code>#{sel_ab}</code> | Pitch <code>#{sel_pn}</code>
+      </div>
+    </div>
+    """
+    st.markdown(_compact_html(meta_card_html), unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 2. Pipeline Visual: Vídeo -> Print Base -> Modelo da Pose 3D (Hawk-Eye)
@@ -1072,15 +1088,61 @@ with shap_col1:
     st.markdown("##### Atribuição SHAP Agregada por Variável Anatômica")
     top_features = explanation.get("top_tipping_features", [])
 
-    shap_chart_data = pd.DataFrame([
+    shap_chart_df = pd.DataFrame([
         {
-            "Articulação / Sinal 3D": f["display_name"],
-            "Impacto SHAP": round(float(f["shap_value"]), 4),
+            "feature": f["display_name"],
+            "shap_value": round(float(f["shap_value"]), 4),
         }
         for f in top_features
-    ]).set_index("Articulação / Sinal 3D")
+    ])
 
-    st.bar_chart(shap_chart_data, horizontal=True, color=team_hex, width="stretch")
+    bg_color = "#F1F5F9" if theme_mode == "light" else "#12141A"
+    text_color = "#0F172A" if theme_mode == "light" else "#F1F5F9"
+    grid_color = "#CBD5E1" if theme_mode == "light" else "#222631"
+
+    shap_chart = (
+        alt.Chart(shap_chart_df)
+        .mark_bar(cornerRadiusEnd=4, height=20)
+        .encode(
+            x=alt.X(
+                "shap_value:Q",
+                title="Impacto SHAP (|Δ Log-Odds|)",
+                axis=alt.Axis(
+                    labelColor=text_color,
+                    titleColor=text_color,
+                    gridColor=grid_color,
+                    domainColor=grid_color,
+                    tickColor=grid_color,
+                ),
+            ),
+            y=alt.Y(
+                "feature:N",
+                sort="-x",
+                title=None,
+                axis=alt.Axis(
+                    labelColor=text_color,
+                    domainColor=grid_color,
+                    tickColor=grid_color,
+                    labelLimit=250,
+                ),
+            ),
+            color=alt.value(team_hex),
+            tooltip=[
+                alt.Tooltip("feature:N", title="Sinal 3D"),
+                alt.Tooltip("shap_value:Q", title="Impacto SHAP", format=".4f"),
+            ],
+        )
+        .properties(
+            background=bg_color,
+            height=260,
+            padding={"left": 10, "top": 10, "right": 20, "bottom": 10},
+        )
+        .configure_view(
+            strokeWidth=0,
+            fill=bg_color,
+        )
+    )
+    st.altair_chart(shap_chart, width="stretch")
 
 with shap_col2, st.container(border=True):
     st.markdown("<div class='pp-kicker'>DIAGNÓSTICO DE SCOUTING BIOMECÂNICO</div>", unsafe_allow_html=True)

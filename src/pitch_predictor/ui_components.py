@@ -658,21 +658,83 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         color: var(--pp-text) !important;
         font-weight: 600 !important;
       }}
+
+      /* Selectbox & React Aria ComboBox (Streamlit 1.66+) */
+      div[data-testid="stSelectbox"] div[data-rac][role="group"],
+      div[data-testid="stSelectbox"] div[role="combobox"],
+      div[data-testid="stSelectbox"] input,
+      div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
       div[data-baseweb="select"] > div {{
         background-color: var(--pp-surface) !important;
         border-color: var(--pp-border) !important;
         color: var(--pp-text) !important;
       }}
-      div[data-baseweb="select"] * {{
-        color: var(--pp-text) !important;
+      div[data-testid="stSelectbox"] svg {{
+        fill: var(--pp-muted) !important;
+        color: var(--pp-muted) !important;
       }}
-      button[kind="secondary"] {{
+      div[data-testid="stSelectbox"] input::placeholder {{
+        color: var(--pp-muted) !important;
+      }}
+      div[data-testid="stSelectbox"] div[role="listbox"],
+      div[data-baseweb="popover"] ul {{
         background-color: var(--pp-surface) !important;
         border: 1px solid var(--pp-border) !important;
         color: var(--pp-text) !important;
       }}
+      div[data-testid="stSelectbox"] div[role="option"],
+      div[data-baseweb="popover"] li {{
+        background-color: var(--pp-surface) !important;
+        color: var(--pp-text) !important;
+      }}
+      div[data-testid="stSelectbox"] div[role="option"]:hover,
+      div[data-testid="stSelectbox"] div[role="option"][aria-selected="true"],
+      div[data-baseweb="popover"] li:hover {{
+        background-color: var(--pp-surface-alt) !important;
+        color: var(--pp-text) !important;
+      }}
+      div[data-baseweb="select"] * {{
+        color: var(--pp-text) !important;
+      }}
+
+      /* Segmented Control & stButtonGroup (Streamlit 1.66+) */
+      div[data-testid="stButtonGroup"] div[role="radiogroup"],
+      div[data-testid="stSegmentedControl"] div[role="radiogroup"] {{
+        background-color: var(--pp-surface-alt) !important;
+        border: 1px solid var(--pp-border) !important;
+        border-radius: 8px !important;
+        padding: 3px !important;
+        gap: 4px !important;
+      }}
+      div[data-testid="stButtonGroup"] button[data-variant="segmented_control"],
       div[data-testid="stSegmentedControl"] button {{
         font-weight: 700 !important;
+        font-size: 12.5px !important;
+        border-radius: 6px !important;
+        border: none !important;
+        transition: all 0.15s ease !important;
+      }}
+      div[data-testid="stButtonGroup"] button[data-variant="segmented_control"]:not([aria-checked="true"]),
+      div[data-testid="stSegmentedControl"] button:not([aria-checked="true"]) {{
+        background-color: transparent !important;
+        color: var(--pp-muted) !important;
+      }}
+      div[data-testid="stButtonGroup"] button[data-variant="segmented_control"]:not([aria-checked="true"]):hover,
+      div[data-testid="stSegmentedControl"] button:not([aria-checked="true"]):hover {{
+        background-color: rgba(128, 128, 128, 0.14) !important;
+        color: var(--pp-text) !important;
+      }}
+      div[data-testid="stButtonGroup"] button[data-variant="segmented_control"][aria-checked="true"],
+      div[data-testid="stSegmentedControl"] button[aria-checked="true"] {{
+        background-color: var(--pp-surface) !important;
+        color: var(--pp-text) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+      }}
+
+      button[kind="secondary"] {{
+        background-color: var(--pp-surface) !important;
+        border: 1px solid var(--pp-border) !important;
+        color: var(--pp-text) !important;
       }}
       .pp-editorial-card {{
         background: var(--pp-surface);
@@ -994,8 +1056,8 @@ def get_pitcher_headshot_src(pitcher_name: str) -> str:
     return PITCHER_HEADSHOT_URLS.get(pitcher_name, PITCHER_HEADSHOT_URLS["Paul Skenes"])
 
 
-def render_pitcher_photo_html(pitcher_name: str, height_px: int = 138) -> str:
-    """Renderiza a foto oficial do arremessador da MLB com faixa cromática da franquia."""
+def render_pitcher_photo_html(pitcher_name: str, height_px: int = 138, theme_mode: str | None = None) -> str:
+    """Renderiza a foto oficial do arremessador da MLB com faixa cromática da franquia e adaptação dual-mode."""
     src = get_pitcher_headshot_src(pitcher_name)
     meta = MLB_PITCHERS.get(pitcher_name, MLB_PITCHERS["Paul Skenes"])
     team_hex = meta.get("team_primary_hex", "#F59E0B")
@@ -1003,10 +1065,18 @@ def render_pitcher_photo_html(pitcher_name: str, height_px: int = 138) -> str:
     jersey = meta.get("jersey_number", "#00")
     img_max_h = max(64, int(height_px) - 12)
 
+    is_light = resolve_ui_theme_mode(theme_mode) == "light"
+    card_bg = (
+        "var(--pp-surface, #F1F5F9)"
+        if is_light
+        else "linear-gradient(180deg,rgba(24,27,35,0.96) 0%,rgba(10,11,14,0.98) 100%)"
+    )
+    border_c = "var(--pp-border, #C2CFDD)" if is_light else "var(--pp-border, #222631)"
+
     raw_html = f"""
-    <div style="background:linear-gradient(180deg,rgba(24,27,35,0.96) 0%,rgba(10,11,14,0.98) 100%);border-radius:6px;border:1px solid #222631;border-top:3px solid {team_hex};padding:4px;margin:2px auto 6px auto;height:{int(height_px)}px;position:relative;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;">
+    <div style="background:{card_bg};border-radius:6px;border:1px solid {border_c};border-top:3px solid {team_hex};padding:4px;margin:2px auto 6px auto;height:{int(height_px)}px;box-sizing:border-box;position:relative;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;">
       <span style="position:absolute;top:5px;right:7px;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:800;color:{team_hex};letter-spacing:0.04em;">{team_abbr} {jersey}</span>
-      <img src="{src}" alt="{pitcher_name}" style="max-height:{img_max_h}px;max-width:100%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.65));display:block;margin:0 auto;" />
+      <img src="{src}" alt="{pitcher_name}" style="max-height:{img_max_h}px;max-width:100%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.40));display:block;margin:0 auto;" />
     </div>
     """
     return _compact_html(raw_html)
