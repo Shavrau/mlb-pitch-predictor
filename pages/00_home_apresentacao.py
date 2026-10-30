@@ -443,25 +443,57 @@ st.markdown(arch_summary_html, unsafe_allow_html=True)
 # ===========================================================================
 # 5. NAVEGAÇÃO RÁPIDA ENTRE MÓDULOS
 # ===========================================================================
-nav_c1, nav_c2, nav_c3 = st.columns(3)
-with nav_c1:
+nav_c1, nav_c2, nav_c3 = st.columns(3, gap="medium")
+with nav_c1, st.container(border=True):
+    st.markdown("<div class='pp-kicker'>MÓDULO 01 • ARCADE RETRO</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='font-size:16px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        f"🎮 Minigame: Você vs. IA"
+        f"</div>"
+        f"<div style='font-size:12.5px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
+        f"Duelo lance a lance no montinho. Escolha seu arremesso, mire na zona de strike e tente enganar a IA."
+        f"</div>",
+        unsafe_allow_html=True,
+    )
     st.page_link(
         "pages/03_minigame.py",
-        label="Jogar Minigame: Você vs. IA →",
+        label="Jogar Minigame →",
         icon=":material/sports_esports:",
         width="stretch",
     )
-with nav_c2:
+
+with nav_c2, st.container(border=True):
+    st.markdown("<div class='pp-kicker'>MÓDULO 02 • STATCAST INTEL</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='font-size:16px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        f"📊 MLB Scouting Report"
+        f"</div>"
+        f"<div style='font-size:12.5px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
+        f"Matriz 4x3 de 12 contagens, plano tático de jogo e tendências situacionais em contagens favoráveis e desfavoráveis."
+        f"</div>",
+        unsafe_allow_html=True,
+    )
     st.page_link(
         "pages/02_scout_report.py",
-        label="Abrir MLB Scouting Report & Matriz →",
+        label="Abrir Scouting Report →",
         icon=":material/analytics:",
         width="stretch",
     )
-with nav_c3:
+
+with nav_c3, st.container(border=True):
+    st.markdown("<div class='pp-kicker'>MÓDULO 03 • VISÃO COMPUTACIONAL 3D</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='font-size:16px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        f"🔬 Laboratório de Biomecânica"
+        f"</div>"
+        f"<div style='font-size:12.5px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
+        f"Cinemática 3D com 33 marcos da entrega, detecção de pitch tipping no release frame e estudo de ablação SHAP."
+        f"</div>",
+        unsafe_allow_html=True,
+    )
     st.page_link(
         "pages/04_pitch_vision_lab.py",
-        label="Abrir Laboratório de Visão & Tipping →",
+        label="Abrir Laboratório de Visão →",
         icon=":material/biotech:",
         width="stretch",
     )

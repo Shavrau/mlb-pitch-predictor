@@ -557,11 +557,29 @@ _STRIKE_ZONE_HTML = """
 _STRIKE_ZONE_CSS = """
 .pp-sz-wrap {
   font-family: var(--st-font, 'Space Grotesk', system-ui, sans-serif);
-  color: var(--st-text-color, #F1F5F9);
-  background: var(--st-secondary-background-color, #12141A);
-  border: 1px solid var(--st-border-color, #222631);
   border-radius: 8px;
   padding: 8px 10px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.pp-sz-wrap:not(.pp-light) {
+  color: #F1F5F9;
+  background: #12141A;
+  border: 1px solid #222631;
+}
+.pp-sz-wrap:not(.pp-light) .pp-sz-readout {
+  background: #0A0B0E;
+  border: 1px solid #222631;
+  color: #F1F5F9;
+}
+.pp-sz-wrap.pp-light {
+  color: #0F172A;
+  background: #F1F5F9;
+  border: 1px solid #C2CFDD;
+}
+.pp-sz-wrap.pp-light .pp-sz-readout {
+  background: #E1E8F0;
+  border: 1px solid #C2CFDD;
+  color: #0F172A;
 }
 .pp-sz-header {
   display: flex;
@@ -574,14 +592,13 @@ _STRIKE_ZONE_CSS = """
   letter-spacing: 0.04em;
 }
 .pp-sz-title {
-  opacity: 0.78;
+  opacity: 0.85;
 }
 .pp-sz-readout {
   padding: 1px 7px;
   border-radius: 4px;
-  background: var(--st-background-color, #0A0B0E);
-  border: 1px solid var(--st-border-color, #222631);
   font-variant-numeric: tabular-nums;
+  font-weight: 700;
 }
 .pp-sz-svg {
   width: 100%;
@@ -606,7 +623,17 @@ export default function (component) {
   const { data, parentElement, setStateValue } = component;
   const svg = parentElement.querySelector("#pp-sz-svg");
   const readout = parentElement.querySelector("#pp-sz-readout");
+  const wrap = parentElement.querySelector(".pp-sz-wrap");
   if (!svg || !data) return () => {};
+
+  const isLight = Boolean(data.is_light);
+  if (wrap) {
+    if (isLight) {
+      wrap.classList.add("pp-light");
+    } else {
+      wrap.classList.remove("pp-light");
+    }
+  }
 
   const activeZone = Number(data.selected_zone || 5);
   const catColor = data.pitch_color || "#EF4444";
@@ -654,9 +681,9 @@ export default function (component) {
     r.setAttribute("width", String(cz.w));
     r.setAttribute("height", String(cz.h));
     r.setAttribute("rx", "5");
-    r.setAttribute("fill", isSel ? catColor : "#334155");
-    r.setAttribute("fill-opacity", isSel ? "0.48" : "0.14");
-    r.setAttribute("stroke", isSel ? catColor : "#64748B");
+    r.setAttribute("fill", isSel ? catColor : (isLight ? "#E2E8F0" : "#334155"));
+    r.setAttribute("fill-opacity", isSel ? "0.48" : (isLight ? "0.35" : "0.14"));
+    r.setAttribute("stroke", isSel ? catColor : (isLight ? "#94A3B8" : "#64748B"));
     r.setAttribute("stroke-width", isSel ? "2" : "1.2");
     r.setAttribute("stroke-dasharray", "4,3");
 
@@ -664,7 +691,7 @@ export default function (component) {
     t.setAttribute("x", String(cz.tx));
     t.setAttribute("y", String(cz.ty));
     t.setAttribute("text-anchor", "middle");
-    t.setAttribute("fill", "currentColor");
+    t.setAttribute("fill", isSel ? (isLight ? catColor : "#FFFFFF") : (isLight ? "#475569" : "#94A3B8"));
     t.setAttribute("font-size", "10.5");
     t.setAttribute("font-family", "JetBrains Mono, monospace");
     t.setAttribute("font-weight", "700");
@@ -693,16 +720,16 @@ export default function (component) {
     r.setAttribute("y", String(y));
     r.setAttribute("width", "45");
     r.setAttribute("height", "45");
-    r.setAttribute("fill", isSel ? catColor : "#0F172A");
-    r.setAttribute("fill-opacity", isSel ? "0.72" : "0.42");
-    r.setAttribute("stroke", isSel ? "#FFFFFF" : accentHex);
+    r.setAttribute("fill", isSel ? catColor : (isLight ? "#F8FAFC" : "#0F172A"));
+    r.setAttribute("fill-opacity", isSel ? "0.75" : (isLight ? "0.65" : "0.42"));
+    r.setAttribute("stroke", isSel ? "#FFFFFF" : (isLight ? "#CBD5E1" : accentHex));
     r.setAttribute("stroke-width", isSel ? "2" : "1.2");
 
     const t = document.createElementNS(NS, "text");
     t.setAttribute("x", String(x + 22.5));
     t.setAttribute("y", String(y + 26.5));
     t.setAttribute("text-anchor", "middle");
-    t.setAttribute("fill", isSel ? "#FFFFFF" : "currentColor");
+    t.setAttribute("fill", isSel ? "#FFFFFF" : (isLight ? "#0F172A" : "#F1F5F9"));
     t.setAttribute("font-size", "12");
     t.setAttribute("font-family", "JetBrains Mono, monospace");
     t.setAttribute("font-weight", isSel ? "800" : "600");
@@ -719,7 +746,7 @@ export default function (component) {
   borderBox.setAttribute("width", "135");
   borderBox.setAttribute("height", "135");
   borderBox.setAttribute("fill", "none");
-  borderBox.setAttribute("stroke", accentHex);
+  borderBox.setAttribute("stroke", isLight ? "#0284C7" : accentHex);
   borderBox.setAttribute("stroke-width", "2.2");
   borderBox.setAttribute("pointer-events", "none");
   svg.appendChild(borderBox);
@@ -740,8 +767,8 @@ export default function (component) {
 
   const plate = document.createElementNS(NS, "polygon");
   plate.setAttribute("points", "86,210 154,210 142,220 120,227 98,220");
-  plate.setAttribute("fill", "#E2E8F0");
-  plate.setAttribute("stroke", "#64748B");
+  plate.setAttribute("fill", isLight ? "#CBD5E1" : "#E2E8F0");
+  plate.setAttribute("stroke", isLight ? "#94A3B8" : "#64748B");
   plate.setAttribute("stroke-width", "1.4");
   svg.appendChild(plate);
 
@@ -795,6 +822,7 @@ def interactive_strike_zone_ccv2(
             "selected_zone": current_zone,
             "pitch_color": pitch_color,
             "accent_hex": accent_hex,
+            "is_light": is_light,
         },
         default={"zone": safe_zone},
         key=key,

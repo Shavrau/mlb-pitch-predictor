@@ -490,6 +490,21 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         scroll_thumb = "#94A3B8"
         scroll_track = "#E1E8F0"
         metric_label_color = "#1E293B"
+        metric_delta_pos_bg = "rgba(5, 150, 105, 0.12)"
+        metric_delta_pos_border = "rgba(5, 150, 105, 0.35)"
+        metric_delta_pos_color = "#064E3B"
+        metric_delta_pos_fill = "#065F46"
+        metric_delta_neg_bg = "rgba(220, 38, 38, 0.12)"
+        metric_delta_neg_border = "rgba(220, 38, 38, 0.35)"
+        metric_delta_neg_color = "#991B1B"
+        metric_delta_neg_fill = "#B91C1C"
+        slider_tick_color = "#334155"
+        alert_success_bg = "#ECFDF5"
+        alert_success_border = "#A7F3D0"
+        alert_success_text = "#064E3B"
+        alert_info_bg = "#EFF6FF"
+        alert_info_border = "#BFDBFE"
+        alert_info_text = "#1E3A8A"
     else:
         pp_bg = "#0A0B0E"
         pp_surface = "#12141A"
@@ -502,6 +517,21 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         scroll_thumb = "#334155"
         scroll_track = "#0E1015"
         metric_label_color = "#CBD5E1"
+        metric_delta_pos_bg = "rgba(16, 185, 129, 0.15)"
+        metric_delta_pos_border = "rgba(16, 185, 129, 0.32)"
+        metric_delta_pos_color = "#6EE7B7"
+        metric_delta_pos_fill = "#34D399"
+        metric_delta_neg_bg = "rgba(239, 68, 68, 0.15)"
+        metric_delta_neg_border = "rgba(239, 68, 68, 0.32)"
+        metric_delta_neg_color = "#FCA5A5"
+        metric_delta_neg_fill = "#F87171"
+        slider_tick_color = "#94A3B8"
+        alert_success_bg = "rgba(6, 78, 59, 0.35)"
+        alert_success_border = "#059669"
+        alert_success_text = "#6EE7B7"
+        alert_info_bg = "rgba(30, 58, 138, 0.35)"
+        alert_info_border = "#2563EB"
+        alert_info_text = "#93C5FD"
 
     raw_css = f"""
     <style>
@@ -635,11 +665,85 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         font-size: 24px !important;
         font-weight: 800 !important;
       }}
-      div[data-testid="stMetricDelta"],
-      div[data-testid="stMetricDelta"] * {{
-        font-weight: 700 !important;
+      div[data-testid="stMetricDelta"] {{
+        display: inline-flex !important;
+        align-items: center !important;
+        background-color: {metric_delta_pos_bg} !important;
+        border: 1px solid {metric_delta_pos_border} !important;
+        border-radius: 4px !important;
+        padding: 2px 7px !important;
+        margin-top: 4px !important;
+      }}
+      div[data-testid="stMetricDelta"] svg {{
+        fill: {metric_delta_pos_fill} !important;
+      }}
+      div[data-testid="stMetricDelta"] div,
+      div[data-testid="stMetricDelta"] span {{
+        color: {metric_delta_pos_color} !important;
+        font-weight: 800 !important;
         font-family: 'JetBrains Mono', monospace !important;
-        font-size: 12px !important;
+        font-size: 11.5px !important;
+      }}
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="Down" i]),
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="down" i]),
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="Decrease" i]) {{
+        background-color: {metric_delta_neg_bg} !important;
+        border: 1px solid {metric_delta_neg_border} !important;
+      }}
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="Down" i]) svg,
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="down" i]) svg,
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="Decrease" i]) svg {{
+        fill: {metric_delta_neg_fill} !important;
+      }}
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="Down" i]) div,
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="down" i]) div,
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="Decrease" i]) div,
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="Down" i]) span,
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="down" i]) span,
+      div[data-testid="stMetricDelta"]:has(svg[data-testid*="Decrease" i]) span {{
+        color: {metric_delta_neg_color} !important;
+      }}
+
+      /* Streamlit Notifications / Alerts (st.success, st.info, st.warning) */
+      div[data-testid="stAlert"] {{
+        border-radius: 8px !important;
+      }}
+      div[data-testid="stAlert"] [data-testid="stNotificationContentSuccess"],
+      div[data-testid="stAlert"]:has(svg[data-testid*="check" i]),
+      div[data-testid="stAlert"]:has([aria-label*="success" i]) {{
+        background-color: {alert_success_bg} !important;
+        border: 1px solid {alert_success_border} !important;
+        color: {alert_success_text} !important;
+      }}
+      div[data-testid="stAlert"] [data-testid="stNotificationContentSuccess"] *,
+      div[data-testid="stAlert"]:has(svg[data-testid*="check" i]) *,
+      div[data-testid="stAlert"]:has([aria-label*="success" i]) * {{
+        color: {alert_success_text} !important;
+      }}
+      div[data-testid="stAlert"] [data-testid="stNotificationContentInfo"],
+      div[data-testid="stAlert"]:has(svg[data-testid*="info" i]),
+      div[data-testid="stAlert"]:has([aria-label*="info" i]) {{
+        background-color: {alert_info_bg} !important;
+        border: 1px solid {alert_info_border} !important;
+        color: {alert_info_text} !important;
+      }}
+      div[data-testid="stAlert"] [data-testid="stNotificationContentInfo"] *,
+      div[data-testid="stAlert"]:has(svg[data-testid*="info" i]) *,
+      div[data-testid="stAlert"]:has([aria-label*="info" i]) * {{
+        color: {alert_info_text} !important;
+      }}
+
+      /* Slider Subtext & Thumb Values */
+      div[data-testid="stSlider"] [data-testid="stThumbValue"] {{
+        color: var(--pp-text) !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-weight: 700 !important;
+      }}
+      div[data-testid="stSlider"] [data-testid="stTickBarMin"],
+      div[data-testid="stSlider"] [data-testid="stTickBarMax"] {{
+        color: {slider_tick_color} !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-weight: 700 !important;
       }}
       div[data-testid="stSlider"] label,
       div[data-testid="stCheckbox"] label,

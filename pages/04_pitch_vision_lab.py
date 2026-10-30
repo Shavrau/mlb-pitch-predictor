@@ -1022,6 +1022,7 @@ val_metrics = explanation.get("validation_metrics") or getattr(tipping_model, "v
 vision_pred_col, vision_prob_col = st.columns([1, 1.35], gap="medium")
 
 with vision_pred_col, st.container(border=True):
+    is_light = (theme_mode == "light")
     pred_style = PITCH_CATEGORY_STYLES.get(bio_pred, PITCH_CATEGORY_STYLES["Fastball"])
     st.markdown(
         f"<div class='pp-kicker'>CLASSIFICADOR CALIBRADO INTRA-ATLETA • {pred_style['icon']} {pred_style['code_badge']}</div>",
@@ -1034,16 +1035,60 @@ with vision_pred_col, st.container(border=True):
     )
 
     if bio_pred == selected_cat:
-        st.success(
-            f"**Leitura Biomecânica Confirmada**: O modelo de Visão Computacional previu **{bio_pred}** "
-            f"(`{bio_conf * 100:.1f}%`) exclusivamente pela cinemática 3D, acertando a categoria real (`{selected_cat}`).",
-            icon=":material/verified:",
+        if is_light:
+            b_bg = "#ECFDF5"
+            b_border = "#059669"
+            b_title_color = "#047857"
+            b_text_color = "#064E3B"
+            b_badge_bg = "#D1FAE5"
+            b_badge_border = "#A7F3D0"
+        else:
+            b_bg = "rgba(6, 78, 59, 0.40)"
+            b_border = "#10B981"
+            b_title_color = "#34D399"
+            b_text_color = "#ECFDF5"
+            b_badge_bg = "rgba(16, 185, 129, 0.20)"
+            b_badge_border = "rgba(16, 185, 129, 0.40)"
+        st.markdown(
+            f"""<div style="background:{b_bg};border:1.5px solid {b_border};border-radius:8px;padding:12px 14px;margin:10px 0 12px 0;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                <span style="font-size:16px;">✅</span>
+                <span style="font-size:13px;font-weight:800;color:{b_title_color};letter-spacing:0.02em;">LEITURA BIOMECÂNICA CONFIRMADA</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;background:{b_badge_bg};border:1px solid {b_badge_border};color:{b_title_color};padding:1px 6px;border-radius:4px;">{bio_conf * 100:.1f}%</span>
+              </div>
+              <div style="font-size:12.5px;line-height:1.45;color:{b_text_color};">
+                O modelo de Visão Computacional previu <strong style="color:{b_title_color};">{bio_pred}</strong> exclusivamente pela cinemática 3D, acertando a categoria real (<strong>{selected_cat}</strong>).
+              </div>
+            </div>""",
+            unsafe_allow_html=True,
         )
     else:
-        st.info(
-            f"**Disfarce Corporal Eficiente**: A pose 3D apontou **{bio_pred}** (`{bio_conf * 100:.1f}%`), "
-            f"enquanto o arremesso executado foi `{selected_cat}` — indicando excelente ocultação mecânica.",
-            icon=":material/visibility:",
+        if is_light:
+            b_bg = "#EFF6FF"
+            b_border = "#2563EB"
+            b_title_color = "#1D4ED8"
+            b_text_color = "#1E3A8A"
+            b_badge_bg = "#DBEAFE"
+            b_badge_border = "#BFDBFE"
+        else:
+            b_bg = "rgba(30, 58, 138, 0.40)"
+            b_border = "#3B82F6"
+            b_title_color = "#60A5FA"
+            b_text_color = "#EFF6FF"
+            b_badge_bg = "rgba(59, 130, 246, 0.20)"
+            b_badge_border = "rgba(59, 130, 246, 0.40)"
+        st.markdown(
+            f"""<div style="background:{b_bg};border:1.5px solid {b_border};border-radius:8px;padding:12px 14px;margin:10px 0 12px 0;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                <span style="font-size:16px;">👁️</span>
+                <span style="font-size:13px;font-weight:800;color:{b_title_color};letter-spacing:0.02em;">DISFARCE CORPORAL EFICIENTE</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;background:{b_badge_bg};border:1px solid {b_badge_border};color:{b_title_color};padding:1px 6px;border-radius:4px;">{bio_conf * 100:.1f}%</span>
+              </div>
+              <div style="font-size:12.5px;line-height:1.45;color:{b_text_color};">
+                A pose 3D apontou <strong style="color:{b_title_color};">{bio_pred}</strong>, enquanto o arremesso executado foi <strong>{selected_cat}</strong> — indicando excelente ocultação mecânica.
+              </div>
+            </div>""",
+            unsafe_allow_html=True,
         )
 
     cv_scheme = val_metrics.get("validation_scheme", "StratifiedGroupKFold(game_pk)")
@@ -1052,9 +1097,34 @@ with vision_pred_col, st.container(border=True):
     cv_brier = float(val_metrics.get("cv_brier_score", 0.0))
     n_games = int(val_metrics.get("unique_games", 36))
     n_samples = int(val_metrics.get("total_samples", 60))
-    st.caption(
-        f"**Auditoria Out-of-Fold (`{cv_scheme}`)**: Acurácia `{cv_acc * 100:.1f}%` • "
-        f"Macro-F1 `{cv_f1:.3f}` • Brier `{cv_brier:.3f}` • `{n_samples}` lances reais em `{n_games}` jogos distintos (0 cópias sintéticas)."
+
+    if is_light:
+        pill_bg = "#E2E8F0"
+        pill_border = "#CBD5E1"
+        pill_color = "#0F172A"
+        aud_text = "#334155"
+        scheme_bg = "#E0E7FF"
+        scheme_border = "#C7D2FE"
+        scheme_color = "#3730A3"
+    else:
+        pill_bg = "#1E293B"
+        pill_border = "#334155"
+        pill_color = "#F1F5F9"
+        aud_text = "#94A3B8"
+        scheme_bg = "rgba(99, 102, 241, 0.18)"
+        scheme_border = "rgba(99, 102, 241, 0.40)"
+        scheme_color = "#A5B4FC"
+
+    st.markdown(
+        f"""<div style="font-size:11.5px;color:{aud_text};line-height:1.65;margin-top:6px;">
+          <strong style="color:var(--pp-text,#0F172A);">Auditoria Out-of-Fold</strong> (<span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:{scheme_color};background:{scheme_bg};border:1px solid {scheme_border};padding:1px 5px;border-radius:4px;">{cv_scheme}</span>):
+          Acurácia <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:{pill_color};background:{pill_bg};border:1px solid {pill_border};padding:1px 5px;border-radius:4px;">{cv_acc * 100:.1f}%</span> •
+          Macro-F1 <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:{pill_color};background:{pill_bg};border:1px solid {pill_border};padding:1px 5px;border-radius:4px;">{cv_f1:.3f}</span> •
+          Brier <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:{pill_color};background:{pill_bg};border:1px solid {pill_border};padding:1px 5px;border-radius:4px;">{cv_brier:.3f}</span> •
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:{pill_color};background:{pill_bg};border:1px solid {pill_border};padding:1px 5px;border-radius:4px;">{n_samples}</span> lances reais em
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:{pill_color};background:{pill_bg};border:1px solid {pill_border};padding:1px 5px;border-radius:4px;">{n_games}</span> jogos distintos (0 cópias sintéticas).
+        </div>""",
+        unsafe_allow_html=True,
     )
 
 with vision_prob_col, st.container(border=True):
@@ -1068,10 +1138,27 @@ with vision_prob_col, st.container(border=True):
             text=f"{c_style['icon']} {c_style['code_badge']} — {c_style['label_pt']}: {p_val * 100:.1f}%",
         )
 
-    st.caption(
-        f"**Vetor 3D Ativo ({len(tipping_model.active_feature_cols_)} features + Δ/Z-Score)**: "
-        f"Slot `{arm_slot_val:.1f}°` (`{slot_diff:+.1f}°`) • Cotovelo `{elbow_flex_val:.1f}°` (`{elbow_diff:+.1f}°`) • "
-        f"Glove Tuck `{glove_tuck_val:.2f}m` (`{glove_diff:+.2f}m`) • Torção `{hip_sep_val:.1f}°` • Braço `{arm_vel_val:.0f}°/s`"
+    if is_light:
+        v_pill_bg = "#E2E8F0"
+        v_pill_border = "#CBD5E1"
+        v_pill_color = "#0F172A"
+        v_text_color = "#334155"
+    else:
+        v_pill_bg = "#1E293B"
+        v_pill_border = "#334155"
+        v_pill_color = "#F1F5F9"
+        v_text_color = "#94A3B8"
+
+    st.markdown(
+        f"""<div style="font-size:11.5px;color:{v_text_color};line-height:1.65;margin-top:8px;">
+          <strong style="color:var(--pp-text,#0F172A);">Vetor 3D Ativo</strong> ({len(tipping_model.active_feature_cols_)} features + Δ/Z-Score):
+          Slot <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:{v_pill_color};background:{v_pill_bg};border:1px solid {v_pill_border};padding:1px 5px;border-radius:4px;">{arm_slot_val:.1f}° ({slot_diff:+.1f}°)</span> •
+          Cotovelo <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:{v_pill_color};background:{v_pill_bg};border:1px solid {v_pill_border};padding:1px 5px;border-radius:4px;">{elbow_flex_val:.1f}° ({elbow_diff:+.1f}°)</span> •
+          Glove Tuck <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:{v_pill_color};background:{v_pill_bg};border:1px solid {v_pill_border};padding:1px 5px;border-radius:4px;">{glove_tuck_val:.2f}m ({glove_diff:+.2f}m)</span> •
+          Torção <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:{v_pill_color};background:{v_pill_bg};border:1px solid {v_pill_border};padding:1px 5px;border-radius:4px;">{hip_sep_val:.1f}°</span> •
+          Braço <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:{v_pill_color};background:{v_pill_bg};border:1px solid {v_pill_border};padding:1px 5px;border-radius:4px;">{arm_vel_val:.0f}°/s</span>
+        </div>""",
+        unsafe_allow_html=True,
     )
 
 st.divider()
