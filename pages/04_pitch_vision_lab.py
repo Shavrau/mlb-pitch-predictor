@@ -1098,11 +1098,12 @@ with shap_col1:
 
     bg_color = "#F1F5F9" if theme_mode == "light" else "#12141A"
     text_color = "#0F172A" if theme_mode == "light" else "#F1F5F9"
-    grid_color = "#CBD5E1" if theme_mode == "light" else "#222631"
+    grid_color = "#E2E8F0" if theme_mode == "light" else "#222631"
+    separator_color = "#94A3B8" if theme_mode == "light" else "#3A4154"
 
     shap_chart = (
         alt.Chart(shap_chart_df)
-        .mark_bar(cornerRadiusEnd=4, height=20)
+        .mark_bar(cornerRadiusEnd=4, height=18)
         .encode(
             x=alt.X(
                 "shap_value:Q",
@@ -1110,20 +1111,27 @@ with shap_col1:
                 axis=alt.Axis(
                     labelColor=text_color,
                     titleColor=text_color,
+                    grid=True,
                     gridColor=grid_color,
-                    domainColor=grid_color,
-                    tickColor=grid_color,
+                    gridDash=[3, 3],
+                    domainColor=separator_color,
+                    tickColor=separator_color,
                 ),
             ),
             y=alt.Y(
                 "feature:N",
                 sort="-x",
                 title=None,
+                scale=alt.Scale(paddingInner=0.35, paddingOuter=0.2),
                 axis=alt.Axis(
                     labelColor=text_color,
-                    domainColor=grid_color,
-                    tickColor=grid_color,
+                    domainColor=separator_color,
+                    tickColor=separator_color,
                     labelLimit=250,
+                    grid=True,
+                    gridColor=separator_color,
+                    gridWidth=1.2,
+                    tickBand="extent",
                 ),
             ),
             color=alt.value(team_hex),
@@ -1138,7 +1146,8 @@ with shap_col1:
             padding={"left": 10, "top": 10, "right": 20, "bottom": 10},
         )
         .configure_view(
-            strokeWidth=0,
+            strokeWidth=1,
+            stroke=separator_color,
             fill=bg_color,
         )
     )
