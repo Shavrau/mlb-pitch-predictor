@@ -447,12 +447,12 @@ nav_c1, nav_c2, nav_c3 = st.columns(3, gap="medium")
 with nav_c1, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 01 • ARCADE RETRO</div>", unsafe_allow_html=True)
     st.markdown(
-        f"<div style='font-size:16px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
-        f"🎮 Minigame: Você vs. IA"
-        f"</div>"
-        f"<div style='font-size:12.5px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
-        f"Duelo lance a lance no montinho. Escolha seu arremesso, mire na zona de strike e tente enganar a IA."
-        f"</div>",
+        "<div style='font-size:16px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        "🎮 Minigame: Você vs. IA"
+        "</div>"
+        "<div style='font-size:12.5px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
+        "Duelo lance a lance no montinho. Escolha seu arremesso, mire na zona de strike e tente enganar a IA."
+        "</div>",
         unsafe_allow_html=True,
     )
     st.page_link(
@@ -465,12 +465,12 @@ with nav_c1, st.container(border=True):
 with nav_c2, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 02 • STATCAST INTEL</div>", unsafe_allow_html=True)
     st.markdown(
-        f"<div style='font-size:16px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
-        f"📊 MLB Scouting Report"
-        f"</div>"
-        f"<div style='font-size:12.5px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
-        f"Matriz 4x3 de 12 contagens, plano tático de jogo e tendências situacionais em contagens favoráveis e desfavoráveis."
-        f"</div>",
+        "<div style='font-size:16px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        "📊 MLB Scouting Report"
+        "</div>"
+        "<div style='font-size:12.5px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
+        "Matriz 4x3 de 12 contagens, plano tático de jogo e tendências situacionais em contagens favoráveis e desfavoráveis."
+        "</div>",
         unsafe_allow_html=True,
     )
     st.page_link(
@@ -483,12 +483,12 @@ with nav_c2, st.container(border=True):
 with nav_c3, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 03 • VISÃO COMPUTACIONAL 3D</div>", unsafe_allow_html=True)
     st.markdown(
-        f"<div style='font-size:16px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
-        f"🔬 Laboratório de Biomecânica"
-        f"</div>"
-        f"<div style='font-size:12.5px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
-        f"Cinemática 3D com 33 marcos da entrega, detecção de pitch tipping no release frame e estudo de ablação SHAP."
-        f"</div>",
+        "<div style='font-size:16px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        "🔬 Laboratório de Biomecânica"
+        "</div>"
+        "<div style='font-size:12.5px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
+        "Cinemática 3D com 33 marcos da entrega, detecção de pitch tipping no release frame e estudo de ablação SHAP."
+        "</div>",
         unsafe_allow_html=True,
     )
     st.page_link(
