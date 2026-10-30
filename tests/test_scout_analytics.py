@@ -368,3 +368,153 @@ def test_export_scouting_report_markdown_contains_pitcher_counts_and_game_plan()
     assert game_plan["early_counts"]["title"] in md_report
     assert game_plan["hitter_counts"]["title"] in md_report
     assert game_plan["two_strike_protection"]["title"] in md_report
+
+
+
+# ---------------------------------------------------------------------------
+# Sprint 2 Deliverables: Head-to-Head Scout & Printable Dugout Card
+# ---------------------------------------------------------------------------
+
+
+def test_render_head_to_head_radar_svg_renders_both_pitchers_and_commonmark_safe() -> None:
+    """Verify render_head_to_head_radar_svg renders both pitchers plus league average and is CommonMark-safe."""
+    from pitch_predictor.scout_analytics import render_head_to_head_radar_svg
+
+    league_dist = (0.55, 0.31, 0.14)
+    dist_a = {"Fastball": 0.65, "Breaking Ball": 0.25, "Offspeed": 0.10}
+    dist_b = {"Fastball": 0.44, "Breaking Ball": 0.20, "Offspeed": 0.36}
+
+    svg = render_head_to_head_radar_svg(
+        league_dist=league_dist,
+        dist_a=dist_a,
+        dist_b=dist_b,
+        name_a="Paul Skenes",
+        name_b="Logan Webb",
+        color_a="#FDB827",
+        color_b="#FD5A1E",
+    )
+
+    assert isinstance(svg, str)
+    assert "<svg" in svg
+    assert "</svg>" in svg
+    assert "Paul Skenes" in svg
+    assert "Logan Webb" in svg
+    assert "Média MLB" in svg
+    assert "#FDB827" in svg
+    assert "#FD5A1E" in svg
+    assert "Fastball" in svg
+    assert "Breaking" in svg
+    assert "Offspeed" in svg
+
+    assert "\n" not in svg
+    assert "    " not in svg
+    assert "<!--" not in svg
+
+
+def test_compute_head_to_head_divergence_calculates_agreement_and_divergence() -> None:
+    """Verify compute_head_to_head_divergence accurately calculates agreement, divergence, and contrast list."""
+    from pitch_predictor.scout_analytics import compute_head_to_head_divergence
+
+    preds_a = {
+        "0-0": "Fastball",
+        "0-1": "Fastball",
+        "0-2": "Breaking Ball",
+        "1-0": "Fastball",
+        "1-1": "Fastball",
+        "1-2": "Breaking Ball",
+        "2-0": "Fastball",
+        "2-1": "Fastball",
+        "2-2": "Breaking Ball",
+        "3-0": "Fastball",
+        "3-1": "Fastball",
+        "3-2": "Fastball",
+    }
+    preds_b = {
+        "0-0": "Fastball",        # agree
+        "0-1": "Breaking Ball",   # diverge
+        "0-2": "Offspeed",        # diverge
+        "1-0": "Fastball",        # agree
+        "1-1": "Offspeed",        # diverge
+        "1-2": "Offspeed",        # diverge
+        "2-0": "Fastball",        # agree
+        "2-1": "Breaking Ball",   # diverge
+        "2-2": "Offspeed",        # diverge
+        "3-0": "Fastball",        # agree
+        "3-1": "Fastball",        # agree
+        "3-2": "Offspeed",        # diverge
+    }
+
+    result = compute_head_to_head_divergence(preds_a, preds_b)
+
+    assert result["total_counts"] == 12
+    assert result["agreement_counts"] == 5
+    assert result["divergence_counts"] == 7
+    assert pytest.approx(result["agreement_pct"], 0.01) == 5.0 / 12.0
+    assert pytest.approx(result["divergence_pct"], 0.01) == 7.0 / 12.0
+    assert len(result["divergent_counts"]) == 7
+    assert len(result["consensus_counts"]) == 5
+    assert len(result["contrasts"]) == 12
+    assert "0-0" in result["consensus_counts"]
+    assert "0-2" in result["divergent_counts"]
+    assert isinstance(result["summary_text"], str)
+
+
+def test_generate_comparative_game_plan_synthesizes_both_profiles() -> None:
+    """Verify generate_comparative_game_plan creates comparative adjustments between Pitcher A and B."""
+    from pitch_predictor.scout_analytics import generate_comparative_game_plan
+
+    preds_a = _sample_12_predictions_map()
+    preds_b = {c: "Offspeed" if "2" in c else "Breaking Ball" for c in preds_a}
+
+    comp_plan = generate_comparative_game_plan(
+        name_a="Power Pitcher",
+        name_b="Offspeed Master",
+        preds_a=preds_a,
+        preds_b=preds_b,
+        priors_a={"pitcher_fb_prior": 0.64, "pitcher_bb_prior": 0.28, "pitcher_os_prior": 0.08},
+        priors_b={"pitcher_fb_prior": 0.46, "pitcher_bb_prior": 0.22, "pitcher_os_prior": 0.32},
+        stand="L",
+        risp_active=True,
+    )
+
+    assert "early_counts" in comp_plan
+    assert "hitter_counts" in comp_plan
+    assert "two_strike_protection" in comp_plan
+    assert "Power Pitcher" in comp_plan["early_counts"]["strategy"]
+    assert "Offspeed Master" in comp_plan["early_counts"]["strategy"]
+
+
+def test_export_scouting_card_html_contains_print_css_and_all_data() -> None:
+    """Verify export_scouting_card_html creates a standalone printable HTML document with @media print."""
+    from pitch_predictor.scout_analytics import (
+        export_scouting_card_html,
+        generate_batter_game_plan,
+    )
+
+    preds_map = _sample_12_predictions_map()
+    priors = {"pitcher_fb_prior": 0.64, "pitcher_bb_prior": 0.28, "pitcher_os_prior": 0.08}
+    game_plan = generate_batter_game_plan(
+        pitcher_name="Paul Skenes",
+        predictions_by_count=preds_map,
+        priors=priors,
+        stand="R",
+        risp_active=False,
+    )
+
+    html_card = export_scouting_card_html(
+        pitcher_name="Paul Skenes",
+        predictions_by_count=preds_map,
+        game_plan=game_plan,
+        priors=priors,
+        stand="R",
+        risp_active=False,
+    )
+
+    assert isinstance(html_card, str)
+    assert "<!DOCTYPE html>" in html_card
+    assert "@media print" in html_card
+    assert "Paul Skenes" in html_card
+    for b, s in MLB_12_COUNTS:
+        assert f"{b}-{s}" in html_card
+    assert "window.print()" in html_card
+    assert "Fastball" in html_card

@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v2.2.0 Checkpoint (Sprint 1: Anatomical Pose Heatmap & Retro Arcade Hotkeys)  
+> **Versão do Projeto:** v2.3.0 Checkpoint (Sprint 2: Head-to-Head Scout Comparison & Printable Dugout Card)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit 1.66.1.
 
@@ -8,10 +8,23 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v2.1.0)
+## 1. Estado Atual da Base de Código (Checkpoint v2.3.0)
 
-Após homologação e implementação das correções de contraste e usabilidade Dual-Mode:
-- **Suíte de Testes**: **227 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+Após homologação e implementação dos entregáveis da Sprint 2 (Scouting Report & Analytics):
+- **Suíte de Testes**: **234 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+- **Entregáveis da Sprint 2 Homologados**:
+  - **Comparador Head-to-Head no Scouting Report (`pages/02_scout_report.py` e `src/pitch_predictor/scout_analytics.py`)**:
+    - Seletor de Modo de Análise no topo do Scouting Report: `["🎯 Dossiê Individual (Single Pitcher)", "⚔️ Comparação Head-to-Head (2 Arremessadores)"]`.
+    - Cards de Atleta lado a lado para Arremessador A e Arremessador B com fotos oficiais em alta resolução (`render_pitcher_photo_html`), lateralidade (RHP/LHP), arsenal característico e priors históricos de repertório.
+    - Faixa de Telemetria de Divergência Situacional: cálculo de concordância (`🤝 CONSENSO`) vs. discordância tática (`⚔️ DIVERGÊNCIA`) nas 12 contagens da MLB via `compute_head_to_head_divergence(...)`.
+    - Matriz Comparativa Contagem a Contagem: tabela de alta legibilidade em ambos os temas (Dark/Light) detalhando a chamada de arremesso de cada atleta e o status tático.
+    - Gráfico Radar Multi-Polígono SVG (`render_head_to_head_radar_svg`): sobreposição geométrica sem colisão textual entre Arremessador A, Arremessador B e a Média da MLB (`#94A3B8` tracejada).
+    - Game Plan Comparativo do Rebatedor (`generate_comparative_game_plan`): orientações estratégicas de swing para o rebatedor ao alternar entre o enfrentamento do Arremessador A e B nas 3 fases da contagem.
+  - **Exportação do Cartão Tático Imprimível de Dugout (`export_scouting_card_html`)**:
+    - Geração de documento HTML standalone de alta fidelidade com regras CSS `@page { size: A4 portrait; margin: 10mm; }` e `@media print`.
+    - Botão de ação de impressão direta via `window.print()` e visualizador de pré-visualização embutido via expander no Streamlit.
+    - Grid 4x3 de 12 contagens em cores semânticas limpas (`#EF4444` Fastball, `#2563EB` Breaking, `#059669` Offspeed), alertas de disciplina de placa e priors base.
+    - Disponível para download instantâneo tanto no Dossiê Individual quanto no modo Head-to-Head duplo.
 - **Entregáveis da Sprint 1 Homologados**:
   - **Heatmap Anatômico Interativo no Frame de Soltura 3D (`src/pitch_predictor/vision/overlay.py` e `pages/04_pitch_vision_lab.py`)**:
     - Código de cores dinâmico nos nós anatômicos e vetores cinemáticos calibrado pelo Z-score intra-atleta:

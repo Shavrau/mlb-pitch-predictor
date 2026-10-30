@@ -568,3 +568,592 @@ def export_scouting_report_markdown(
         )
 
     return "\n".join(lines)
+
+
+
+# ---------------------------------------------------------------------------
+# Sprint 2 Deliverables: Head-to-Head Scout Comparison & Printable Dugout Card
+# ---------------------------------------------------------------------------
+
+
+def render_head_to_head_radar_svg(
+    league_dist: dict[str, float] | tuple[float, float, float],
+    dist_a: dict[str, float] | tuple[float, float, float],
+    dist_b: dict[str, float] | tuple[float, float, float],
+    name_a: str = "Arremessador A",
+    name_b: str = "Arremessador B",
+    color_a: str = "#F59E0B",
+    color_b: str = "#38BDF8",
+) -> str:
+    """
+    Render a 3-axis triangular SVG Radar Chart comparing:
+    1. MLB League Average (`#94A3B8` dashed)
+    2. Pitcher A (`color_a`)
+    3. Pitcher B (`color_b`)
+
+    Strictly CommonMark-safe via `_compact_html` and XML-valid.
+    """
+    l_fb, l_bb, l_os = _extract_dist_triplet(league_dist)
+    a_fb, a_bb, a_os = _extract_dist_triplet(dist_a)
+    b_fb, b_bb, b_os = _extract_dist_triplet(dist_b)
+
+    cx, cy = 205.0, 142.0
+    max_r = 92.0
+    angles = (-math.pi / 2.0, math.pi / 6.0, 5.0 * math.pi / 6.0)
+
+    def _pt(val: float, angle: float, scale: float = 1.0) -> str:
+        norm_r = min(1.0, max(0.08, val / 0.80)) * max_r * scale
+        x = cx + norm_r * math.cos(angle)
+        y = cy + norm_r * math.sin(angle)
+        return f"{x:.1f},{y:.1f}"
+
+    def _ring_points(frac: float) -> str:
+        pts = []
+        for ang in angles:
+            x = cx + max_r * frac * math.cos(ang)
+            y = cy + max_r * frac * math.sin(ang)
+            pts.append(f"{x:.1f},{y:.1f}")
+        return " ".join(pts)
+
+    league_pts = " ".join(
+        [_pt(l_fb, angles[0]), _pt(l_bb, angles[1]), _pt(l_os, angles[2])]
+    )
+    a_pts = " ".join(
+        [_pt(a_fb, angles[0]), _pt(a_bb, angles[1]), _pt(a_os, angles[2])]
+    )
+    b_pts = " ".join(
+        [_pt(b_fb, angles[0]), _pt(b_bb, angles[1]), _pt(b_os, angles[2])]
+    )
+
+    top_x, top_y = cx, cy - max_r
+    br_x, br_y = cx + max_r * math.cos(angles[1]), cy + max_r * math.sin(angles[1])
+    bl_x, bl_y = cx + max_r * math.cos(angles[2]), cy + max_r * math.sin(angles[2])
+
+    clean_name_a = name_a.split("(")[0].strip()[:14]
+    clean_name_b = name_b.split("(")[0].strip()[:14]
+
+    raw_svg = f"""
+    <div style="display:flex;justify-content:center;align-items:center;margin:6px 0;">
+      <svg viewBox="0 0 410 295" width="100%" style="max-width:420px;background:var(--pp-surface,#12141A);border-radius:8px;border:1px solid var(--pp-border,#222631);padding:8px;display:block;">
+        <polygon points="{_ring_points(1.0)}" fill="none" stroke="#475569" stroke-opacity="0.45" stroke-width="1.4" />
+        <polygon points="{_ring_points(0.75)}" fill="none" stroke="#475569" stroke-opacity="0.32" stroke-width="1" stroke-dasharray="3,3" />
+        <polygon points="{_ring_points(0.50)}" fill="none" stroke="#475569" stroke-opacity="0.32" stroke-width="1" stroke-dasharray="3,3" />
+        <polygon points="{_ring_points(0.25)}" fill="none" stroke="#475569" stroke-opacity="0.32" stroke-width="1" stroke-dasharray="3,3" />
+        <line x1="{cx}" y1="{cy}" x2="{top_x:.1f}" y2="{top_y:.1f}" stroke="#64748B" stroke-opacity="0.45" stroke-width="1.1" />
+        <line x1="{cx}" y1="{cy}" x2="{br_x:.1f}" y2="{br_y:.1f}" stroke="#64748B" stroke-opacity="0.45" stroke-width="1.1" />
+        <line x1="{cx}" y1="{cy}" x2="{bl_x:.1f}" y2="{bl_y:.1f}" stroke="#64748B" stroke-opacity="0.45" stroke-width="1.1" />
+        <polygon points="{league_pts}" fill="rgba(148,163,184,0.10)" stroke="#94A3B8" stroke-width="1.8" stroke-dasharray="4,3" />
+        <polygon points="{a_pts}" fill="rgba(245,158,11,0.18)" stroke="{color_a}" stroke-width="2.5" />
+        <polygon points="{b_pts}" fill="rgba(56,189,248,0.18)" stroke="{color_b}" stroke-width="2.5" stroke-dasharray="6,2" />
+        <text x="{cx}" y="20" text-anchor="middle" fill="#EF4444" font-size="11" font-weight="800" font-family="JetBrains Mono, monospace">▲ Fastball</text>
+        <text x="{cx}" y="34" text-anchor="middle" font-size="10.5" font-weight="700" font-family="JetBrains Mono, monospace"><tspan fill="{color_a}">{clean_name_a} {a_fb * 100:.0f}%</tspan> <tspan fill="#64748B">|</tspan> <tspan fill="{color_b}">{clean_name_b} {b_fb * 100:.0f}%</tspan></text>
+        <text x="340" y="210" text-anchor="middle" fill="#3B82F6" font-size="11" font-weight="800" font-family="JetBrains Mono, monospace">◆ Breaking</text>
+        <text x="340" y="224" text-anchor="middle" font-size="10.5" font-weight="700" font-family="JetBrains Mono, monospace"><tspan fill="{color_a}">{a_bb * 100:.0f}%</tspan> <tspan fill="#64748B">|</tspan> <tspan fill="{color_b}">{b_bb * 100:.0f}%</tspan></text>
+        <text x="70" y="210" text-anchor="middle" fill="#10B981" font-size="11" font-weight="800" font-family="JetBrains Mono, monospace">● Offspeed</text>
+        <text x="70" y="224" text-anchor="middle" font-size="10.5" font-weight="700" font-family="JetBrains Mono, monospace"><tspan fill="{color_a}">{a_os * 100:.0f}%</tspan> <tspan fill="#64748B">|</tspan> <tspan fill="{color_b}">{b_os * 100:.0f}%</tspan></text>
+        <rect x="20" y="258" width="12" height="4" fill="#94A3B8" />
+        <text x="38" y="263" fill="#94A3B8" font-size="10" font-weight="600" font-family="sans-serif">Média MLB</text>
+        <rect x="135" y="258" width="12" height="4" fill="{color_a}" />
+        <text x="153" y="263" fill="{color_a}" font-size="10" font-weight="700" font-family="sans-serif">{name_a[:16]}</text>
+        <rect x="270" y="258" width="12" height="4" fill="{color_b}" />
+        <text x="288" y="263" fill="{color_b}" font-size="10" font-weight="700" font-family="sans-serif">{name_b[:16]}</text>
+      </svg>
+    </div>
+    """
+    return _compact_html(raw_svg)
+
+
+def compute_head_to_head_divergence(
+    preds_a: dict[str, str],
+    preds_b: dict[str, str],
+) -> dict[str, Any]:
+    """
+    Compare predictions of Pitcher A vs. Pitcher B across all 12 MLB counts.
+
+    Returns:
+    - `total_counts`: 12
+    - `agreement_counts`: number of counts where both pitchers throw the same category
+    - `divergence_counts`: number of counts with tactical disagreement
+    - `agreement_pct`: agreement ratio (0.0 to 1.0)
+    - `divergence_pct`: divergence ratio (0.0 to 1.0)
+    - `divergent_counts`: list of count strings where calls differ
+    - `consensus_counts`: list of count strings where calls match
+    - `contrasts`: list of 12 dicts with detailed comparisons per count
+    - `summary_text`: tactical narrative explaining the divergence
+    """
+    contrasts: list[dict[str, Any]] = []
+    divergent: list[str] = []
+    consensus: list[str] = []
+
+    for b, s in MLB_12_COUNTS:
+        ck = f"{b}-{s}"
+        p_a = preds_a.get(ck, "Fastball")
+        p_b = preds_b.get(ck, "Fastball")
+        is_div = p_a != p_b
+
+        if ck in PITCHER_AHEAD_COUNTS:
+            lev = "AHEAD"
+        elif ck in PITCHER_BEHIND_COUNTS:
+            lev = "BEHIND"
+        else:
+            lev = "EVEN"
+
+        record = {
+            "count": ck,
+            "balls": b,
+            "strikes": s,
+            "leverage": lev,
+            "pitch_a": p_a,
+            "pitch_b": p_b,
+            "is_divergent": is_div,
+        }
+        contrasts.append(record)
+
+        if is_div:
+            divergent.append(ck)
+        else:
+            consensus.append(ck)
+
+    total = len(MLB_12_COUNTS)
+    n_div = len(divergent)
+    n_agree = len(consensus)
+    div_pct = float(n_div) / float(total)
+    agree_pct = float(n_agree) / float(total)
+
+    if n_div >= 7:
+        summary_text = (
+            f"Alta divergência tática ({div_pct * 100:.1f}% — {n_div} de 12 contagens com chamadas opostas). "
+            f"Os dois arremessadores operam com filosofias de duelo antagônicas: enquanto um ataca agressivamente com velocidade, "
+            f"o outro prioriza quebras e indução de contato fraco fora do centro da zona."
+        )
+    elif n_div >= 4:
+        summary_text = (
+            f"Divergência tática moderada ({div_pct * 100:.1f}% — {n_div} de 12 contagens). "
+            f"Ambos compartilham tendências similares em contagens neutras, mas divergem significativamente "
+            f"no momento decisivo com 2 strikes (putaway) e em contagens desfavoráveis."
+        )
+    else:
+        summary_text = (
+            f"Forte consenso tático ({agree_pct * 100:.1f}% de alinhamento — {n_agree} de 12 contagens idênticas). "
+            f"Ambos os perfis respeitam a cartilha canônica da liga em quase todas as situações de pressão."
+        )
+
+    return {
+        "total_counts": total,
+        "agreement_counts": n_agree,
+        "divergence_counts": n_div,
+        "agreement_pct": agree_pct,
+        "divergence_pct": div_pct,
+        "divergent_counts": divergent,
+        "consensus_counts": consensus,
+        "contrasts": contrasts,
+        "summary_text": summary_text,
+    }
+
+
+def generate_comparative_game_plan(
+    name_a: str,
+    name_b: str,
+    preds_a: dict[str, str],
+    preds_b: dict[str, str],
+    priors_a: dict[str, float],
+    priors_b: dict[str, float],
+    stand: str = "L",
+    risp_active: bool = False,
+) -> dict[str, dict[str, str]]:
+    """
+    Synthesize a comparative 3-stage Game Plan contrasting the batter's tactical adjustments
+    when facing Pitcher A vs. Pitcher B.
+    """
+    plan_a = generate_batter_game_plan(name_a, preds_a, priors_a, stand, risp_active)
+    plan_b = generate_batter_game_plan(name_b, preds_b, priors_b, stand, risp_active)
+
+    clean_a = name_a.split("(")[0].strip()
+    clean_b = name_b.split("(")[0].strip()
+
+    early_a = plan_a["early_counts"]["dominant_pitch"]
+    early_b = plan_b["early_counts"]["dominant_pitch"]
+
+    hitter_a = plan_a["hitter_counts"]["dominant_pitch"]
+    hitter_b = plan_b["hitter_counts"]["dominant_pitch"]
+
+    two_a = plan_a["two_strike_protection"]["dominant_pitch"]
+    two_b = plan_b["two_strike_protection"]["dominant_pitch"]
+
+    return {
+        "early_counts": {
+            "title": "1. Ajuste em Contagens Neutras (0-0, 1-0, 0-1, 1-1)",
+            "dominant_a": early_a,
+            "dominant_b": early_b,
+            "strategy": (
+                f"Ao enfrentar {clean_a}: ancore o swing em {early_a} na metade superior da zona. "
+                f"Contra {clean_b}: reajuste a antecipação para {early_b}, preparando o tempo de reação "
+                f"para a quebra ou atraso no ponto de soltura."
+            ),
+            "chase_warning": (
+                f"Transição crítica: {clean_a} desafia na zona com maior frequência, enquanto "
+                f"{clean_b} tenta expandir as bordas logo nos primeiros arremessos."
+            ),
+        },
+        "hitter_counts": {
+            "title": "2. Ajuste em Vantagem do Rebatedor (2-0, 2-1, 3-0, 3-1)",
+            "dominant_a": hitter_a,
+            "dominant_b": hitter_b,
+            "strategy": (
+                f"Em contagens favoráveis: {clean_a} projeta {hitter_a} para forçar o strike; "
+                f"já {clean_b} aposta em {hitter_b}. Ataque a bola com agressividade puxando para o pull-side "
+                f"apenas na zona de conforto."
+            ),
+            "chase_warning": (
+                "Não persiga bolas fora do quadrante central (Zonas 4, 5 e 6). Aceite o walk se o arremesso escapar."
+            ),
+        },
+        "two_strike_protection": {
+            "title": "3. Ajuste de Sobrevivência com 2 Strikes (0-2, 1-2, 2-2, 3-2)",
+            "dominant_a": two_a,
+            "dominant_b": two_b,
+            "strategy": (
+                f"Modo B-Swing com 2 strikes: contra {clean_a}, a principal arma de eliminação é {two_a}; "
+                f"contra {clean_b}, o foco defensivo é {two_b}. Encurte a pegada no bastão e proteja as laterais."
+            ),
+            "chase_warning": (
+                f"Atenção às zonas de chase (11 a 14): {clean_a} busca whiffs em elevação/wipeout, enquanto "
+                f"{clean_b} induz groundouts na terra com quedas tardias."
+            ),
+        },
+    }
+
+
+def export_scouting_card_html(
+    pitcher_name: str,
+    predictions_by_count: dict[str, str],
+    game_plan: dict[str, dict[str, str]],
+    priors: dict[str, float],
+    stand: str = "L",
+    risp_active: bool = False,
+    theme_mode: str = "light",
+) -> str:
+    """
+    Generate a high-fidelity, standalone printable HTML Dugout Card.
+    Optimized for printing (Ctrl+P) and PDF export via `@media print` CSS rules.
+    """
+    fb_p, bb_p, os_p = _extract_dist_triplet(priors)
+    model_dist = compute_matrix_distribution(predictions_by_count)
+    stand_label = "Rebatedor Canhoto (LHB)" if stand.upper() == "L" else "Rebatedor Destro (RHB)"
+    risp_label = "RISP Ativo (Corredores em 2B/3B)" if risp_active else "Bases Limpas / Sem RISP"
+
+    grid_cells: list[str] = []
+    for b in range(4):
+        for s in range(3):
+            ck = f"{b}-{s}"
+            cat = predictions_by_count.get(ck, "Fastball")
+            style = PITCH_CATEGORY_STYLES.get(cat, PITCH_CATEGORY_STYLES["Fastball"])
+            c_badge = style.get("code_badge", "PITCH")
+            prim = style.get("secondary", style["primary"])
+
+            if ck in PITCHER_AHEAD_COUNTS:
+                badge_txt = "AHEAD"
+                badge_bg = "#ECFDF5"
+                badge_c = "#065F46"
+            elif ck in PITCHER_BEHIND_COUNTS:
+                badge_txt = "BEHIND"
+                badge_bg = "#FEF3C7"
+                badge_c = "#92400E"
+            else:
+                badge_txt = "EVEN"
+                badge_bg = "#F1F5F9"
+                badge_c = "#334155"
+
+            cell = f"""
+            <div class="card-cell" style="border-left:4px solid {prim};">
+              <div class="cell-head">
+                <span class="count-pill">{ck}</span>
+                <span class="lev-pill" style="background:{badge_bg};color:{badge_c};">{badge_txt}</span>
+              </div>
+              <div class="pitch-name">{style['icon']} {cat}</div>
+              <div class="pitch-code" style="color:{prim};">{c_badge}</div>
+            </div>
+            """
+            grid_cells.append(cell)
+
+    early = game_plan.get("early_counts", {})
+    hitter = game_plan.get("hitter_counts", {})
+    two_s = game_plan.get("two_strike_protection", {})
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>MLB Statcast Dugout Card — {pitcher_name}</title>
+  <style>
+    @page {{
+      size: A4 portrait;
+      margin: 10mm;
+    }}
+    * {{
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }}
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #FFFFFF;
+      color: #0F172A;
+      padding: 16px;
+      line-height: 1.4;
+      font-size: 13px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }}
+    .no-print {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0F172A;
+      color: #FFFFFF;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }}
+    .print-btn {{
+      background: #2563EB;
+      color: #FFFFFF;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }}
+    .print-btn:hover {{
+      background: #1D4ED8;
+    }}
+    .dugout-card {{
+      border: 2px solid #CBD5E1;
+      border-radius: 10px;
+      padding: 18px;
+      background: #FFFFFF;
+    }}
+    .header-bar {{
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #E2E8F0;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }}
+    .title-area h1 {{
+      font-size: 20px;
+      font-weight: 800;
+      color: #0F172A;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }}
+    .title-area .sub {{
+      font-size: 12px;
+      color: #64748B;
+      font-weight: 600;
+      margin-top: 2px;
+    }}
+    .meta-box {{
+      text-align: right;
+      font-family: monospace;
+      font-size: 11px;
+      color: #475569;
+    }}
+    .priors-bar {{
+      display: flex;
+      gap: 12px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      padding: 8px 14px;
+      margin-bottom: 14px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }}
+    .priors-bar span strong {{
+      color: #0F172A;
+    }}
+    .section-title {{
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #1E293B;
+      letter-spacing: 0.05em;
+      margin: 12px 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }}
+    .matrix-grid {{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }}
+    .card-cell {{
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      padding: 8px 10px;
+    }}
+    .cell-head {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }}
+    .count-pill {{
+      font-family: monospace;
+      font-weight: 800;
+      font-size: 12px;
+      color: #0F172A;
+    }}
+    .lev-pill {{
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: monospace;
+    }}
+    .pitch-name {{
+      font-size: 13px;
+      font-weight: 800;
+      color: #0F172A;
+    }}
+    .pitch-code {{
+      font-family: monospace;
+      font-size: 9.5px;
+      font-weight: 700;
+    }}
+    .plan-grid {{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }}
+    .plan-card {{
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      padding: 10px;
+    }}
+    .plan-card h4 {{
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #0F172A;
+      margin-bottom: 4px;
+    }}
+    .plan-card .focus {{
+      font-size: 11px;
+      font-weight: 700;
+      color: #2563EB;
+      margin-bottom: 6px;
+    }}
+    .plan-card p {{
+      font-size: 11px;
+      color: #334155;
+      line-height: 1.35;
+      margin-bottom: 6px;
+    }}
+    .plan-card .alert {{
+      background: #FEF3C7;
+      border: 1px solid #FDE68A;
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 10px;
+      color: #92400E;
+      font-weight: 600;
+    }}
+    .footer-note {{
+      border-top: 1px solid #E2E8F0;
+      padding-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #64748B;
+      font-family: monospace;
+    }}
+    @media print {{
+      .no-print {{
+        display: none !important;
+      }}
+      body {{
+        padding: 0;
+      }}
+      .dugout-card {{
+        border: 1px solid #94A3B8;
+        padding: 12px;
+      }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <div>
+      <strong>⚾ MLB STATCAST DUGOUT CARD — VISUALIZADOR DE IMPRESSÃO</strong>
+      <span style="font-size:11px;opacity:0.8;display:block;">Pronto para impressão em A4 ou salvamento em PDF para uso no dugout</span>
+    </div>
+    <button class="print-btn" onclick="window.print()">
+      🖨️ Imprimir / Salvar em PDF
+    </button>
+  </div>
+
+  <div class="dugout-card">
+    <div class="header-bar">
+      <div class="title-area">
+        <h1>{pitcher_name}</h1>
+        <div class="sub">MLB STATCAST TACTICAL DOSSIER • DUGOUT GAME PLAN</div>
+      </div>
+      <div class="meta-box">
+        <div><strong>PLATOON:</strong> {stand_label}</div>
+        <div><strong>SITUAÇÃO:</strong> {risp_label}</div>
+      </div>
+    </div>
+
+    <div class="priors-bar">
+      <span><strong>Priors Base:</strong> FB {fb_p * 100:.0f}% • BB {bb_p * 100:.0f}% • OS {os_p * 100:.0f}%</span>
+      <span>|</span>
+      <span><strong>Matriz IA (12 Contagens):</strong> Fastball {model_dist['Fastball'] * 100:.0f}% • Breaking {model_dist['Breaking Ball'] * 100:.0f}% • Offspeed {model_dist['Offspeed'] * 100:.0f}%</span>
+    </div>
+
+    <div class="section-title">Matriz Tática de Decisão (12 Contagens da MLB)</div>
+    <div class="matrix-grid">
+      {"".join(grid_cells)}
+    </div>
+
+    <div class="section-title">Game Plan do Rebatedor por Fase da Contagem</div>
+    <div class="plan-grid">
+      <div class="plan-card">
+        <h4>1. Neutras (0-0, 1-0, 0-1, 1-1)</h4>
+        <div class="focus">Foco: {early.get('dominant_pitch', 'Fastball')}</div>
+        <p>{early.get('strategy', '')}</p>
+        <div class="alert">[CHASE] {early.get('chase_warning', '')}</div>
+      </div>
+      <div class="plan-card">
+        <h4>2. Vantagem (2-0, 2-1, 3-0, 3-1)</h4>
+        <div class="focus">Foco: {hitter.get('dominant_pitch', 'Fastball')}</div>
+        <p>{hitter.get('strategy', '')}</p>
+        <div class="alert">[ZONA] {hitter.get('chase_warning', '')}</div>
+      </div>
+      <div class="plan-card">
+        <h4>3. Putaway (0-2, 1-2, 2-2, 3-2)</h4>
+        <div class="focus">Foco: {two_s.get('dominant_pitch', 'Breaking Ball')}</div>
+        <p>{two_s.get('strategy', '')}</p>
+        <div class="alert">[2-STRIKES] {two_s.get('chase_warning', '')}</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      <span>MLB Statcast Multimodal AI • Databricks Serverless Model Serving</span>
+      <span>Uso Exclusivo no Dugout & Comissão Técnica</span>
+    </div>
+  </div>
+</body>
+</html>"""
+    return html_content

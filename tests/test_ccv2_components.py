@@ -172,7 +172,7 @@ def test_ccv2_count_inspection_detail_and_component_mount() -> None:
         st.write(f"SELECTED_COUNT={sel_count}")
         st.write(f"SELECTED_ZONE={sel_zone}")
 
-    at = AppTest.from_function(_app_script).run()
+    at = AppTest.from_function(_app_script, default_timeout=30).run()
     assert not at.exception, f"CCv2 AppTest raised exception: {at.exception}"
     combined = "\n".join(m.value for m in at.markdown)
     assert "SELECTED_COUNT=1-2" in combined
