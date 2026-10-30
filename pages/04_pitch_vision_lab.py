@@ -616,6 +616,30 @@ with strip_meta_col:
     """
     st.markdown(_compact_html(meta_card_html), unsafe_allow_html=True)
 
+# Baselines do arremessador (calculadas sobre o histórico real do atleta)
+p_means = bio_df[[c for c in EXTENDED_BIOMECHANICAL_FEATURE_COLS if c in bio_df.columns]].mean(numeric_only=True)
+p_stds = bio_df[[c for c in EXTENDED_BIOMECHANICAL_FEATURE_COLS if c in bio_df.columns]].std(numeric_only=True)
+
+# Limiares Adaptativos de Z-Score: desvios padrões reais por arremessador com fallback seguro
+DEFAULT_BIO_STDS: dict[str, float] = {
+    "arm_slot_angle": 3.5,
+    "elbow_flexion_angle": 5.0,
+    "release_height": 0.025,
+    "trunk_tilt": 2.0,
+    "stride_extension": 0.05,
+    "glove_tuck_distance": 0.03,
+    "hip_shoulder_separation": 3.0,
+    "arm_angular_velocity": 40.0,
+    "delivery_tempo_s": 0.025,
+    "forward_release_extension": 0.03,
+}
+
+def _resolve_safe_std(col: str) -> float:
+    raw_s = float(p_stds.get(col, float("nan")))
+    if pd.isna(raw_s) or raw_s < 1e-4:
+        return DEFAULT_BIO_STDS.get(col, 1.0)
+    return raw_s
+
 # ---------------------------------------------------------------------------
 # 2. Pipeline Visual: Vídeo -> Print Base -> Modelo da Pose 3D (Hawk-Eye)
 # ---------------------------------------------------------------------------
@@ -674,13 +698,37 @@ with base_print_col:
 
 with pose_col:
     st.markdown("**03 // Modelo da Pose 3D (Vetores Hawk-Eye)**")
+    raw_slot = float(bio_record.get("arm_slot_angle", 50.0))
+    raw_elbow = float(bio_record.get("elbow_flexion_angle", 145.0))
+    raw_ht = float(bio_record.get("release_height", 0.71))
+    raw_tilt = float(bio_record.get("trunk_tilt", 11.5))
+    raw_glove = float(bio_record.get("glove_tuck_distance", 0.24))
+    raw_sep = float(bio_record.get("hip_shoulder_separation", 38.0))
+
+    b_slot = float(p_means.get("arm_slot_angle", base_bio_profile.get("arm_slot_angle", raw_slot)))
+    b_elbow = float(p_means.get("elbow_flexion_angle", base_bio_profile.get("elbow_flexion_angle", raw_elbow)))
+    b_ht = float(p_means.get("release_height", base_bio_profile.get("release_height", raw_ht)))
+    b_tilt = float(p_means.get("trunk_tilt", base_bio_profile.get("trunk_tilt", raw_tilt)))
+    b_glove = float(p_means.get("glove_tuck_distance", raw_glove))
+    b_sep = float(p_means.get("hip_shoulder_separation", raw_sep))
+
+    z_pose_dict = {
+        "arm_slot_angle": (raw_slot - b_slot) / _resolve_safe_std("arm_slot_angle"),
+        "elbow_flexion_angle": (raw_elbow - b_elbow) / _resolve_safe_std("elbow_flexion_angle"),
+        "release_height": (raw_ht - b_ht) / _resolve_safe_std("release_height"),
+        "trunk_tilt": (raw_tilt - b_tilt) / _resolve_safe_std("trunk_tilt"),
+        "glove_tuck_distance": (raw_glove - b_glove) / _resolve_safe_std("glove_tuck_distance"),
+        "hip_shoulder_separation": (raw_sep - b_sep) / _resolve_safe_std("hip_shoulder_separation"),
+    }
+
     metrics_dict = {
-        "arm_slot_angle": float(bio_record.get("arm_slot_angle", 50.0)),
-        "elbow_flexion_angle": float(bio_record.get("elbow_flexion_angle", 145.0)),
-        "release_height": float(bio_record.get("release_height", 0.71)),
-        "trunk_tilt": float(bio_record.get("trunk_tilt", 11.5)),
-        "glove_tuck_distance": float(bio_record.get("glove_tuck_distance", 0.24)),
-        "hip_shoulder_separation": float(bio_record.get("hip_shoulder_separation", 38.0)),
+        "arm_slot_angle": raw_slot,
+        "elbow_flexion_angle": raw_elbow,
+        "release_height": raw_ht,
+        "trunk_tilt": raw_tilt,
+        "glove_tuck_distance": raw_glove,
+        "hip_shoulder_separation": raw_sep,
+        "z_scores": z_pose_dict,
     }
 
     annotated_frame = extract_and_annotate_release_frame(
@@ -697,8 +745,27 @@ with pose_col:
     )
     _render_image_stretch(
         annotated_frame,
-        caption="Modelo da Pose 3D | Braço & Arco: Cyan/Amber | Glove Tuck: Sky | Tronco: Red",
+        caption="Modelo da Pose 3D com Heatmap Articular | Verde: Normal | Âmbar: Atenção | Vermelho: Tipping",
     )
+    heatmap_legend_html = """
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:6px 8px;background:var(--pp-surface);border:1px solid var(--pp-border);border-radius:6px;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:10px;">
+        <span style="display:inline-flex;align-items:center;gap:4px;color:#22D4E8;font-weight:700;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#22D4E8;display:inline-block;"></span>
+            Normal (|Z| &lt; 1.0)
+        </span>
+        <span style="color:var(--pp-muted);">•</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;color:#F59E0B;font-weight:700;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>
+            Atenção (1.0 &le; |Z| &lt; 1.75)
+        </span>
+        <span style="color:var(--pp-muted);">•</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;color:#EF4444;font-weight:700;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#EF4444;display:inline-block;"></span>
+            Pitch Tipping (|Z| &ge; 1.75)
+        </span>
+    </div>
+    """
+    st.markdown(_compact_html(heatmap_legend_html), unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 2B. Timeline Cinemática Sincronizada das 4 Fases da Mecânica

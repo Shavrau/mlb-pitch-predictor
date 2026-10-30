@@ -39,6 +39,59 @@ COLOR_WHITE = (244, 246, 250)
 COLOR_MUTED = (165, 175, 190)
 COLOR_DARK_HUD = (14, 17, 23)
 
+# Adaptive Biomechanical Heatmap Palette (BGR for OpenCV, RGB for Pillow)
+# Normal: Cyan / Emerald (#22D4E8) - |Z| < 1.0
+COLOR_HEATMAP_NORMAL_BGR = (232, 212, 34)
+COLOR_HEATMAP_NORMAL_RGB = (34, 212, 232)
+
+# Attention / Warning: Amber (#F59E0B) - 1.0 <= |Z| < 1.75
+COLOR_HEATMAP_WARNING_BGR = (11, 158, 245)
+COLOR_HEATMAP_WARNING_RGB = (245, 158, 11)
+
+# Pitch Tipping Anomaly: Pulsing Ruby Red (#EF4444) - |Z| >= 1.75
+COLOR_HEATMAP_ANOMALY_BGR = (68, 68, 239)
+COLOR_HEATMAP_ANOMALY_RGB = (239, 68, 68)
+
+_BASE_FRAME_LANDMARKS_CACHE: dict[tuple[Any, ...], dict[str | int, Any]] = {}
+
+
+def get_joint_color_by_z(z_val: float | None, bgr: bool = True) -> tuple[int, int, int]:
+    """
+    Returns adaptive joint heatmap color based on intra-pitcher standardized Z-score:
+    - Normal (|Z| < 1.0): Cyan / Emerald
+    - Attention (1.0 <= |Z| < 1.75): Amber
+    - Pitch Tipping (|Z| >= 1.75): Ruby Red
+    """
+    if z_val is None or not math.isfinite(z_val):
+        return COLOR_HEATMAP_NORMAL_BGR if bgr else COLOR_HEATMAP_NORMAL_RGB
+    abs_z = abs(z_val)
+    if abs_z >= 1.75:
+        return COLOR_HEATMAP_ANOMALY_BGR if bgr else COLOR_HEATMAP_ANOMALY_RGB
+    if abs_z >= 1.0:
+        return COLOR_HEATMAP_WARNING_BGR if bgr else COLOR_HEATMAP_WARNING_RGB
+    return COLOR_HEATMAP_NORMAL_BGR if bgr else COLOR_HEATMAP_NORMAL_RGB
+
+
+def _extract_z_scores_from_metrics(metrics: dict[str, Any] | None) -> dict[str, float | None]:
+    """Extracts standardized Z-scores dictionary from metrics payload."""
+    if not metrics:
+        return {}
+    z_map = metrics.get("z_scores")
+    if isinstance(z_map, dict):
+        return z_map
+    return {
+        "arm_slot_angle": metrics.get("z_slot", metrics.get("z_arm_slot")),
+        "elbow_flexion_angle": metrics.get("z_elbow", metrics.get("z_elbow_flexion")),
+        "release_height": metrics.get("z_ht", metrics.get("z_release_height")),
+        "trunk_tilt": metrics.get("z_tilt", metrics.get("z_trunk_tilt")),
+        "glove_tuck_distance": metrics.get("z_glove", metrics.get("z_glove_tuck")),
+        "hip_shoulder_separation": metrics.get("z_sep", metrics.get("z_hip_shoulder_sep")),
+        "arm_angular_velocity": metrics.get("z_vel"),
+        "delivery_tempo_s": metrics.get("z_tempo"),
+        "stride_extension": metrics.get("z_stride"),
+    }
+
+
 
 def _to_pixel_coords(point: dict[str, float] | None, width: int, height: int) -> tuple[int, int] | None:
     """Converts normalized [0, 1] landmark coordinates to pixel space."""
@@ -203,25 +256,29 @@ def draw_pitcher_skeleton_pillow(
         r_ank = _to_px(landmarks.get("RIGHT_ANKLE"))
         l_ank = _to_px(landmarks.get("LEFT_ANKLE"))
 
-        c_cyan = (34, 212, 232)
-        c_red = (239, 68, 68)
-        c_amber = (245, 158, 11)
-        c_blue = (56, 189, 248)
+        z_scores = _extract_z_scores_from_metrics(metrics)
+        c_slot = get_joint_color_by_z(z_scores.get("arm_slot_angle"), bgr=False)
+        c_elbow = get_joint_color_by_z(z_scores.get("elbow_flexion_angle"), bgr=False)
+        c_ht = get_joint_color_by_z(z_scores.get("release_height"), bgr=False)
+        c_tilt = get_joint_color_by_z(z_scores.get("trunk_tilt"), bgr=False)
+        c_glove = get_joint_color_by_z(z_scores.get("glove_tuck_distance"), bgr=False)
+        c_sep = get_joint_color_by_z(z_scores.get("hip_shoulder_separation"), bgr=False)
+
         c_white = (244, 246, 250)
 
         mid_hip = None
         mid_sh = None
         if r_hip and l_hip:
-            draw.line([r_hip, l_hip], fill=c_amber, width=3)
+            draw.line([r_hip, l_hip], fill=c_sep, width=3)
             mid_hip = ((r_hip[0] + l_hip[0]) // 2, (r_hip[1] + l_hip[1]) // 2)
             if r_sh and l_sh:
                 mid_sh = ((r_sh[0] + l_sh[0]) // 2, (r_sh[1] + l_sh[1]) // 2)
-                draw.line([mid_hip, mid_sh], fill=c_red, width=3)
+                draw.line([mid_hip, mid_sh], fill=c_tilt, width=3)
 
         if r_hip and r_ank:
-            draw.line([r_hip, r_ank], fill=c_amber, width=2)
+            draw.line([r_hip, r_ank], fill=c_sep, width=2)
         if l_hip and l_ank:
-            draw.line([l_hip, l_ank], fill=c_amber, width=2)
+            draw.line([l_hip, l_ank], fill=c_sep, width=2)
 
         if r_sh and l_sh:
             draw.line([r_sh, l_sh], fill=c_white, width=2)
@@ -232,16 +289,16 @@ def draw_pitcher_skeleton_pillow(
 
         if mid_sh and mid_hip and glove_wr:
             chest_pt = (int(0.7 * mid_sh[0] + 0.3 * mid_hip[0]), int(0.7 * mid_sh[1] + 0.3 * mid_hip[1]))
-            draw.line([chest_pt, glove_wr], fill=c_blue, width=2)
+            draw.line([chest_pt, glove_wr], fill=c_glove, width=2)
 
         if throw_sh and throw_el:
-            draw.line([throw_sh, throw_el], fill=c_cyan, width=4)
+            draw.line([throw_sh, throw_el], fill=c_slot, width=4)
         if throw_el and throw_wr:
-            draw.line([throw_el, throw_wr], fill=c_cyan, width=4)
+            draw.line([throw_el, throw_wr], fill=c_elbow, width=4)
             rx, ry = throw_wr
             draw.ellipse([rx - 10, ry - 10, rx + 10, ry + 10], outline=c_white, width=2)
-            draw.line([(rx - 15, ry), (rx + 15, ry)], fill=c_amber, width=2)
-            draw.line([(rx, ry - 15), (rx, ry + 15)], fill=c_amber, width=2)
+            draw.line([(rx - 15, ry), (rx + 15, ry)], fill=c_ht, width=2)
+            draw.line([(rx, ry - 15), (rx, ry + 15)], fill=c_ht, width=2)
 
     if metrics:
         draw.rectangle([14, 14, 285, 138], fill=(14, 17, 23), outline=(34, 212, 232), width=1)
@@ -298,24 +355,33 @@ def draw_pitcher_skeleton(
     mid_hip: tuple[int, int] | None = None
     mid_sh: tuple[int, int] | None = None
 
+    # Resolve adaptive joint heatmap colors from standardized Z-scores
+    z_scores = _extract_z_scores_from_metrics(metrics)
+    c_slot = get_joint_color_by_z(z_scores.get("arm_slot_angle"), bgr=True)
+    c_elbow = get_joint_color_by_z(z_scores.get("elbow_flexion_angle"), bgr=True)
+    c_ht = get_joint_color_by_z(z_scores.get("release_height"), bgr=True)
+    c_tilt = get_joint_color_by_z(z_scores.get("trunk_tilt"), bgr=True)
+    c_glove = get_joint_color_by_z(z_scores.get("glove_tuck_distance"), bgr=True)
+    c_sep = get_joint_color_by_z(z_scores.get("hip_shoulder_separation"), bgr=True)
+
     # 1. Pelvic Hip Axis & Lower Kinetic Chain
     if r_hip and l_hip:
-        cv2.line(img, r_hip, l_hip, COLOR_AMBER, 3, cv2.LINE_AA)
-        cv2.circle(img, r_hip, 4, COLOR_AMBER, -1)
-        cv2.circle(img, l_hip, 4, COLOR_AMBER, -1)
+        cv2.line(img, r_hip, l_hip, c_sep, 3, cv2.LINE_AA)
+        cv2.circle(img, r_hip, 4, c_sep, -1)
+        cv2.circle(img, l_hip, 4, c_sep, -1)
         mid_hip = ((r_hip[0] + l_hip[0]) // 2, (r_hip[1] + l_hip[1]) // 2)
 
         if r_sh and l_sh:
             mid_sh = ((r_sh[0] + l_sh[0]) // 2, (r_sh[1] + l_sh[1]) // 2)
             # Vertical reference tick at mid_hip + actual Trunk Tilt spine vector
             cv2.line(img, mid_hip, (mid_hip[0], max(0, mid_sh[1] - 12)), COLOR_MUTED, 1, cv2.LINE_AA)
-            cv2.line(img, mid_hip, mid_sh, COLOR_SPINE_RED, 3, cv2.LINE_AA)
-            cv2.circle(img, mid_sh, 5, COLOR_SPINE_RED, -1)
+            cv2.line(img, mid_hip, mid_sh, c_tilt, 3, cv2.LINE_AA)
+            cv2.circle(img, mid_sh, 5, c_tilt, -1)
 
     if r_hip and r_ank:
-        cv2.line(img, r_hip, r_ank, COLOR_AMBER, 2, cv2.LINE_AA)
+        cv2.line(img, r_hip, r_ank, c_sep, 2, cv2.LINE_AA)
     if l_hip and l_ank:
-        cv2.line(img, l_hip, l_ank, COLOR_AMBER, 2, cv2.LINE_AA)
+        cv2.line(img, l_hip, l_ank, c_sep, 2, cv2.LINE_AA)
 
     # 2. Scapular Shoulder Axis
     if r_sh and l_sh:
@@ -332,15 +398,15 @@ def draw_pitcher_skeleton(
         cv2.circle(img, glove_el, 4, COLOR_GLOVE_BLUE, -1)
     if glove_el and glove_wr:
         cv2.line(img, glove_el, glove_wr, COLOR_GLOVE_BLUE, 2, cv2.LINE_AA)
-        cv2.circle(img, glove_wr, 5, COLOR_GLOVE_BLUE, -1)
+        cv2.circle(img, glove_wr, 5, c_glove, -1)
 
     if mid_sh and mid_hip and glove_wr:
         chest_pt = (
             round(0.70 * mid_sh[0] + 0.30 * mid_hip[0]),
             round(0.70 * mid_sh[1] + 0.30 * mid_hip[1]),
         )
-        cv2.line(img, chest_pt, glove_wr, COLOR_GLOVE_BLUE, 1, cv2.LINE_AA)
-        cv2.circle(img, chest_pt, 3, COLOR_GLOVE_BLUE, -1)
+        cv2.line(img, chest_pt, glove_wr, c_glove, 2, cv2.LINE_AA)
+        cv2.circle(img, chest_pt, 4, c_glove, -1)
 
     # Technical Arm Slot Angular Arc at Throwing Shoulder
     if throw_sh and throw_wr:
@@ -352,36 +418,56 @@ def draw_pitcher_skeleton(
         dy = throw_wr[1] - throw_sh[1]
         ang_deg = math.degrees(math.atan2(dy, dx))
         start_a, end_a = (min(0.0, ang_deg), max(0.0, ang_deg)) if is_righty else (min(180.0, ang_deg), max(180.0, ang_deg))
-        cv2.ellipse(img, throw_sh, (arc_r, arc_r), 0.0, start_a, end_a, COLOR_AMBER, 2, cv2.LINE_AA)
+        cv2.ellipse(img, throw_sh, (arc_r, arc_r), 0.0, start_a, end_a, c_slot, 2, cv2.LINE_AA)
 
     # Throwing Arm Chain + Precision Release Point Reticle
     if throw_sh and throw_el:
-        cv2.line(img, throw_sh, throw_el, COLOR_HAWKEYE_CYAN, 4, cv2.LINE_AA)
+        cv2.line(img, throw_sh, throw_el, c_slot, 4, cv2.LINE_AA)
         cv2.circle(img, throw_sh, 6, COLOR_WHITE, -1)
-        cv2.circle(img, throw_el, 7, COLOR_HAWKEYE_CYAN, -1)
-        cv2.circle(img, throw_el, 11, COLOR_HAWKEYE_CYAN, 1, cv2.LINE_AA)
+        cv2.circle(img, throw_el, 7, c_elbow, -1)
+        cv2.circle(img, throw_el, 11, c_elbow, 1, cv2.LINE_AA)
+        z_el = z_scores.get("elbow_flexion_angle")
+        if z_el is not None and abs(z_el) >= 1.75:
+            cv2.circle(img, throw_el, 16, COLOR_HEATMAP_ANOMALY_BGR, 2, cv2.LINE_AA)
 
     if throw_el and throw_wr:
-        cv2.line(img, throw_el, throw_wr, COLOR_HAWKEYE_CYAN, 4, cv2.LINE_AA)
-        cv2.circle(img, throw_wr, 8, COLOR_HAWKEYE_CYAN, -1)
+        cv2.line(img, throw_el, throw_wr, c_elbow, 4, cv2.LINE_AA)
+        cv2.circle(img, throw_wr, 8, c_ht, -1)
         cv2.circle(img, throw_wr, 15, COLOR_WHITE, 2, cv2.LINE_AA)
-        cv2.drawMarker(img, throw_wr, COLOR_AMBER, cv2.MARKER_CROSS, 22, 2)
+        cv2.drawMarker(img, throw_wr, c_ht, cv2.MARKER_CROSS, 22, 2)
+        z_h = z_scores.get("release_height")
+        if z_h is not None and abs(z_h) >= 1.75:
+            cv2.circle(img, throw_wr, 21, COLOR_HEATMAP_ANOMALY_BGR, 2, cv2.LINE_AA)
 
     # 4. Hawk-Eye 3D Telemetry HUD Badge (Top-Left Corner)
     if metrics:
-        rows_to_draw: list[str] = []
-        if metrics.get("arm_slot_angle") is not None:
-            rows_to_draw.append(f"ARM SLOT:   {float(metrics['arm_slot_angle']):5.1f} deg")
-        if metrics.get("elbow_flexion_angle") is not None:
-            rows_to_draw.append(f"ELBOW FLEX: {float(metrics['elbow_flexion_angle']):5.1f} deg")
-        if metrics.get("release_height") is not None:
-            rows_to_draw.append(f"RELEASE HT: {float(metrics['release_height']):5.3f} norm")
-        if metrics.get("trunk_tilt") is not None:
-            rows_to_draw.append(f"TRUNK TILT: {float(metrics['trunk_tilt']):5.1f} deg")
-        if metrics.get("glove_tuck_distance") is not None:
-            rows_to_draw.append(f"GLOVE TUCK: {float(metrics['glove_tuck_distance']):5.2f} m")
-        if metrics.get("hip_shoulder_separation") is not None:
-            rows_to_draw.append(f"HIP-SH SEP: {float(metrics['hip_shoulder_separation']):5.1f} deg")
+        rows_to_draw: list[tuple[str, tuple[int, int, int]]] = []
+        for k, lbl, unit in [
+            ("arm_slot_angle", "ARM SLOT", "deg"),
+            ("elbow_flexion_angle", "ELBOW FLEX", "deg"),
+            ("release_height", "RELEASE HT", "norm"),
+            ("trunk_tilt", "TRUNK TILT", "deg"),
+            ("glove_tuck_distance", "GLOVE TUCK", "m"),
+            ("hip_shoulder_separation", "HIP-SH SEP", "deg"),
+        ]:
+            if metrics.get(k) is not None:
+                v = float(metrics[k])
+                fmt = f"{v:5.3f}" if "norm" in unit else f"{v:5.1f}"
+                zv = z_scores.get(k)
+                pill_txt = ""
+                pill_col = COLOR_WHITE
+                if zv is not None and math.isfinite(zv):
+                    abs_zv = abs(zv)
+                    if abs_zv >= 1.75:
+                        pill_txt = " [TIP]"
+                        pill_col = COLOR_HEATMAP_ANOMALY_BGR
+                    elif abs_zv >= 1.0:
+                        pill_txt = " [WARN]"
+                        pill_col = COLOR_HEATMAP_WARNING_BGR
+                    else:
+                        pill_txt = " [NORM]"
+                        pill_col = COLOR_HEATMAP_NORMAL_BGR
+                rows_to_draw.append((f"{lbl}: {fmt} {unit}{pill_txt}", pill_col))
 
         card_w = min(w - 24, 272)
         card_h = min(h - 24, 46 + 17 * len(rows_to_draw))
@@ -407,7 +493,7 @@ def draw_pitcher_skeleton(
                 cv2.line(img, (24, 36), (14 + card_w - 10, 36), COLOR_MUTED, 1)
 
                 y_pos = 52
-                for line_txt in rows_to_draw:
+                for line_txt, line_col in rows_to_draw:
                     if y_pos < 14 + card_h - 4:
                         cv2.putText(
                             img,
@@ -415,7 +501,7 @@ def draw_pitcher_skeleton(
                             (24, y_pos),
                             cv2.FONT_HERSHEY_SIMPLEX,
                             0.39,
-                            COLOR_WHITE,
+                            line_col,
                             1,
                             cv2.LINE_AA,
                         )
@@ -445,6 +531,29 @@ def extract_and_annotate_release_frame(
     path = Path(video_path) if video_path else Path("")
 
     if not mock_mode:
+        # Check for clean broadcast base frame to render dynamic anatomical heatmap
+        base_frame = find_preloaded_base_frame(
+            video_path=video_path,
+            pitch_category=pitch_category,
+            game_pk=game_pk,
+            at_bat_number=at_bat_number,
+            pitch_number=pitch_number,
+            pitcher_id=pitcher_id,
+            exact_match_only=False,
+        )
+        if base_frame is not None:
+            cache_key = (str(pitcher_id), str(game_pk), str(at_bat_number), str(pitch_number), str(pitch_category))
+            landmarks = _BASE_FRAME_LANDMARKS_CACHE.get(cache_key)
+            if landmarks is None:
+                if extractor is None:
+                    from pitch_predictor.vision.pose_extractor import PoseExtractor
+                    extractor = PoseExtractor()
+                landmarks = extractor.extract_frame_landmarks(base_frame)
+                if landmarks:
+                    _BASE_FRAME_LANDMARKS_CACHE[cache_key] = landmarks
+            if landmarks:
+                return draw_pitcher_skeleton(base_frame, landmarks, p_throws=p_throws, metrics=metrics)
+
         preloaded = find_preloaded_release_frame(
             video_path=video_path,
             pitch_category=pitch_category,

@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v2.1.0 Checkpoint (Dual-Mode WCAG AAA Contrast & UI Polish v2.1)  
+> **Versão do Projeto:** v2.2.0 Checkpoint (Sprint 1: Anatomical Pose Heatmap & Retro Arcade Hotkeys)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit 1.66.1.
 
@@ -11,7 +11,20 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 ## 1. Estado Atual da Base de Código (Checkpoint v2.1.0)
 
 Após homologação e implementação das correções de contraste e usabilidade Dual-Mode:
-- **Suíte de Testes**: **224 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+- **Suíte de Testes**: **227 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+- **Entregáveis da Sprint 1 Homologados**:
+  - **Heatmap Anatômico Interativo no Frame de Soltura 3D (`src/pitch_predictor/vision/overlay.py` e `pages/04_pitch_vision_lab.py`)**:
+    - Código de cores dinâmico nos nós anatômicos e vetores cinemáticos calibrado pelo Z-score intra-atleta:
+      - `🟢 Emerald / Cyan (#22D4E8)`: Mecânica normal na baseline do arremessador ($|Z| < 1.0$).
+      - `🟡 Amber (#F59E0B)`: Microdesvio articular moderado sob atenção ($1.0 \le |Z| < 1.75$).
+      - `🔴 Ruby Red (#EF4444)`: Desvio biomecânico estatisticamente anômalo / indício de Pitch Tipping ($|Z| \ge 1.75$).
+    - Cache em memória dos marcos anatômicos do frame base (`_BASE_FRAME_LANDMARKS_CACHE`), garantindo re-renderização ultrarrápida (<1ms) durante a manipulação dos sliders interativos no simulador de pose.
+    - Faixa editorial de legenda sob o visualizador 3D com badges de status em ambos os temas (Dark Broadcast e Light Editorial).
+  - **Atalhos de Teclado no Minigame Arcade (`pages/03_minigame.py` e `src/pitch_predictor/ccv2_components.py`)**:
+    - Teclas `1`, `2`, `3`: Alternância instantânea de arsenal entre Tier S, Tier A e Tier B.
+    - Teclas Direcionais (`Setas ↑ ← ↓ →` e `W, A, S, D`): Navegação bidirecional contínua da mira entre as 13 zonas (grid 3x3 + 4 quadrantes de chase) governada por `NAV_MAP` nos componentes Streamlit CCv2 e ouvinte DOM global.
+    - Teclas `Espaço` ou `Enter`: Disparo instantâneo do arremesso contra a IA (`ARREMESSAR CONTRA A IA`).
+    - Faixa visual de controles arcade estilo console retrô no HUD Scorebug com teclas `<kbd>` estilizadas de alto contraste WCAG AAA.
 - **Homologação Visual & Contraste WCAG AAA**:
   - **Erradicação do Fundo Branco no Card da Strike Zone CCv2 (`pages/03_minigame.py` e `src/pitch_predictor/ccv2_components.py`)**: Aplicação de tokens explícitos `.pp-sz-wrap:not(.pp-light)` (`#12141A` / `#222631`) e `.pp-sz-wrap.pp-light` (`#F1F5F9` / `#C2CFDD`), transmitindo `is_light` no payload `data` e adaptando as zonas interativas do grid para total harmonia em ambos os temas.
   - **Legibilidade Aperfeiçoada da Seção 3 no Modo Light Editorial (`pages/04_pitch_vision_lab.py`)**: Delta de probabilidade calibrada com badge verde esmeralda escuro (`#064E3B` / `#065F46`), banner editorial de confirmação biomecânica com fundo `#ECFDF5`, borda `#059669` e texto `#064E3B`, e pills de auditoria Out-of-Fold em cinza grafite de alto contraste sobre `#E2E8F0`.

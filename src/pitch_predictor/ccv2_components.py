@@ -656,6 +656,22 @@ export default function (component) {
     14: [204, 188],
   };
 
+  const NAV_MAP = {
+    1:  { up: 11, down: 4, left: 11, right: 2 },
+    2:  { up: 11, down: 5, left: 1,  right: 3 },
+    3:  { up: 12, down: 6, left: 2,  right: 12 },
+    4:  { up: 1,  down: 7, left: 11, right: 5 },
+    5:  { up: 2,  down: 8, left: 4,  right: 6 },
+    6:  { up: 3,  down: 9, left: 5,  right: 12 },
+    7:  { up: 4,  down: 13, left: 13, right: 8 },
+    8:  { up: 5,  down: 13, left: 7,  right: 9 },
+    9:  { up: 6,  down: 14, left: 8,  right: 14 },
+    11: { up: 11, down: 13, left: 11, right: 12 },
+    12: { up: 12, down: 14, left: 11, right: 12 },
+    13: { up: 11, down: 13, left: 13, right: 14 },
+    14: { up: 12, down: 14, left: 13, right: 14 },
+  };
+
   function bindZone(el, zId) {
     el.setAttribute("tabindex", "0");
     el.setAttribute("role", "option");
@@ -665,6 +681,19 @@ export default function (component) {
       if (ev.key === "Enter" || ev.key === " ") {
         ev.preventDefault();
         setStateValue("zone", zId);
+        return;
+      }
+      const k = ev.key.toLowerCase();
+      let dir = null;
+      if (k === "arrowup" || k === "w") dir = "up";
+      else if (k === "arrowdown" || k === "s") dir = "down";
+      else if (k === "arrowleft" || k === "a") dir = "left";
+      else if (k === "arrowright" || k === "d") dir = "right";
+
+      if (dir && NAV_MAP[zId]) {
+        ev.preventDefault();
+        const nextZ = NAV_MAP[zId][dir];
+        setStateValue("zone", nextZ);
       }
     };
   }

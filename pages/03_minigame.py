@@ -20,6 +20,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 from pitch_predictor.ccv2_components import interactive_strike_zone_ccv2
 from pitch_predictor.fallback_engine import predict_tactical_fallback
@@ -225,6 +226,60 @@ def _get_console_broadcast_css(accent_hex: str = "#F59E0B") -> str:
         padding: 24px;
         text-align: center;
         margin-bottom: 20px;
+    }}
+
+    .arcade-hotkey-strip {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 7px 14px;
+        background: var(--pp-surface, #12141A);
+        border: 1px solid var(--pp-border, #222631);
+        border-radius: 6px;
+        margin: 8px 0 12px 0;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+    }}
+
+    .hotkey-badge {{
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }}
+
+    .hotkey-badge kbd {{
+        display: inline-block;
+        padding: 2px 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.3;
+        color: var(--pp-text, #F1F5F9);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--pp-border, #334155);
+        border-radius: 4px;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+    }}
+
+    .pp-light .hotkey-badge kbd {{
+        background: #FFFFFF;
+        border-color: #CBD5E1;
+        color: #0F172A;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+    }}
+
+    .hotkey-label {{
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--pp-muted, #94A3B8);
+        letter-spacing: 0.04em;
+    }}
+
+    .hotkey-sep {{
+        color: var(--pp-border, #334155);
+        font-size: 12px;
     }}
 
     .bio-gauge-row {{
@@ -649,8 +704,143 @@ hud_html = f"""
     </div>
 </div>
 {timing_html}
+<div class="arcade-hotkey-strip">
+    <div class="hotkey-badge">
+        <span class="hotkey-keys"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></span>
+        <span class="hotkey-label">ARSENAL TIER</span>
+    </div>
+    <div class="hotkey-sep">•</div>
+    <div class="hotkey-badge">
+        <span class="hotkey-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span>
+        <span class="hotkey-label">MIRA (13 ZONAS)</span>
+    </div>
+    <div class="hotkey-sep">•</div>
+    <div class="hotkey-badge">
+        <span class="hotkey-keys"><kbd>ESPAÇO</kbd> / <kbd>ENTER</kbd></span>
+        <span class="hotkey-label">ARREMESSAR</span>
+    </div>
+</div>
 """
 st.markdown(_compact_html(hud_html), unsafe_allow_html=True)
+
+# Client-side Keyboard Shortcuts Controller (Keys 1-3: Tier, WASD/Arrows: Aim, Space/Enter: Throw)
+components.html(
+    """
+    <script>
+    (function() {
+        const parentDoc = window.parent ? window.parent.document : document;
+        if (!parentDoc || parentDoc.__ppArcadeKeysBound) return;
+        parentDoc.__ppArcadeKeysBound = true;
+
+        const NAV_MAP = {
+            1:  { up: 11, down: 4, left: 11, right: 2 },
+            2:  { up: 11, down: 5, left: 1,  right: 3 },
+            3:  { up: 12, down: 6, left: 2,  right: 12 },
+            4:  { up: 1,  down: 7, left: 11, right: 5 },
+            5:  { up: 2,  down: 8, left: 4,  right: 6 },
+            6:  { up: 3,  down: 9, left: 5,  right: 12 },
+            7:  { up: 4,  down: 13, left: 13, right: 8 },
+            8:  { up: 5,  down: 13, left: 7,  right: 9 },
+            9:  { up: 6,  down: 14, left: 8,  right: 14 },
+            11: { up: 11, down: 13, left: 11, right: 12 },
+            12: { up: 12, down: 14, left: 11, right: 12 },
+            13: { up: 11, down: 13, left: 13, right: 14 },
+            14: { up: 12, down: 14, left: 13, right: 14 },
+        };
+
+        function findZoneElement(doc, zId) {
+            const hits = Array.from(doc.querySelectorAll('.pp-zone-hit'));
+            for (const h of hits) {
+                const txt = (h.textContent || '').trim();
+                if (txt === String(zId) || txt === ('Z' + zId)) return h;
+            }
+            return null;
+        }
+
+        function getActiveZoneFromIframes() {
+            const iframes = Array.from(parentDoc.querySelectorAll('iframe'));
+            for (const ifr of iframes) {
+                try {
+                    const d = ifr.contentDocument || ifr.contentWindow.document;
+                    if (!d) continue;
+                    const sel = d.querySelector('.pp-zone-hit[aria-selected="true"]');
+                    if (sel) {
+                        const t = (sel.textContent || '').trim().replace('Z', '');
+                        const num = parseInt(t, 10);
+                        if (!isNaN(num)) return num;
+                    }
+                } catch(err) {}
+            }
+            return 5;
+        }
+
+        function clickZoneInIframes(zId) {
+            const iframes = Array.from(parentDoc.querySelectorAll('iframe'));
+            for (const ifr of iframes) {
+                try {
+                    const d = ifr.contentDocument || ifr.contentWindow.document;
+                    if (!d) continue;
+                    const targetEl = findZoneElement(d, zId);
+                    if (targetEl) {
+                        targetEl.click();
+                        return true;
+                    }
+                } catch(err) {}
+            }
+            return false;
+        }
+
+        parentDoc.addEventListener('keydown', function(e) {
+            const active = parentDoc.activeElement;
+            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+
+            const k = e.key;
+
+            // Hotkeys 1, 2, 3: select pitch tier
+            if (k === '1' || k === '2' || k === '3') {
+                const idx = parseInt(k, 10) - 1;
+                const labels = parentDoc.querySelectorAll('div[data-testid="stRadio"] label');
+                if (labels && labels.length > idx) {
+                    e.preventDefault();
+                    labels[idx].click();
+                }
+                return;
+            }
+
+            // Space / Enter: trigger throw
+            if (k === ' ' || k === 'Enter') {
+                const btns = Array.from(parentDoc.querySelectorAll('button'));
+                const throwBtn = btns.find(b => b.innerText && b.innerText.includes('ARREMESSAR CONTRA A IA'));
+                if (throwBtn && !throwBtn.disabled) {
+                    e.preventDefault();
+                    throwBtn.click();
+                }
+                return;
+            }
+
+            // Arrow keys / WASD: strike zone navigation
+            const lk = k.toLowerCase();
+            let dir = null;
+            if (lk === 'arrowup' || lk === 'w') dir = 'up';
+            else if (lk === 'arrowdown' || lk === 's') dir = 'down';
+            else if (lk === 'arrowleft' || lk === 'a') dir = 'left';
+            else if (lk === 'arrowright' || lk === 'd') dir = 'right';
+
+            if (dir) {
+                const cur = getActiveZoneFromIframes();
+                const nextZ = (NAV_MAP[cur] || NAV_MAP[5])[dir];
+                if (nextZ) {
+                    e.preventDefault();
+                    clickZoneInIframes(nextZ);
+                }
+            }
+        }, true);
+    })();
+    </script>
+    """,
+    height=0,
+    width=0,
+)
 
 # ---------------------------------------------------------------------------
 # 5. Tela de GAME OVER (Caso Vidas == 0)
@@ -1104,6 +1294,7 @@ else:
             tier_options,
             index=0,
             label_visibility="collapsed",
+            key="minigame_tier_selection_radio",
         )
 
         if "TIER S" in selected_tier_str:

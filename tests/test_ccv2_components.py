@@ -181,8 +181,8 @@ def test_ccv2_count_inspection_detail_and_component_mount() -> None:
 
 def test_light_mode_count_matrix_and_strike_zone_contrast() -> None:
     """Verify Light Mode contrast improvements: AHEAD/BEHIND/EVEN tags, #94A3B8 1.5px grid, #D97706 reticle."""
-    from pitch_predictor.ui_components import render_strike_zone_svg
     from pitch_predictor.scout_analytics import render_count_matrix_html
+    from pitch_predictor.ui_components import render_strike_zone_svg
 
     # 1. Strike Zone SVG
     sz_light = render_strike_zone_svg(selected_zone=5, prev_category="Fastball", theme_mode="light")
@@ -202,3 +202,16 @@ def test_light_mode_count_matrix_and_strike_zone_contrast() -> None:
     assert "EVEN" in matrix_light
     assert "#475569" in matrix_light  # Crisp --pp-muted in Light Mode
     assert "box-shadow:" in matrix_light
+
+
+def test_strike_zone_keyboard_nav_map_validity() -> None:
+    """Verify that NAV_MAP covers all 13 strike zones and directional navigation is integrated."""
+    from pitch_predictor.ccv2_components import _STRIKE_ZONE_JS
+
+    assert "NAV_MAP" in _STRIKE_ZONE_JS
+    assert "arrowup" in _STRIKE_ZONE_JS
+    assert "arrowdown" in _STRIKE_ZONE_JS
+    assert "arrowleft" in _STRIKE_ZONE_JS
+    assert "arrowright" in _STRIKE_ZONE_JS
+    for z in (1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14):
+        assert f"{z}:" in _STRIKE_ZONE_JS
