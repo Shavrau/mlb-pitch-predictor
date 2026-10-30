@@ -128,3 +128,66 @@ def test_draw_pitcher_skeleton_with_anatomical_heatmap_z_scores():
     assert annotated.shape == (480, 640, 3)
     assert annotated.sum() > 0
 
+def test_is_valid_pitcher_landmarks():
+    """Verify validation of mound pitcher vs background home plate actors."""
+    from pitch_predictor.vision.overlay import is_valid_pitcher_landmarks
+
+    assert not is_valid_pitcher_landmarks(None)
+    assert not is_valid_pitcher_landmarks({})
+
+    # Background catcher/batter (shoulders at y < 0.35)
+    catcher_lms = {
+        "RIGHT_SHOULDER": {"x": 0.43, "y": 0.27},
+        "LEFT_SHOULDER": {"x": 0.48, "y": 0.25},
+    }
+    assert not is_valid_pitcher_landmarks(catcher_lms)
+
+    # Valid pitcher on the mound (shoulders at y >= 0.35)
+    pitcher_lms = {
+        "RIGHT_SHOULDER": {"x": 0.46, "y": 0.51},
+        "LEFT_SHOULDER": {"x": 0.50, "y": 0.51},
+    }
+    assert is_valid_pitcher_landmarks(pitcher_lms)
+
+
+def test_get_calibrated_mound_landmarks():
+    """Verify calibrated mound fallback produces valid anatomical points for RHP and LHP."""
+    from pitch_predictor.vision.overlay import get_calibrated_mound_landmarks, is_valid_pitcher_landmarks
+
+    rhp_lms = get_calibrated_mound_landmarks(p_throws="R", pitch_category="Fastball")
+    assert is_valid_pitcher_landmarks(rhp_lms)
+    assert "RIGHT_SHOULDER" in rhp_lms
+    assert "RIGHT_WRIST" in rhp_lms
+    assert rhp_lms["RIGHT_SHOULDER"]["y"] >= 0.35
+
+    lhp_lms = get_calibrated_mound_landmarks(p_throws="L", pitch_category="Breaking Ball")
+    assert is_valid_pitcher_landmarks(lhp_lms)
+    assert "LEFT_SHOULDER" in lhp_lms
+    assert "LEFT_WRIST" in lhp_lms
+    assert lhp_lms["LEFT_SHOULDER"]["y"] >= 0.35
+
+
+def test_extract_and_annotate_release_frame_preserves_broadcast_colors():
+    """Verify that annotated release frames maintain correct background colors without RGB/BGR inversion."""
+    from pitch_predictor.vision.overlay import (
+        extract_and_annotate_release_frame,
+        find_preloaded_base_frame,
+    )
+
+    base = find_preloaded_base_frame(pitch_category="Fastball", pitcher_id=694973)
+    if base is not None:
+        annotated = extract_and_annotate_release_frame(
+            video_path="",
+            pitch_category="Fastball",
+            pitcher_id=694973,
+            p_throws="R",
+        )
+        assert annotated is not None
+        assert annotated.shape == base.shape
+        # Top-right Delta sign / stadium banner outside skeletal overlay should match background exactly
+        # (Delta logo area x: 120-280, y: 190-240)
+        base_patch = base[190:240, 120:280].astype(int)
+        ann_patch = annotated[190:240, 120:280].astype(int)
+        diff = np.abs(base_patch - ann_patch)
+        assert diff.max() == 0, "Background pixels must not be corrupted by double color conversion"
+
