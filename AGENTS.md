@@ -47,7 +47,7 @@ Após homologação e implementação dos entregáveis da Sprint 2 (Scouting Rep
 - **Aplicação em Nuvem Operacional (Databricks Apps)**:
   - App `pitch-predictor-app-dev` em estado **`RUNNING` / `ACTIVE`**.
   - URL Corporativa Pública: **`https://pitch-predictor-app-dev-7474645845452998.aws.databricksapps.com`**.
-  - Deploy **`01f1d481d17e1d048a2fbcbaad01611d`** ativo com **`SUCCEEDED`** e Streamlit `1.66.1`.
+  - Deploy **`01f1d4b5a745172f9b4fdcc9ddc9d4d3`** ativo com **`SUCCEEDED`** e Streamlit `1.66.1`.
 - **Revisão Geral de Escrita & Redação Esportiva**:
   - **Correções Gramaticais e Semânticas**: Correção da regência preposicional diante de sujeitos no infinitivo (*"antes de ele acontecer"*, *"tempo de o olho processar"*, *"antes de a bola deixar sua mão"*).
   - **Acentuação e Termos Técnicos**: Inclusão de acentos em relatórios gerados por modelos (*"afastando a hipótese de"*), substituição de termos de pôquer por esportivos (*"Sinais Físicos"* em vez de *"Tells Físicos"*).
