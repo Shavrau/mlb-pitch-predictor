@@ -7,6 +7,7 @@ Configures the global Streamlit layout, Dual Mode selector (Dark Broadcast `#0A0
 1. `pages/03_minigame.py` — Minigame Console HUD: Você vs. IA no Montinho
 2. `pages/02_scout_report.py` — MLB Scouting Report, Matriz 4x3 de 12 Contagens & Game Plan
 3. `pages/04_pitch_vision_lab.py` — Laboratório de Visão Computacional, Pose 3D & Pitch Tipping
+4. `pages/05_mlops_hub.py` — Databricks MLOps, Linhagem Unity Catalog & Governança Serverless
 """
 
 from __future__ import annotations
@@ -77,6 +78,13 @@ vision_lab_page = st.Page(
     url_path="vision-lab",
 )
 
+mlops_page = st.Page(
+    "pages/05_mlops_hub.py",
+    title="Databricks MLOps & Governança",
+    icon=":material/monitoring:",
+    url_path="mlops",
+)
+
 pg = st.navigation(
     {
         "MLB Statcast • Módulos": [
@@ -84,6 +92,7 @@ pg = st.navigation(
             minigame_page,
             scout_report_page,
             vision_lab_page,
+            mlops_page,
         ]
     }
 )
