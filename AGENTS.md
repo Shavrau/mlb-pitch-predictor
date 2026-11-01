@@ -23,6 +23,8 @@ Após homologação e implementação da **Dual Identity (Classic Diamond & Offi
     - Botões primários com gradiente de argila batida infield (`#C85A17` a `#A2420F`), borda de couro Rawlings (`#78350F`) e sombras táteis profundas.
   - **Fita Global de Transmissão de Rede (`render_broadcast_station_bar_html`)**:
     - Ribbon de telemetria de rede de televisão esportiva integrada no topo de todas as 6 páginas da aplicação com status de transmissão ao vivo (`● AO VIVO`) e rotação de tickers das franquias MLB.
+  - **Eliminação da Navbar Superior Padrão do Streamlit (Zero Oclusão de Conteúdo)**:
+    - Ocultação e colapso total da barra de cabeçalho fixa padrão (`header[data-testid="stHeader"]`, `.stAppHeader`) e da toolbar com os 3 pontos (`[data-testid="stToolbar"]`, `[data-testid="stDecoration"]`), prevenindo qualquer oclusão do topo das páginas, com preservação do botão de expandir da sidebar (`[data-testid="stSidebarCollapsedControl"]`).
 
 Após homologação e implementação dos **Componentes Bespoke MLB Broadcast & Topps Chrome (Reversibilidade Garantida)**:
 - **Suíte de Testes**: **258 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
