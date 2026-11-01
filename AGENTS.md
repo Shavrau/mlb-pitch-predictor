@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v2.3.0 Checkpoint (Sprint 2: Head-to-Head Scout Comparison & Printable Dugout Card)  
+> **Versão do Projeto:** v2.4.0 Checkpoint (Pitch Tunneling 3D & Ballpark MLB Authentic Theme)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit 1.66.1.
 
@@ -10,8 +10,20 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ## 1. Estado Atual da Base de Código (Checkpoint v2.3.0)
 
-Após homologação e implementação dos entregáveis da Sprint 2 (Scouting Report & Analytics):
-- **Suíte de Testes**: **234 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+Após homologação e implementação do **Pitch Tunneling 3D (Opção 1)** e do **Tema Autêntico Ballpark MLB com Reversibilidade (Opção 2)**:
+- **Suíte de Testes**: **256 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+- **Entregáveis da Versão 2.4.0 Homologados**:
+  - **Identidade Visual Autêntica Ballpark MLB com Garantia de Reversibilidade (`ui_components.py`, `app.py`)**:
+    - **Reversibilidade Instantânea (1 Clique)**: O seletor de aparência na sidebar permite alternar instantaneamente entre `["⚾ Ballpark MLB", "Dark Broadcast", "Light Editorial"]`, permitindo voltar imediatamente à estética anterior sem alterar código.
+    - **Reversibilidade Git**: Tag `pre-ballpark-theme` fixada no commit `900184e` e tag `v2.4.0-ballpark-theme` no commit `0689287`.
+    - **Paleta de Ballpark**: `--pp-bg: #08120C` (noite de estádio / turf), `--pp-surface: #0F1C14` (dugout), `--pp-border: #243D2D` e acentos em `--pp-grass`, `--pp-clay`, `--pp-seam` e `--pp-chalk`.
+    - **Divisores com Costura Rawlings (`render_baseball_seams_divider_svg`)**: Pesponto em V vermelho carmesim (`#DC2626`) replicando as 108 costuras da bola oficial da MLB.
+    - **Relógio de Eixo de Rotação (`render_spin_axis_clock_svg`)**: Mostrador analógico de 12 horas indicando vetor de tilt, RPM e eficiência Magnus.
+    - **Prancheta Tática de Dugout (`render_dugout_clipboard_frame_html`)**: Moldura com presilha metálica escovada e rebites para os Game Plans no Scouting Report.
+  - **Módulo de Disfarce de Trajetória 3D (Pitch Tunneling & Commitment Point) (`pages/06_pitch_tunneling.py` e `src/pitch_predictor/tunneling_analytics.py`)**:
+    - Simulação física de voo 3D de $y=54.5\text{ ft}$ a $y=1.4\text{ ft}$ calibrada pelo Statcast.
+    - Commitment Point a 23.8 ft com diâmetro de túnel de 4 polegadas.
+    - Arena 3D em perspectiva SVG animada e corte transversal 2D do túnel.
 - **Entregáveis da Sprint 2 Homologados**:
   - **Comparador Head-to-Head no Scouting Report (`pages/02_scout_report.py` e `src/pitch_predictor/scout_analytics.py`)**:
     - Seletor de Modo de Análise no topo do Scouting Report: `["🎯 Dossiê Individual (Single Pitcher)", "⚔️ Comparação Head-to-Head (2 Arremessadores)"]`.
