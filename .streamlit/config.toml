@@ -40,3 +40,6 @@ secondaryBackgroundColor = "#F1F5F9"
 textColor = "#0F172A"
 borderColor = "#C2CFDD"
 primaryColor = "#0369A1"
+
+[client]
+toolbarMode = "minimal"

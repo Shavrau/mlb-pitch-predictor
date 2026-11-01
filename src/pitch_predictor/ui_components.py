@@ -974,10 +974,59 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
       }}
 
-      header[data-testid="stHeader"] {{
+      /* Remove default Streamlit top navbar and toolbar */
+      header[data-testid="stHeader"],
+      header.stAppHeader,
+      .stAppHeader,
+      div[data-testid="stHeader"] {{
+        background: transparent !important;
+        background-color: transparent !important;
+        color: transparent !important;
+        height: 0px !important;
+        min-height: 0px !important;
+        max-height: 0px !important;
+        padding: 0px !important;
+        margin: 0px !important;
+        border: none !important;
+        box-shadow: none !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+        z-index: 100 !important;
+      }}
 
-        background-color: var(--pp-bg) !important;
+      /* Hide default Streamlit toolbar and decoration */
+      [data-testid="stToolbar"],
+      .stToolbar,
+      [data-testid="stDecoration"],
+      .stDecoration,
+      #MainMenu,
+      [data-testid="stStatusWidget"],
+      header[data-testid="stHeader"] [data-testid="stToolbar"] {{
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+        width: 0px !important;
+        pointer-events: none !important;
+      }}
 
+      /* Preserve sidebar expand toggle if collapsed */
+      [data-testid="stSidebarCollapsedControl"],
+      header[data-testid="stHeader"] [data-testid="stSidebarCollapsedControl"] {{
+        pointer-events: auto !important;
+        visibility: visible !important;
+        display: flex !important;
+        position: fixed !important;
+        top: 10px !important;
+        left: 10px !important;
+        z-index: 999999 !important;
+        background: var(--pp-surface) !important;
+        border: 1px solid var(--pp-border) !important;
+        border-radius: 6px !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+      }}
+
+      [data-testid="stSidebarCollapsedControl"] button {{
+        color: var(--pp-text) !important;
       }}
 
       section[data-testid="stSidebar"] {{

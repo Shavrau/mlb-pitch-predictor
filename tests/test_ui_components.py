@@ -555,6 +555,9 @@ def test_get_custom_css_light_editorial_palette_zero_green_and_scorebook_grid() 
     assert "#ECFDF5" not in css, "Light mode must not contain green background"
 
     assert "28px 28px" in css, "Light mode must include scorebook grid texture"
+    assert 'header[data-testid="stHeader"]' in css
+    assert '[data-testid="stToolbar"]' in css
+    assert "display: none !important" in css
 
 
 def test_render_baseball_seams_divider_svg() -> None:
