@@ -33,6 +33,7 @@ from pitch_predictor.ui_components import (
     render_pitcher_photo_html,
     render_spin_axis_clock_svg,
     render_topps_chrome_card_html,
+    render_broadcast_station_bar_html,
     resolve_ui_theme_mode,
 )
 
@@ -56,6 +57,7 @@ team_hex = pitcher_meta.get("team_primary_hex", "#F59E0B")
 p_throws = pitcher_meta.get("p_throws", "R")
 
 st.markdown(get_custom_css(theme_mode=active_theme, accent_hex=team_hex), unsafe_allow_html=True)
+st.markdown(render_broadcast_station_bar_html(theme_mode=active_theme), unsafe_allow_html=True)
 
 # Header
 st.markdown("<div class='pp-kicker'>MLB STATCAST • 3D BALL AERODYNAMICS & TUNNELING</div>", unsafe_allow_html=True)

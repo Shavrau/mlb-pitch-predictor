@@ -40,6 +40,7 @@ from pitch_predictor.ui_components import (
     render_baseball_diamond_svg,
     render_pitch_flight_arena_svg,
     render_pitcher_photo_html,
+    render_broadcast_station_bar_html,
     resolve_ui_theme_mode,
 )
 from pitch_predictor.vision.overlay import (
@@ -638,6 +639,7 @@ active_pitcher_meta = MLB_PITCHERS.get(st.session_state.minigame_pitcher, MLB_PI
 franchise_hex = active_pitcher_meta.get("team_primary_hex", "#F59E0B")
 
 st.markdown(get_custom_css(theme_mode=active_theme, accent_hex=franchise_hex), unsafe_allow_html=True)
+st.markdown(render_broadcast_station_bar_html(theme_mode=active_theme), unsafe_allow_html=True)
 st.markdown(_get_console_broadcast_css(accent_hex=franchise_hex), unsafe_allow_html=True)
 
 if st.session_state.minigame_audio and st.session_state.last_sound_trigger:

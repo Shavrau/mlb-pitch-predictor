@@ -27,6 +27,7 @@ from pitch_predictor.ui_components import (
     render_baseball_seams_divider_svg,
     render_broadcast_scorebug_header_html,
     render_topps_chrome_card_html,
+    render_broadcast_station_bar_html,
     resolve_ui_theme_mode,
 )
 
@@ -244,6 +245,7 @@ st.markdown(
     get_custom_css(theme_mode=active_theme, accent_hex=active_style_cfg["team_primary_hex"]),
     unsafe_allow_html=True,
 )
+st.markdown(render_broadcast_station_bar_html(theme_mode=active_theme), unsafe_allow_html=True)
 client = get_serving_client()
 
 # ===========================================================================

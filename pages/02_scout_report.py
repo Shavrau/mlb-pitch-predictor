@@ -49,6 +49,7 @@ from pitch_predictor.ui_components import (
     render_pitcher_photo_html,
     render_strike_zone_svg,
     render_topps_chrome_card_html,
+    render_broadcast_station_bar_html,
     resolve_ui_theme_mode,
 )
 
@@ -180,6 +181,7 @@ init_scout_state()
 active_theme = resolve_ui_theme_mode()
 accent_hex = ARCHETYPE_FRANCHISE_HEX.get(st.session_state.scout_archetype, "#F59E0B")
 st.markdown(get_custom_css(theme_mode=active_theme, accent_hex=accent_hex), unsafe_allow_html=True)
+st.markdown(render_broadcast_station_bar_html(theme_mode=active_theme), unsafe_allow_html=True)
 client = get_serving_client()
 
 # ---------------------------------------------------------------------------

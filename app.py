@@ -1,23 +1,35 @@
 """
+
 MLB Pitch Predictor — Broadcast Editorial Dual-Mode Interface (Multipage Entrypoint).
 
 Configures the global Streamlit layout, Dual Mode selector (Dark Broadcast `#0A0B0E` default
+
 + Light Editorial `#F8FAFC`), and routes between:
+
 0. `pages/00_home_apresentacao.py` — Visão Geral & Apresentação Executiva (Default)
+
 1. `pages/03_minigame.py` — Minigame Console HUD: Você vs. IA no Montinho
+
 2. `pages/02_scout_report.py` — MLB Scouting Report, Matriz 4x3 de 12 Contagens & Game Plan
+
 3. `pages/04_pitch_vision_lab.py` — Laboratório de Visão Computacional, Pose 3D & Pitch Tipping
+
 4. `pages/06_pitch_tunneling.py` — Disfarce de Trajetória 3D (Pitch Tunneling & Commitment Point)
+
 5. `pages/05_mlops_hub.py` — Databricks MLOps, Linhagem Unity Catalog & Governança Serverless
+
 """
 
 from __future__ import annotations
 
 import sys
+
 from pathlib import Path
 
 # Ensure src/ is on sys.path for Databricks Apps and container execution
+
 SRC_DIR = str(Path(__file__).resolve().parent / "src")
+
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
@@ -30,32 +42,59 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-if "ui_theme_mode" not in st.session_state or st.session_state.ui_theme_mode not in ("diamond", "ballpark", "dark", "light"):
+if "ui_theme_mode" not in st.session_state or st.session_state.ui_theme_mode not in (
+    "diamond",
+    "ballpark",
+    "light",
+):
     st.session_state.ui_theme_mode = "diamond"
 
 with st.sidebar:
     st.caption("MLB STATCAST • BROADCAST UI")
+
     theme_default = (
         "Light Editorial"
         if st.session_state.ui_theme_mode == "light"
-        else ("Dark Broadcast" if st.session_state.ui_theme_mode == "dark" else "Classic Diamond")
+        else "Classic Diamond"
     )
+
     appearance_choice = st.segmented_control(
         "Aparência",
-        options=["Classic Diamond", "Dark Broadcast", "Light Editorial"],
+        options=["Classic Diamond", "Light Editorial"],
         default=theme_default,
         selection_mode="single",
         key="ui_appearance_toggle",
     )
+
     if appearance_choice == "Light Editorial":
         st.session_state.ui_theme_mode = "light"
-    elif appearance_choice == "Dark Broadcast":
-        st.session_state.ui_theme_mode = "dark"
+
     else:
         st.session_state.ui_theme_mode = "diamond"
 
     from pitch_predictor.ui_components import get_custom_css
-    st.markdown(get_custom_css(theme_mode=st.session_state.ui_theme_mode), unsafe_allow_html=True)
+
+    st.markdown(
+        get_custom_css(theme_mode=st.session_state.ui_theme_mode),
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+
+        <div style="background:var(--pp-surface);border:1px solid var(--pp-border);border-top:2px solid var(--pp-accent);border-radius:6px;padding:8px 10px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted);">
+
+          <div style="color:var(--pp-text);font-weight:800;letter-spacing:0.04em;margin-bottom:2px;">MLB STATCAST NETWORK</div>
+
+          <div>5 Astros • 33 Marcos 3D</div>
+
+          <div style="color:var(--pp-clay,#C85A17);font-weight:700;margin-top:3px;">● TELEMETRIA ATIVA</div>
+
+        </div>
+
+        """,
+        unsafe_allow_html=True,
+    )
 
 home_page = st.Page(
     "pages/00_home_apresentacao.py",
@@ -112,4 +151,5 @@ pg = st.navigation(
         ]
     }
 )
+
 pg.run()

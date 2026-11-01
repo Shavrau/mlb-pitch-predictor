@@ -32,6 +32,7 @@ from pitch_predictor.ui_components import (
     PITCH_CATEGORY_STYLES,
     _compact_html,
     get_custom_css,
+    render_broadcast_station_bar_html,
     resolve_ui_theme_mode,
 )
 
@@ -43,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 active_theme = resolve_ui_theme_mode()
 st.markdown(get_custom_css(theme_mode=active_theme, accent_hex="#8B5CF6"), unsafe_allow_html=True)
+st.markdown(render_broadcast_station_bar_html(theme_mode=active_theme), unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Caching de Telemetria com Botão de Sincronização

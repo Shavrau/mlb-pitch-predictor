@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v2.5.0 Checkpoint (Bespoke MLB Broadcast HUD, Topps Chrome Cards & Classic Diamond Full Experience)  
+> **Versão do Projeto:** v2.6.0 Checkpoint (Dual Identity: Classic Diamond Ballpark & Official Scorer Parchment Light Editorial)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit 1.66.1.
 
@@ -8,7 +8,21 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v2.5.0)
+## 1. Estado Atual da Base de Código (Checkpoint v2.6.0)
+
+Após homologação e implementação da **Dual Identity (Classic Diamond & Official Scorer Light Editorial)**:
+- **Suíte de Testes**: **260 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+- **Entregáveis da Versão 2.6.0 Homologados**:
+  - **Eliminação Completa do Dark Broadcast**: O tema genérico escuro foi 100% aposentado e substituído pelo autêntico **Classic Diamond**. A alternância de aparência agora oferece estritamente: `["Classic Diamond", "Light Editorial"]`.
+  - **Elevação do Light Editorial (Official Scorer Parchment & Topps Chrome Platinum)**:
+    - Textura de micro-grid de 28px de folha de anotação de placar de imprensa (`linear-gradient(to right, rgba(15,23,42,0.035) 1px, transparent 1px)`) sobre canvas papel imprensa (`#F4F6F9`) e tipografia slate de alto contraste (`#0F172A`).
+    - Cards colecionáveis Topps Chrome Platinum com chanfros táticos em corte laser (`clip-path`), acabamento prateado platina e caixa de radar Stalker com fundo escuro (`#0F172A`) e velocidade em ciano elétrico (`#38BDF8`).
+    - **Invariante Corinthians 100% Preservada (Zero Verde)**: Substituição de qualquer tom verde por azul floodlight (`#0284C7` / `#0369A1`), ardósia escura e costuras carmesim Rawlings.
+  - **Atmosfera de Ballpark Profunda no Classic Diamond**:
+    - Halo de iluminação radial dos refletores de estádio (`radial-gradient(ellipse 90% 45% at 50% -10%, rgba(56, 189, 248, 0.08) 0%, rgba(200, 90, 23, 0.035) 45%, transparent 75%)`) combinado com pinstripes de uniforme de beisebol (passo de 48px com 2.2% de opacidade).
+    - Botões primários com gradiente de argila batida infield (`#C85A17` a `#A2420F`), borda de couro Rawlings (`#78350F`) e sombras táteis profundas.
+  - **Fita Global de Transmissão de Rede (`render_broadcast_station_bar_html`)**:
+    - Ribbon de telemetria de rede de televisão esportiva integrada no topo de todas as 6 páginas da aplicação com status de transmissão ao vivo (`● AO VIVO`) e rotação de tickers das franquias MLB.
 
 Após homologação e implementação dos **Componentes Bespoke MLB Broadcast & Topps Chrome (Reversibilidade Garantida)**:
 - **Suíte de Testes**: **258 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).

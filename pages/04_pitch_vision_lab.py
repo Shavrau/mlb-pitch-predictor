@@ -33,6 +33,7 @@ from pitch_predictor.ui_components import (
     _compact_html,
     get_custom_css,
     render_pitcher_photo_html,
+    render_broadcast_station_bar_html,
     resolve_ui_theme_mode,
 )
 from pitch_predictor.vision.overlay import (
@@ -478,6 +479,7 @@ st.markdown(
     ),
     unsafe_allow_html=True,
 )
+st.markdown(render_broadcast_station_bar_html(theme_mode=theme_mode), unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Cabeçalho Editorial Hawk-Eye 3D
