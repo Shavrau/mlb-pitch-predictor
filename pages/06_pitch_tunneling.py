@@ -28,7 +28,9 @@ from pitch_predictor.ui_components import (
     PITCH_CATEGORY_STYLES,
     _compact_html,
     get_custom_css,
+    render_baseball_seams_divider_svg,
     render_pitcher_photo_html,
+    render_spin_axis_clock_svg,
     resolve_ui_theme_mode,
 )
 
@@ -109,6 +111,8 @@ pitch_b = arsenal[pitch_b_key]
 
 # Compute precise metrics
 metrics = compute_tunneling_metrics(pitch_a, pitch_b, p_throws=p_throws)
+
+st.markdown(render_baseball_seams_divider_svg(width_px=750, theme_mode=active_theme), unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Faixa Superior de KPIs de Tunneling
@@ -264,6 +268,36 @@ with col_left:
             },
         ])
         st.dataframe(aero_df, hide_index=True, width="stretch")
+
+    with st.container(border=True):
+        st.markdown("<div class='pp-kicker'>EIXOS DE ROTAÇÃO COMPARATIVOS (SPIN AXIS CLOCK)</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div style='font-size:13px;font-weight:700;color:var(--pp-text);margin-bottom:6px;'>"
+            "Orientação de Tilt e Eficiência Magnus no Momento de Soltura"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        clock_col1, clock_col2 = st.columns(2, gap="small")
+        with clock_col1:
+            clock_a = render_spin_axis_clock_svg(
+                spin_axis=pitch_a["spin_axis"],
+                spin_rpm=pitch_a["spin_rpm"],
+                pitch_name=pitch_a["name"],
+                tilt_deg=pitch_a.get("spin_axis_deg"),
+                category=pitch_a["category"],
+                theme_mode=active_theme,
+            )
+            st.markdown(clock_a, unsafe_allow_html=True)
+        with clock_col2:
+            clock_b = render_spin_axis_clock_svg(
+                spin_axis=pitch_b["spin_axis"],
+                spin_rpm=pitch_b["spin_rpm"],
+                pitch_name=pitch_b["name"],
+                tilt_deg=pitch_b.get("spin_axis_deg"),
+                category=pitch_b["category"],
+                theme_mode=active_theme,
+            )
+            st.markdown(clock_b, unsafe_allow_html=True)
 
 with col_right:
     with st.container(border=True):

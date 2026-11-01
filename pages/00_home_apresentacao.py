@@ -24,6 +24,7 @@ from pitch_predictor.ui_components import (
     PITCH_CATEGORY_STYLES,
     _compact_html,
     get_custom_css,
+    render_baseball_seams_divider_svg,
     resolve_ui_theme_mode,
 )
 
@@ -443,7 +444,8 @@ st.markdown(arch_summary_html, unsafe_allow_html=True)
 # ===========================================================================
 # 5. NAVEGAÇÃO RÁPIDA ENTRE MÓDULOS
 # ===========================================================================
-nav_c1, nav_c2, nav_c3, nav_c4 = st.columns(4, gap="medium")
+st.markdown(render_baseball_seams_divider_svg(width_px=800, theme_mode=active_theme), unsafe_allow_html=True)
+nav_c1, nav_c2, nav_c3, nav_c4, nav_c5 = st.columns(5, gap="small")
 with nav_c1, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 01 • ARCADE RETRO</div>", unsafe_allow_html=True)
     st.markdown(
@@ -499,10 +501,28 @@ with nav_c3, st.container(border=True):
     )
 
 with nav_c4, st.container(border=True):
-    st.markdown("<div class='pp-kicker'>MÓDULO 04 • CLOUD GOVERNANCE</div>", unsafe_allow_html=True)
+    st.markdown("<div class='pp-kicker'>MÓDULO 04 • PITCH TUNNELING</div>", unsafe_allow_html=True)
     st.markdown(
         "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
-        "⚡ Databricks MLOps Hub"
+        "🎭 Trajetória 3D"
+        "</div>"
+        "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
+        "Disfarce de túnel, ponto de decisão a 23.8 ft e eixos de rotação Statcast."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    st.page_link(
+        "pages/06_pitch_tunneling.py",
+        label="Abrir Trajetória 3D →",
+        icon=":material/alt_route:",
+        width="stretch",
+    )
+
+with nav_c5, st.container(border=True):
+    st.markdown("<div class='pp-kicker'>MÓDULO 05 • CLOUD GOVERNANCE</div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        "⚡ Databricks MLOps"
         "</div>"
         "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
         "Monitoramento Serverless Serving, linhagem Unity Catalog e auditoria MLflow."

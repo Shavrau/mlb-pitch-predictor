@@ -256,6 +256,12 @@ def test_all_html_and_svg_renderers_are_commonmark_safe_single_line() -> None:
     )
 
     features = derive_tactical_features(_initial_at_bat_state(balls=1, strikes=2))
+    from pitch_predictor.ui_components import (
+        render_baseball_seams_divider_svg,
+        render_dugout_clipboard_frame_html,
+        render_spin_axis_clock_svg,
+    )
+
     fragments = [
         render_baseball_diamond_svg(1, 1, 0, outs=1),
         render_strike_zone_svg(selected_zone=14, prev_category="Breaking Ball"),
@@ -271,7 +277,11 @@ def test_all_html_and_svg_renderers_are_commonmark_safe_single_line() -> None:
         render_pitcher_photo_html("Logan Webb"),
         render_pitcher_photo_html("Chris Sale"),
         render_pitcher_photo_html("Yoshinobu Yamamoto"),
+        render_baseball_seams_divider_svg(width_px=600),
+        render_spin_axis_clock_svg(spin_axis="1:15", spin_rpm=2480, pitch_name="4-Seam Fastball"),
+        render_dugout_clipboard_frame_html(title="Plano de Jogo", content_html="<p>Teste</p>"),
         get_custom_css(),
+        get_custom_css(theme_mode="ballpark"),
     ]
     for frag in fragments:
         assert "\n" not in frag, "HTML/SVG fragment must not contain newlines (CommonMark <pre><code> hazard)"
@@ -314,3 +324,93 @@ def test_render_pitch_flight_arena_svg_renders_animated_trajectory_and_ghost_tun
         assert "IA ESPERAVA:" in svg
         assert "\n" not in svg
         assert "<!--" not in svg
+
+
+
+# ---------------------------------------------------------------------------
+# Ballpark MLB Authentic Theme Components
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_ui_theme_mode_supports_ballpark_dark_light() -> None:
+    """Verify resolve_ui_theme_mode resolves ballpark, light, and dark appropriately."""
+    from pitch_predictor.ui_components import resolve_ui_theme_mode
+
+    assert resolve_ui_theme_mode("ballpark") == "ballpark"
+    assert resolve_ui_theme_mode("⚾ Ballpark MLB") == "ballpark"
+    assert resolve_ui_theme_mode("baseball") == "ballpark"
+    assert resolve_ui_theme_mode("light") == "light"
+    assert resolve_ui_theme_mode("Light Editorial") == "light"
+    assert resolve_ui_theme_mode("dark") == "dark"
+    assert resolve_ui_theme_mode("Dark Broadcast") == "dark"
+    assert resolve_ui_theme_mode(None) in ("ballpark", "dark", "light")
+
+
+def test_get_custom_css_ballpark_palette() -> None:
+    """Verify get_custom_css in ballpark mode injects authentic MLB colors and styles."""
+    from pitch_predictor.ui_components import get_custom_css
+
+    css = get_custom_css(theme_mode="ballpark")
+    assert "--pp-grass: #1B4332;" in css
+    assert "--pp-clay: #C85A17;" in css
+    assert "--pp-seam: #DC2626;" in css
+    assert "--pp-chalk: #F8FAFC;" in css
+    assert "--pp-leather: #78350F;" in css
+    assert "--pp-bg: #08120C;" in css
+    assert ".pp-seam-divider" in css
+    assert ".pp-dugout-clipboard" in css
+
+
+def test_render_baseball_seams_divider_svg() -> None:
+    """Verify render_baseball_seams_divider_svg returns valid SVG with Rawlings red V-stitches."""
+    from pitch_predictor.ui_components import render_baseball_seams_divider_svg
+
+    for mode in ("ballpark", "dark", "light"):
+        svg = render_baseball_seams_divider_svg(width_px=650, theme_mode=mode)
+        assert "<svg" in svg
+        assert "#DC2626" in svg
+        assert chr(10) not in svg
+        assert "<!--" not in svg
+
+
+def test_render_spin_axis_clock_svg() -> None:
+    """Verify render_spin_axis_clock_svg renders 12-hour clock face and telemetry cards."""
+    from pitch_predictor.ui_components import render_spin_axis_clock_svg
+
+    for axis in ("1:15", "10:30", "6:00", "12:00", "7:45"):
+        svg = render_spin_axis_clock_svg(
+            spin_axis=axis,
+            spin_rpm=2450,
+            pitch_name="4-Seam (FF)",
+            category="Fastball",
+            theme_mode="ballpark",
+        )
+        assert "<svg" in svg
+        assert "12:00" in svg
+        assert "3:00" in svg
+        assert "6:00" in svg
+        assert "9:00" in svg
+        assert f"{axis} TILT" in svg
+        assert "2,450 RPM" in svg
+        assert "EFEITO MAGNUS" in svg
+        assert chr(10) not in svg
+        assert "<!--" not in svg
+
+
+def test_render_dugout_clipboard_frame_html() -> None:
+    """Verify render_dugout_clipboard_frame_html wraps content with clip, rivets, and stadium header."""
+    from pitch_predictor.ui_components import render_dugout_clipboard_frame_html
+
+    for mode in ("ballpark", "dark", "light"):
+        html = render_dugout_clipboard_frame_html(
+            title="GAME PLAN • DOIS STRIKES",
+            content_html="<div class='test-plan'>Plano de ataque</div>",
+            stadium="ESTÁDIO: PNC PARK",
+            theme_mode=mode,
+        )
+        assert "MLB DUGOUT TACTICAL CARD" in html
+        assert "GAME PLAN • DOIS STRIKES" in html
+        assert "ESTÁDIO: PNC PARK" in html
+        assert "test-plan" in html
+        assert chr(10) not in html
+        assert "<!--" not in html

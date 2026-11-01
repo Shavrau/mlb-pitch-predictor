@@ -43,6 +43,8 @@ from pitch_predictor.ui_components import (
     PITCH_CATEGORY_STYLES,
     _compact_html,
     get_custom_css,
+    render_baseball_seams_divider_svg,
+    render_dugout_clipboard_frame_html,
     render_pitcher_photo_html,
     render_strike_zone_svg,
     resolve_ui_theme_mode,
@@ -452,12 +454,19 @@ if view_mode == "🎯 Dossiê Individual (Single Pitcher)":
     # ---------------------------------------------------------------------------
     # Section 3: Batter Game Plan (3 Tactical Approach Cards)
     # ---------------------------------------------------------------------------
+    st.markdown(render_baseball_seams_divider_svg(width_px=750, theme_mode=active_theme), unsafe_allow_html=True)
     with st.container(border=True):
         st.markdown(
             '<div class="section-header">03. Plano de Jogo do Rebatedor (Game Plan) — Abordagem por Fase da Contagem</div>',
             unsafe_allow_html=True,
         )
-        st.markdown(render_game_plan_cards_html(game_plan), unsafe_allow_html=True)
+        dugout_html = render_dugout_clipboard_frame_html(
+            title="GAME PLAN DO REBATEDOR • PLANO DE ATAQUE",
+            content_html=render_game_plan_cards_html(game_plan),
+            stadium=f"PERFIL: {selected_arch[:24].upper()}",
+            theme_mode=active_theme,
+        )
+        st.markdown(dugout_html, unsafe_allow_html=True)
 
     # ---------------------------------------------------------------------------
     # Section 4: Coaching Staff Export (Download .md + Printable Dugout Card)
@@ -888,6 +897,7 @@ else:
     # ---------------------------------------------------------------------------
     # Section 4: Comparative Batter Game Plan (A vs B)
     # ---------------------------------------------------------------------------
+    st.markdown(render_baseball_seams_divider_svg(width_px=750, theme_mode=active_theme), unsafe_allow_html=True)
     with st.container(border=True):
         st.markdown(
             '<div class="section-header">04. Game Plan Comparativo: Como Ajustar o Swing ao Trocar de Arremessador</div>',

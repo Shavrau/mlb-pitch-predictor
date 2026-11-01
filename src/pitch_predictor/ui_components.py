@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import base64
 import functools
+import math
 from pathlib import Path
 from typing import Any
 
@@ -101,8 +102,8 @@ PITCH_CATEGORY_STYLES: dict[str, dict[str, str]] = {
 
 def resolve_ui_theme_mode(mode: str | None = None) -> str:
     """
-    Resolve the active UI theme mode (`"dark"` or `"light"`).
-    Defaults strictly to `"dark"` (Dark Broadcast `#0A0B0E`).
+    Resolve the active UI theme mode (`"ballpark"`, `"light"`, or `"dark"`).
+    Defaults to `"ballpark"` when selected or `"dark"` (Dark Broadcast `#0A0B0E`).
     """
     candidate = mode
     if candidate is None:
@@ -113,8 +114,12 @@ def resolve_ui_theme_mode(mode: str | None = None) -> str:
         except Exception:  # noqa: BLE001
             candidate = None
 
-    if candidate and "light" in str(candidate).strip().lower():
-        return "light"
+    if candidate:
+        cand_str = str(candidate).strip().lower()
+        if "ballpark" in cand_str or "baseball" in cand_str:
+            return "ballpark"
+        if "light" in cand_str:
+            return "light"
     return "dark"
 
 
@@ -505,6 +510,33 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         alert_info_bg = "#EFF6FF"
         alert_info_border = "#BFDBFE"
         alert_info_text = "#1E3A8A"
+    elif resolved == "ballpark":
+        pp_bg = "#08120C"
+        pp_surface = "#0F1C14"
+        pp_surface_alt = "#16261C"
+        pp_border = "#243D2D"
+        pp_text = "#F8FAFC"
+        pp_muted = "#94A3B8"
+        pp_sidebar_bg = "#060D09"
+        color_scheme = "dark"
+        scroll_thumb = "#2F523C"
+        scroll_track = "#08120C"
+        metric_label_color = "#E2E8F0"
+        metric_delta_pos_bg = "rgba(16, 185, 129, 0.18)"
+        metric_delta_pos_border = "rgba(16, 185, 129, 0.40)"
+        metric_delta_pos_color = "#6EE7B7"
+        metric_delta_pos_fill = "#34D399"
+        metric_delta_neg_bg = "rgba(220, 38, 38, 0.18)"
+        metric_delta_neg_border = "rgba(220, 38, 38, 0.40)"
+        metric_delta_neg_color = "#FCA5A5"
+        metric_delta_neg_fill = "#F87171"
+        slider_tick_color = "#94A3B8"
+        alert_success_bg = "rgba(27, 67, 50, 0.55)"
+        alert_success_border = "#2D6A4F"
+        alert_success_text = "#A7F3D0"
+        alert_info_bg = "rgba(200, 90, 23, 0.22)"
+        alert_info_border = "#C85A17"
+        alert_info_text = "#FED7AA"
     else:
         pp_bg = "#0A0B0E"
         pp_surface = "#12141A"
@@ -553,6 +585,12 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         --pitch-offspeed: #10B981;
         --base-occupied: #F59E0B;
         --strike-zone: #38BDF8;
+        --pp-grass: #1B4332;
+        --pp-clay: #C85A17;
+        --pp-seam: #DC2626;
+        --pp-chalk: #F8FAFC;
+        --pp-leather: #78350F;
+        --pp-scoreboard: #0F141C;
         scrollbar-width: thin;
         scrollbar-color: {scroll_thumb} {scroll_track};
       }}
@@ -592,6 +630,17 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
       .pp-display {{
         font-family: 'Barlow Condensed', 'Space Grotesk', sans-serif !important;
         letter-spacing: 0.03em;
+      }}
+      .pp-seam-divider {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 12px 0;
+      }}
+      .pp-dugout-clipboard {{
+        position: relative;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        margin: 18px 0 12px 0;
       }}
       .section-header {{
         font-family: 'Barlow Condensed', 'Space Grotesk', sans-serif;
@@ -1351,3 +1400,194 @@ def render_pitch_flight_arena_svg(
     </div>
     """
     return _compact_html(raw_svg)
+
+
+def render_baseball_seams_divider_svg(
+    width_px: int = 600,
+    theme_mode: str | None = None,
+) -> str:
+    """
+    Render a precision horizontal baseball seam divider SVG.
+
+    Features the iconic Rawlings MLB baseball dual-stitch pattern with red V-stitches
+    (#DC2626) and a subtle guideline. Guaranteed CommonMark-safe single-line markup.
+    """
+    stitches: list[str] = []
+    for x in range(30, 580, 24):
+        if 280 <= x <= 320:
+            continue
+        stitches.append(f"M {x-5} 7 L {x} 12 L {x-5} 17")
+    path_d = " ".join(stitches)
+
+    resolved = resolve_ui_theme_mode(theme_mode)
+    line_stroke = "#334155" if resolved != "light" else "#CBD5E1"
+
+    raw_svg = f"""
+    <div class="pp-seam-divider" style="display:flex;justify-content:center;align-items:center;margin:12px 0;width:100%;">
+      <svg viewBox="0 0 600 24" width="100%" style="max-width:{int(width_px)}px;display:block;">
+        <line x1="10" y1="12" x2="590" y2="12" stroke="{line_stroke}" stroke-width="1.2" stroke-dasharray="2,4" />
+        <path d="{path_d}" fill="none" stroke="#DC2626" stroke-width="1.8" stroke-linecap="round" />
+        <circle cx="300" cy="12" r="5" fill="#DC2626" stroke="#FEF2F2" stroke-width="1" />
+      </svg>
+    </div>
+    """
+    return _compact_html(raw_svg)
+
+
+def render_spin_axis_clock_svg(
+    spin_axis: str = "1:15",
+    spin_rpm: int = 2480,
+    pitch_name: str = "4-Seam Fastball",
+    tilt_deg: float | None = None,
+    category: str = "Fastball",
+    theme_mode: str | None = None,
+) -> str:
+    """
+    Render an authentic MLB Statcast 12-Hour Spin Axis Clock Gauge SVG.
+
+    Visualizes pitch tilt orientation, active Magnus effect vector, and RPM telemetry.
+    Guaranteed CommonMark-safe single-line markup.
+    """
+    clock_angle_deg = 37.5
+    if tilt_deg is not None:
+        clock_angle_deg = float(tilt_deg) % 360.0
+    else:
+        try:
+            parts = spin_axis.split(":")
+            h = int(parts[0]) % 12
+            m = int(parts[1]) if len(parts) > 1 else 0
+            clock_angle_deg = (h * 30.0 + m * 0.5) % 360.0
+        except Exception:
+            clock_angle_deg = 37.5
+
+    cx, cy = 82, 88
+    r_dial = 46
+    math_rad = math.radians(clock_angle_deg - 90.0)
+    x2 = round(cx + (r_dial - 8) * math.cos(math_rad), 1)
+    y2 = round(cy + (r_dial - 8) * math.sin(math_rad), 1)
+
+    cat_style = PITCH_CATEGORY_STYLES.get(category, PITCH_CATEGORY_STYLES["Fastball"])
+    pointer_color = cat_style["primary"]
+
+    if "Fastball" in category or "4-Seam" in pitch_name:
+        magnus_pct = "98% ATIVO"
+        magnus_color = "#10B981"
+    elif "Breaking" in category or "Slider" in pitch_name or "Curve" in pitch_name:
+        magnus_pct = "88% ATIVO"
+        magnus_color = "#3B82F6"
+    else:
+        magnus_pct = "76% ATIVO"
+        magnus_color = "#F59E0B"
+
+    resolved = resolve_ui_theme_mode(theme_mode)
+    if resolved == "light":
+        card_bg = "#FFFFFF"
+        border_c = "#C2CFDD"
+        dial_fill = "#E6ECF2"
+        dial_stroke = "#94A3B8"
+        text_primary = "#0F172A"
+        text_muted = "#475569"
+        panel_bg = "#F1F5F9"
+    elif resolved == "ballpark":
+        card_bg = "linear-gradient(135deg, #111C15 0%, #0B130E 100%)"
+        border_c = "#243D2D"
+        dial_fill = "#060D09"
+        dial_stroke = "#2F523C"
+        text_primary = "#F8FAFC"
+        text_muted = "#94A3B8"
+        panel_bg = "#16261C"
+    else:
+        card_bg = "linear-gradient(135deg, #12151C 0%, #0A0B0E 100%)"
+        border_c = "#222631"
+        dial_fill = "#07080B"
+        dial_stroke = "#334155"
+        text_primary = "#F1F5F9"
+        text_muted = "#94A3B8"
+        panel_bg = "#181B23"
+
+    raw_svg = f"""
+    <div style="display:flex;justify-content:center;align-items:center;margin:4px 0;width:100%;">
+      <svg viewBox="0 0 290 176" width="100%" style="max-width:290px;background:{card_bg};border:1px solid {border_c};border-radius:8px;padding:8px;display:block;box-sizing:border-box;">
+        <text x="145" y="19" text-anchor="middle" fill="{text_muted}" font-family="JetBrains Mono, monospace" font-size="8.8" font-weight="700" letter-spacing="0.04em">EIXO DE ROTAÇÃO (SPIN AXIS CLOCK)</text>
+        <circle cx="{cx}" cy="{cy}" r="{r_dial}" fill="{dial_fill}" stroke="{dial_stroke}" stroke-width="1.4" />
+        <circle cx="{cx}" cy="{cy}" r="{r_dial - 2}" fill="none" stroke="{dial_stroke}" stroke-width="0.8" stroke-dasharray="2,5" />
+        <text x="{cx}" y="{cy - 34}" text-anchor="middle" fill="{text_muted}" font-size="7.5" font-family="JetBrains Mono, monospace" font-weight="700">12:00</text>
+        <text x="{cx + 34}" y="{cy + 3}" text-anchor="middle" fill="{text_muted}" font-size="7.5" font-family="JetBrains Mono, monospace" font-weight="700">3:00</text>
+        <text x="{cx}" y="{cy + 40}" text-anchor="middle" fill="{text_muted}" font-size="7.5" font-family="JetBrains Mono, monospace" font-weight="700">6:00</text>
+        <text x="{cx - 34}" y="{cy + 3}" text-anchor="middle" fill="{text_muted}" font-size="7.5" font-family="JetBrains Mono, monospace" font-weight="700">9:00</text>
+        <line x1="{cx}" y1="{cy}" x2="{x2}" y2="{y2}" stroke="{pointer_color}" stroke-width="2.8" stroke-linecap="round" />
+        <circle cx="{x2}" cy="{y2}" r="3.8" fill="{pointer_color}" stroke="#FFFFFF" stroke-width="1" />
+        <circle cx="{cx}" cy="{cy}" r="3.5" fill="#FFFFFF" />
+        <rect x="156" y="32" width="122" height="38" rx="4" fill="{panel_bg}" stroke="{border_c}" stroke-width="1" />
+        <text x="164" y="46" fill="{text_muted}" font-size="7.8" font-family="JetBrains Mono, monospace" font-weight="700">EIXO REAL</text>
+        <text x="164" y="62" fill="{pointer_color}" font-size="12.5" font-weight="800" font-family="JetBrains Mono, monospace">{spin_axis} TILT</text>
+        <rect x="156" y="74" width="122" height="38" rx="4" fill="{panel_bg}" stroke="{border_c}" stroke-width="1" />
+        <text x="164" y="88" fill="{text_muted}" font-size="7.8" font-family="JetBrains Mono, monospace" font-weight="700">ROTAÇÃO</text>
+        <text x="164" y="104" fill="{text_primary}" font-size="12.5" font-weight="800" font-family="JetBrains Mono, monospace">{spin_rpm:,} RPM</text>
+        <rect x="156" y="116" width="122" height="38" rx="4" fill="{panel_bg}" stroke="{border_c}" stroke-width="1" />
+        <text x="164" y="130" fill="{text_muted}" font-size="7.8" font-family="JetBrains Mono, monospace" font-weight="700">EFEITO MAGNUS</text>
+        <text x="164" y="146" fill="{magnus_color}" font-size="11" font-weight="800" font-family="JetBrains Mono, monospace">{magnus_pct}</text>
+      </svg>
+    </div>
+    """
+    return _compact_html(raw_svg)
+
+
+def render_dugout_clipboard_frame_html(
+    title: str,
+    content_html: str,
+    stadium: str = "PNC PARK • PITTSBURGH",
+    theme_mode: str | None = None,
+) -> str:
+    """
+    Wrap content in an authentic MLB Dugout Tactical Clipboard frame.
+
+    Features a top brushed-steel clip with brass rivets, stadium header strip,
+    and acrylic dugout clipboard texture. Guaranteed CommonMark-safe single-line markup.
+    """
+    resolved = resolve_ui_theme_mode(theme_mode)
+    if resolved == "light":
+        frame_bg = "#FFFFFF"
+        border_c = "#CBD5E1"
+        header_border = "#E2E8F0"
+        title_color = "#C85A17"
+        stadium_color = "#64748B"
+        clip_bg = "linear-gradient(180deg, #94A3B8 0%, #64748B 100%)"
+        clip_border = "#475569"
+        text_c = "#0F172A"
+    elif resolved == "ballpark":
+        frame_bg = "linear-gradient(180deg, #111C15 0%, #0B130E 100%)"
+        border_c = "#2A4533"
+        header_border = "#1E3326"
+        title_color = "#F59E0B"
+        stadium_color = "#94A3B8"
+        clip_bg = "linear-gradient(180deg, #64748B 0%, #334155 100%)"
+        clip_border = "#94A3B8"
+        text_c = "#F8FAFC"
+    else:
+        frame_bg = "#141720"
+        border_c = "#2C3242"
+        header_border = "#222631"
+        title_color = "#C85A17"
+        stadium_color = "#94A3B8"
+        clip_bg = "linear-gradient(180deg, #64748B 0%, #334155 100%)"
+        clip_border = "#94A3B8"
+        text_c = "#E2E8F0"
+
+    raw_html = f"""
+    <div class="pp-dugout-clipboard" style="background:{frame_bg};border:1.5px solid {border_c};border-radius:10px;padding:26px 18px 16px 18px;position:relative;box-shadow:0 8px 24px rgba(0,0,0,0.35);margin:18px 0 12px 0;">
+      <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:{clip_bg};border:1px solid {clip_border};border-radius:4px;padding:3px 28px;display:flex;align-items:center;gap:12px;box-shadow:0 3px 8px rgba(0,0,0,0.45);z-index:2;">
+        <div style="width:6px;height:6px;border-radius:50%;background:#D97706;border:1px solid #78350F;"></div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:800;color:#F8FAFC;letter-spacing:0.08em;white-space:nowrap;">MLB DUGOUT TACTICAL CARD</span>
+        <div style="width:6px;height:6px;border-radius:50%;background:#D97706;border:1px solid #78350F;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid {header_border};padding-bottom:8px;margin-bottom:14px;flex-wrap:wrap;gap:6px;">
+        <span style="color:{title_color};font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:800;letter-spacing:0.04em;">⚾ {title}</span>
+        <span style="color:{stadium_color};font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:600;">{stadium}</span>
+      </div>
+      <div style="color:{text_c};font-size:13px;line-height:1.55;">
+        {content_html}
+      </div>
+    </div>
+    """
+    return _compact_html(raw_html)

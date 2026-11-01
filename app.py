@@ -30,22 +30,29 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-if "ui_theme_mode" not in st.session_state or st.session_state.ui_theme_mode not in ("dark", "light"):
-    st.session_state.ui_theme_mode = "dark"
+if "ui_theme_mode" not in st.session_state or st.session_state.ui_theme_mode not in ("ballpark", "dark", "light"):
+    st.session_state.ui_theme_mode = "ballpark"
 
 with st.sidebar:
     st.caption("MLB STATCAST • BROADCAST UI")
+    theme_default = (
+        "Light Editorial"
+        if st.session_state.ui_theme_mode == "light"
+        else ("Dark Broadcast" if st.session_state.ui_theme_mode == "dark" else "⚾ Ballpark MLB")
+    )
     appearance_choice = st.segmented_control(
         "Aparência",
-        options=["Dark Broadcast", "Light Editorial"],
-        default="Light Editorial" if st.session_state.ui_theme_mode == "light" else "Dark Broadcast",
+        options=["⚾ Ballpark MLB", "Dark Broadcast", "Light Editorial"],
+        default=theme_default,
         selection_mode="single",
         key="ui_appearance_toggle",
     )
     if appearance_choice == "Light Editorial":
         st.session_state.ui_theme_mode = "light"
-    else:
+    elif appearance_choice == "Dark Broadcast":
         st.session_state.ui_theme_mode = "dark"
+    else:
+        st.session_state.ui_theme_mode = "ballpark"
 
     from pitch_predictor.ui_components import get_custom_css
     st.markdown(get_custom_css(theme_mode=st.session_state.ui_theme_mode), unsafe_allow_html=True)
