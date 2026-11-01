@@ -178,9 +178,9 @@ def _get_console_broadcast_css(accent_hex: str = "#F59E0B") -> str:
 
     .tier-badge-b {{
         display: inline-block;
-        background: rgba(16, 185, 129, 0.16);
-        color: #10B981;
-        border: 1px solid #10B981;
+        background: rgba(2, 132, 199, 0.16);
+        color: #38BDF8;
+        border: 1px solid #0284C7;
         border-radius: 4px;
         padding: 1px 6px;
         font-family: 'JetBrains Mono', monospace;
@@ -201,9 +201,9 @@ def _get_console_broadcast_css(accent_hex: str = "#F59E0B") -> str:
     }}
 
     .timing-cold {{
-        background: rgba(16, 185, 129, 0.10);
-        border: 1px solid rgba(16, 185, 129, 0.45);
-        color: #10B981;
+        background: rgba(2, 132, 199, 0.10);
+        border: 1px solid rgba(2, 132, 199, 0.45);
+        color: #38BDF8;
     }}
 
     .timing-alert {{
@@ -480,7 +480,7 @@ def _render_bionic_verdict_html(
     h_acc = (human_hits / safe_rounds) * 100.0
     cv_acc = (cv_hits / safe_rounds) * 100.0
 
-    border_col = "#10B981" if h_ok else "#EF4444"
+    border_col = "#38BDF8" if h_ok else "#EF4444"
     pts = int(b_res.get("points_earned", 0))
     combo = int(b_res.get("combo", 1))
     round_num = int(b_res.get("round_num", safe_rounds))
@@ -491,7 +491,7 @@ def _render_bionic_verdict_html(
         else "ENGANADO PELO DISFARCE DE TRAJETÓRIA (COMBO RESETADO)"
     )
 
-    user_badge_col = "#10B981" if h_ok else "#EF4444"
+    user_badge_col = "#38BDF8" if h_ok else "#EF4444"
     user_badge_txt = "ACERTOU" if h_ok else "ERROU"
 
     cv_badge_col = "#38BDF8" if cv_ok else "#F59E0B"
@@ -505,7 +505,7 @@ def _render_bionic_verdict_html(
         leader_col = "#38BDF8"
     else:
         leader_txt = "EMPATE TÉCNICO HUMANO VS. IA"
-        leader_col = "#10B981"
+        leader_col = "#38BDF8"
 
     raw_html = f"""
     <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-left:4px solid {border_col};border-radius:8px;padding:14px 18px;margin-bottom:14px;">
@@ -536,10 +536,10 @@ def _render_bionic_verdict_html(
         <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-radius:6px;padding:10px 12px;">
           <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--pp-text,#F1F5F9);margin-bottom:3px;">
             <span>VOCÊ: {human_hits}/{safe_rounds}</span>
-            <strong style="color:#10B981;">{h_acc:.0f}%</strong>
+            <strong style="color:#38BDF8;">{h_acc:.0f}%</strong>
           </div>
           <div style="width:100%;height:5px;background:var(--pp-border,#222631);border-radius:99px;overflow:hidden;margin-bottom:6px;">
-            <div style="width:{min(100.0, h_acc):.1f}%;height:100%;background:#10B981;"></div>
+            <div style="width:{min(100.0, h_acc):.1f}%;height:100%;background:#38BDF8;"></div>
           </div>
           <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--pp-text,#F1F5F9);margin-bottom:3px;">
             <span>IA 3D: {cv_hits}/{safe_rounds}</span>
@@ -1153,7 +1153,7 @@ if "Modo 2" in st.session_state.minigame_mode:
             </div>
             <div class="bio-gauge-row">
                 <span>Altura de Soltura:</span>
-                <strong style="color:#10B981;">{rel_ht:.2f} ({ht_diff:+.2f})</strong>
+                <strong style="color:#38BDF8;">{rel_ht:.2f} ({ht_diff:+.2f})</strong>
             </div>
             <div class="bio-gauge-row" style="border-bottom:none;">
                 <span>Inclinação do Tronco:</span>
@@ -1335,7 +1335,7 @@ else:
             tier = outcome.get("pitch_tier", "A")
 
             is_success = res in ("STRIKE", "WHIFF", "STRIKEOUT", "INNING_CLEARED", "OUT", "FOUL")
-            box_border = "#10B981" if is_success else "#EF4444"
+            box_border = "#38BDF8" if is_success else "#EF4444"
             badge_bg = (
                 "rgba(16, 185, 129, 0.14)" if is_success else "rgba(239, 68, 68, 0.14)"
             )

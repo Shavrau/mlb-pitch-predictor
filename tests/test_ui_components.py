@@ -258,8 +258,10 @@ def test_all_html_and_svg_renderers_are_commonmark_safe_single_line() -> None:
     features = derive_tactical_features(_initial_at_bat_state(balls=1, strikes=2))
     from pitch_predictor.ui_components import (
         render_baseball_seams_divider_svg,
+        render_broadcast_scorebug_header_html,
         render_dugout_clipboard_frame_html,
         render_spin_axis_clock_svg,
+        render_topps_chrome_card_html,
     )
 
     fragments = [
@@ -280,6 +282,10 @@ def test_all_html_and_svg_renderers_are_commonmark_safe_single_line() -> None:
         render_baseball_seams_divider_svg(width_px=600),
         render_spin_axis_clock_svg(spin_axis="1:15", spin_rpm=2480, pitch_name="4-Seam Fastball"),
         render_dugout_clipboard_frame_html(title="Plano de Jogo", content_html="<p>Teste</p>"),
+        render_broadcast_scorebug_header_html(pitcher_name="Paul Skenes", balls=1, strikes=2, outs=1),
+        render_broadcast_scorebug_header_html(pitcher_name="Chris Sale", balls=3, strikes=2, outs=2, theme_mode="light"),
+        render_topps_chrome_card_html("Paul Skenes"),
+        render_topps_chrome_card_html("Chris Sale", theme_mode="light"),
         get_custom_css(),
         get_custom_css(theme_mode="ballpark"),
     ]
@@ -363,6 +369,10 @@ def test_get_custom_css_diamond_palette_zero_green() -> None:
     assert "#243D2D" not in css, "Theme must contain zero green borders (#243D2D)"
     assert ".pp-seam-divider" in css
     assert ".pp-dugout-clipboard" in css
+    assert "repeating-linear-gradient" in css, "Diamond mode must include subtle tactical pinstripes"
+
+    dark_css = get_custom_css(theme_mode="dark")
+    assert "repeating-linear-gradient" not in dark_css, "Dark broadcast mode must not have pinstripes (reversibility)" 
 
 
 def test_render_baseball_seams_divider_svg() -> None:
@@ -418,3 +428,42 @@ def test_render_dugout_clipboard_frame_html() -> None:
         assert "test-plan" in html
         assert chr(10) not in html
         assert "<!--" not in html
+
+
+def test_render_broadcast_scorebug_header_html() -> None:
+    """Verify render_broadcast_scorebug_header_html renders LED dots, radar gun, and runner diamond."""
+    from pitch_predictor.ui_components import render_broadcast_scorebug_header_html
+
+    html = render_broadcast_scorebug_header_html(
+        pitcher_name="Paul Skenes",
+        balls=2,
+        strikes=1,
+        outs=1,
+        speed_mph="102.1 MPH",
+        on_1b=1,
+        on_2b=0,
+        on_3b=0,
+        inning="▲ 3rd",
+        theme_mode="diamond",
+    )
+    assert "pp-scorebug-banner" in html
+    assert "PAUL SKENES" in html
+    assert "RADAR GUN" in html
+    assert "102.1 MPH" in html
+    assert "▲ 3rd" in html
+    assert chr(10) not in html
+    assert "<!--" not in html
+
+
+def test_render_topps_chrome_card_html() -> None:
+    """Verify render_topps_chrome_card_html renders collectible card with jersey watermark and arsenal."""
+    from pitch_predictor.ui_components import render_topps_chrome_card_html
+
+    for pitcher in ("Paul Skenes", "Corbin Burnes", "Logan Webb", "Chris Sale", "Yoshinobu Yamamoto"):
+        card_html = render_topps_chrome_card_html(pitcher_name=pitcher, theme_mode="diamond")
+        assert "pp-topps-card" in card_html
+        assert "TOPPS CHROME" in card_html
+        assert pitcher.upper() in card_html
+        assert "ARSENAL:" in card_html
+        assert chr(10) not in card_html
+        assert "<!--" not in card_html

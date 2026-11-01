@@ -29,8 +29,10 @@ from pitch_predictor.ui_components import (
     _compact_html,
     get_custom_css,
     render_baseball_seams_divider_svg,
+    render_broadcast_scorebug_header_html,
     render_pitcher_photo_html,
     render_spin_axis_clock_svg,
+    render_topps_chrome_card_html,
     resolve_ui_theme_mode,
 )
 
@@ -112,6 +114,23 @@ pitch_b = arsenal[pitch_b_key]
 # Compute precise metrics
 metrics = compute_tunneling_metrics(pitch_a, pitch_b, p_throws=p_throws)
 
+st.markdown(
+    render_broadcast_scorebug_header_html(
+        pitcher_name=chosen_pitcher,
+        balls=1,
+        strikes=2,
+        outs=1,
+        speed_mph=f"{pitch_a.get('speed_mph', 98.0)} MPH",
+        on_1b=0,
+        on_2b=0,
+        on_3b=0,
+        inning="▲ 6ª",
+        matchup_title=f"TUNNEL: {pitch_a['code']} vs {pitch_b['code']}",
+        theme_mode=active_theme,
+    ),
+    unsafe_allow_html=True,
+)
+
 st.markdown(render_baseball_seams_divider_svg(width_px=750, theme_mode=active_theme), unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
@@ -135,7 +154,7 @@ with kpi1, st.container(border=True):
 with kpi2, st.container(border=True):
     st.markdown("<div class='pp-kicker'>DISTÂNCIA NO TÚNEL (23.8 FT)</div>", unsafe_allow_html=True)
     sub_ball = metrics["d_tunnel_inches"] <= 2.94
-    tag_color = "#10B981" if sub_ball else "#F59E0B"
+    tag_color = "#38BDF8" if sub_ball else "#F59E0B"
     tag_label = "Menor que a bola (2.94\")" if sub_ball else "Separação sutil"
     st.markdown(
         f"<div style='font-size:22px;font-weight:800;color:var(--pp-text);font-family:\"JetBrains Mono\",monospace;margin:2px 0;'>"
@@ -333,8 +352,8 @@ with col_right:
             unsafe_allow_html=True,
         )
 
-    # Pitcher Photo Card
+    # Athlete Topps Chrome Card
     st.markdown(
-        render_pitcher_photo_html(selected_pitcher, height_px=140, theme_mode=active_theme),
+        render_topps_chrome_card_html(selected_pitcher, theme_mode=active_theme),
         unsafe_allow_html=True,
     )

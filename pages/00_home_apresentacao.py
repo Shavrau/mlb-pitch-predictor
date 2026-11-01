@@ -25,6 +25,8 @@ from pitch_predictor.ui_components import (
     _compact_html,
     get_custom_css,
     render_baseball_seams_divider_svg,
+    render_broadcast_scorebug_header_html,
+    render_topps_chrome_card_html,
     resolve_ui_theme_mode,
 )
 
@@ -270,10 +272,10 @@ hero_html = _compact_html(
           <div style="width:100%;height:4px;background:var(--pp-border,#222631);border-radius:2px;margin:5px 0;"><div style="width:37.5%;height:100%;background:#F59E0B;border-radius:2px;"></div></div>
           <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);">Tempo de o olho processar o movimento</div>
         </div>
-        <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3px solid #10B981;border-radius:6px;padding:11px 14px;">
+        <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3px solid #38BDF8;border-radius:6px;padding:11px 14px;">
           <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted,#94A3B8);font-weight:800;letter-spacing:0.05em;">INFERÊNCIA PRÉ-ARREMESSO</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:21px;font-weight:800;color:#10B981;margin:3px 0;">24 Variáveis</div>
-          <div style="width:100%;height:4px;background:var(--pp-border,#222631);border-radius:2px;margin:5px 0;"><div style="width:12.5%;height:100%;background:#10B981;border-radius:2px;"></div></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:21px;font-weight:800;color:#38BDF8;margin:3px 0;">24 Variáveis</div>
+          <div style="width:100%;height:4px;background:var(--pp-border,#222631);border-radius:2px;margin:5px 0;"><div style="width:12.5%;height:100%;background:#38BDF8;border-radius:2px;"></div></div>
           <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);">Contexto Statcast + cinemática 3D (&lt;50 ms)</div>
         </div>
       </div>
@@ -302,10 +304,10 @@ cards_pitches_html = _compact_html(
         </div>
         <div style="font-size:12px;color:var(--pp-muted,#94A3B8);margin-top:6px;line-height:1.4;">Sliders, Sweepers e Curvas de alto giro (2800+ RPM) projetados para whiff nas bordas.</div>
       </div>
-      <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-top:3px solid #10B981;border-radius:8px;padding:12px 15px;">
+      <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-top:3px solid #0284C7;border-radius:8px;padding:12px 15px;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
           <span style="font-size:14.5px;font-weight:800;color:var(--pp-text,#F1F5F9);">● Mudança de Velocidade (Offspeed)</span>
-          <span style="font-family:'JetBrains Mono',monospace;background:rgba(16,185,129,0.14);color:#10B981;border:1px solid #10B981;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;">CH/FS • ~125 km/h</span>
+          <span style="font-family:'JetBrains Mono',monospace;background:rgba(2,132,199,0.18);color:#38BDF8;border:1px solid #0284C7;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;">CH/FS • ~125 km/h</span>
         </div>
         <div style="font-size:12px;color:var(--pp-muted,#94A3B8);margin-top:6px;line-height:1.4;">Changeup e Splitter com disfarce de trajetória idêntico à bola rápida e queda tardia.</div>
       </div>
@@ -347,6 +349,29 @@ def _render_live_tactical_demo() -> None:
 
         style_cfg = FRIENDLY_PITCHER_STYLES[chosen_style]
         moment_cfg = FRIENDLY_GAME_MOMENTS[chosen_moment]
+
+        scorebug_p_name = style_cfg.get("pitcher_name", "Paul Skenes")
+        if scorebug_p_name not in MLB_PITCHERS:
+            scorebug_p_name = "Paul Skenes"
+        p_meta = MLB_PITCHERS.get(scorebug_p_name, MLB_PITCHERS["Paul Skenes"])
+        inn_dir = "▲" if moment_cfg.get("inning_topbot") == "Top" else "▼"
+        inn_lbl = f"{inn_dir} {moment_cfg.get('inning', 1)}ª"
+        st.markdown(
+            render_broadcast_scorebug_header_html(
+                pitcher_name=scorebug_p_name,
+                balls=moment_cfg.get("balls", 0),
+                strikes=moment_cfg.get("strikes", 0),
+                outs=moment_cfg.get("outs_when_up", 0),
+                speed_mph=p_meta.get("top_speed", "101.8 MPH"),
+                on_1b=moment_cfg.get("on_1b_flag", 0),
+                on_2b=moment_cfg.get("on_2b_flag", 0),
+                on_3b=moment_cfg.get("on_3b_flag", 0),
+                inning=inn_lbl,
+                matchup_title="STATCAST TACTICAL SIMULATION",
+                theme_mode=active_theme,
+            ),
+            unsafe_allow_html=True,
+        )
 
         demo_raw_inputs: dict[str, Any] = {
             "prev_pitch_category": moment_cfg["prev_pitch_category"],

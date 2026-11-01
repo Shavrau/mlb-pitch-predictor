@@ -1,6 +1,6 @@
 # 🤖 Manual Operacional & Diretrizes de Arquitetura para Agentes de IA (AGENTS.md)
 
-> **Versão do Projeto:** v2.4.0 Checkpoint (Pitch Tunneling 3D & Ballpark MLB Authentic Theme)  
+> **Versão do Projeto:** v2.5.0 Checkpoint (Bespoke MLB Broadcast HUD, Topps Chrome Cards & Classic Diamond Full Experience)  
 > **Escopo:** Baseball ML Pitch Predictor, Statcast Tactical AI, Biomechanical Pose Estimation, Multimodal Fusion & Databricks Apps Serverless Cloud  
 > **Ambiente Local:** Windows (PowerShell), Python 3.12.14 (`.venv`), Databricks Serverless, Streamlit 1.66.1.
 
@@ -8,10 +8,25 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 
 ---
 
-## 1. Estado Atual da Base de Código (Checkpoint v2.3.0)
+## 1. Estado Atual da Base de Código (Checkpoint v2.5.0)
 
-Após homologação e implementação do **Pitch Tunneling 3D (Opção 1)** e do **Tema Autêntico Ballpark MLB com Reversibilidade (Opção 2)**:
-- **Suíte de Testes**: **256 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+Após homologação e implementação dos **Componentes Bespoke MLB Broadcast & Topps Chrome (Reversibilidade Garantida)**:
+- **Suíte de Testes**: **258 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
+- **Entregáveis da Versão 2.5.0 Homologados**:
+  - **Scorebug HUD Broadcast Flutuante (`render_broadcast_scorebug_header_html`)**:
+    - Réplica da estética broadcast da Apple TV+ / MLB Network: LED dots eletrônicos de contagem (Bolas em âmbar, Strikes em vermelho, Outs em carmesim), caixa Stalker Radar Gun com tipografia digital tabular, mini-diamante com corredores em base em tempo real e identificação de arremessador com monograma de franquia e lateralidade.
+    - Integrado nas páginas: Home (`pages/00_home_apresentacao.py`), Scouting Report (`pages/02_scout_report.py`) e Pitch Tunneling 3D (`pages/06_pitch_tunneling.py`).
+  - **Cards Colecionáveis Topps Chrome / Statcast Foil (`render_topps_chrome_card_html` e `render_pitcher_photo_html`)**:
+    - Chanfros táticos em corte laser (`clip-path: polygon(...)`), marca d'água stenciled do número da camisa em escala monumental (42px-62px), moldura em platina escovada/grafite, tag de radar gun com velocidade máxima e pílulas de repertório de arremesso.
+    - 100% reversível: no tema Dark Broadcast ou Light Editorial, o card é automaticamente deschanfrado para manter simplicidade caso desejado.
+  - **Placa de Home Plate 3D em Perspectiva com Halo de Argila Infield (`render_strike_zone_svg`)**:
+    - Borda chanfrada de borracha preta, pentágono em giz branco de alta visibilidade (`#F8FAFC`), halo circular de argila infield (`#C85A17`) e linhas de foul de giz pontilhadas.
+  - **Pinstripes Táticos de Giz e Dugout Canvas Carbono (`get_custom_css`)**:
+    - Linhas verticais sutis de pinstripes de uniforme de beisebol (passo de 48px com 1.8% de opacidade) sobre o canvas preto ônix (`#090A0E`) exclusivamente no tema `Classic Diamond`, com reversibilidade instantânea nos outros temas.
+  - **Erradicação Total do Verde (Invariante Corinthians)**:
+    - Eliminação completa de tons verdes (`#10B981`, `#059669`, `#1B4332`, etc.) em todas as páginas (`pages/00_home_apresentacao.py`, `pages/02_scout_report.py`, `pages/03_minigame.py`, `pages/05_mlops_hub.py`, `pages/06_pitch_tunneling.py`), substituídos pelo azul elétrico floodlight (`#38BDF8` / `#0284C7`), argila infield (`#C85A17`) ou couro Rawlings (`#78350F`).
+  - **Erradicação de Emojis Desnecessários**:
+    - Títulos, botões, tabelas e placares limpos de emojis supérfluos, mantendo tipografia editorial técnica e glifos broadcasting (`▲`, `▼`, `●`, `◆`).
 - **Entregáveis da Versão 2.4.0 Homologados**:
   - **Identidade Visual Classic Diamond (Zero Verde / Zero Emojis Desnecessários / Reversibilidade Total) (`ui_components.py`, `app.py`)**:
     - **Zero Verde (Padrão Corinthians / MLB Classic Diamond)**: Fundo preto ônix de estádio (`#090A0E`), superfície em ardósia/carbono (`#12141C`), borda grafite (`#262C3D`), acentos autênticos de beisebol em argila de terra batida (`#C85A17`), costuras carmesim Rawlings (`#DC2626`), couro de luva (`#78350F`) e giz branco (`#F8FAFC`). Métricas e alertas positivos em azul floodlight elétrico (`#38BDF8` / `#0284C7`), com eliminação absoluta de tons verdes (`#1B4332`, `#08120C`, `#243D2D`).

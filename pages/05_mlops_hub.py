@@ -94,10 +94,10 @@ with col_title:
 
 with col_sync:
     is_live = ep_info.get("live_source", False) or uc_info.get("live_source", False)
-    badge_bg = "rgba(16, 185, 129, 0.12)" if is_live else "rgba(245, 158, 11, 0.12)"
-    badge_border = "#10B981" if is_live else "#F59E0B"
-    badge_text = "#059669" if is_live else "#D97706"
-    badge_label = "🟢 Conexão Databricks SDK Ativa" if is_live else "🟡 Fallback Local de Resiliência"
+    badge_bg = "rgba(2, 132, 199, 0.14)" if is_live else "rgba(245, 158, 11, 0.12)"
+    badge_border = "#0284C7" if is_live else "#F59E0B"
+    badge_text = "#38BDF8" if is_live else "#D97706"
+    badge_label = "● Conexão Databricks SDK Ativa" if is_live else "● Fallback Local de Resiliência"
 
     st.markdown(
         f"<div style='background:{badge_bg};border:1px solid {badge_border};color:{badge_text};"
@@ -135,7 +135,7 @@ with kpi2, st.container(border=True):
         "<div style='font-size:22px;font-weight:800;color:var(--pp-text);font-family:\"JetBrains Mono\",monospace;margin:2px 0;'>"
         "~22.8 ms"
         "</div>"
-        "<div style='font-size:11px;color:#10B981;font-weight:700;'>"
+        "<div style='font-size:11px;color:#38BDF8;font-weight:700;'>"
         "⚡ Sub-400ms SLA (Reação no Bastão)"
         "</div>",
         unsafe_allow_html=True,
@@ -314,7 +314,7 @@ with tab_serving:
                         <div style="background:rgba(59,130,246,0.12);color:#3B82F6;padding:4px;border-radius:4px;border:1px solid rgba(59,130,246,0.3);">
                           Breaking<br><strong>{latest.get('probabilities', {}).get('Breaking Ball', 0.63):.1%}</strong>
                         </div>
-                        <div style="background:rgba(16,185,129,0.12);color:#10B981;padding:4px;border-radius:4px;border:1px solid rgba(16,185,129,0.3);">
+                        <div style="background:rgba(2,132,199,0.14);color:#38BDF8;padding:4px;border-radius:4px;border:1px solid rgba(2,132,199,0.35);">
                           Offspeed<br><strong>{latest.get('probabilities', {}).get('Offspeed', 0.12):.1%}</strong>
                         </div>
                       </div>
@@ -371,8 +371,8 @@ with tab_lineage:
     # Invariants Compliance Banner
     st.markdown(
         """
-        <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:4px solid #10B981;border-radius:6px;padding:12px 16px;margin-top:14px;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:#10B981;margin-bottom:4px;">
+        <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:4px solid #0284C7;border-radius:6px;padding:12px 16px;margin-top:14px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:#38BDF8;margin-bottom:4px;">
             ✓ AUDITORIA DE CONFORMIDADE: INVARIANTE 3 (ZERO-LEAKAGE) &amp; INVARIANTE 1 (IaC)
           </div>
           <div style="font-size:12.5px;color:var(--pp-text);line-height:1.5;">
@@ -466,7 +466,7 @@ with tab_mlflow:
                     "domain:N",
                     scale=alt.Scale(
                         domain=["Statcast Prior", "Statcast Context", "Biomecânica 3D", "Statcast Sequence", "Statcast Leverage", "Statcast Matchup"],
-                        range=["#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6", "#06B6D4"],
+                        range=["#EF4444", "#F59E0B", "#38BDF8", "#3B82F6", "#8B5CF6", "#06B6D4"],
                     ),
                     legend=alt.Legend(title="Domínio de Dados", orient="bottom"),
                 ),
@@ -527,7 +527,7 @@ with tab_jobs:
 
                 st.markdown(
                     f"""
-                    <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3px solid #10B981;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+                    <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3px solid #0284C7;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
                       <div>
                         <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:var(--pp-text);">
                           {idx}. {t_key}
@@ -535,7 +535,7 @@ with tab_jobs:
                         <div style="font-size:11px;color:var(--pp-muted);">{t_desc}</div>
                       </div>
                       <div style="text-align:right;">
-                        <span style="background:rgba(16,185,129,0.15);color:#10B981;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;">
+                        <span style="background:rgba(2,132,199,0.18);color:#38BDF8;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;">
                           ✓ {t_state}
                         </span>
                         <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted);margin-top:2px;">{t_dur}</div>

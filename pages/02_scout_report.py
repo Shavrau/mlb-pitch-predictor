@@ -44,9 +44,11 @@ from pitch_predictor.ui_components import (
     _compact_html,
     get_custom_css,
     render_baseball_seams_divider_svg,
+    render_broadcast_scorebug_header_html,
     render_dugout_clipboard_frame_html,
     render_pitcher_photo_html,
     render_strike_zone_svg,
+    render_topps_chrome_card_html,
     resolve_ui_theme_mode,
 )
 
@@ -339,6 +341,27 @@ if view_mode == "🎯 Dossiê Individual (Single Pitcher)":
                 f"Fonte ativa: **{st.session_state.scout_batch_source}** • "
                 f"Platoon: **{profile['p_throws']}HP vs {selected_stand}HB** • "
                 f"Situação: **{selected_bases}**"
+            )
+
+            cur_c = st.session_state.get("scout_inspected_count", "0-2")
+            insp_b, insp_s = (int(x) for x in cur_c.split("-"))
+            p_name = _archetype_to_pitcher_name(selected_arch)
+            meta_p = MLB_PITCHERS.get(p_name, MLB_PITCHERS["Paul Skenes"])
+            st.markdown(
+                render_broadcast_scorebug_header_html(
+                    pitcher_name=p_name,
+                    balls=insp_b,
+                    strikes=insp_s,
+                    outs=2 if risp_active else 1,
+                    speed_mph=meta_p.get("top_speed", "101.8 MPH"),
+                    on_1b=on_1b,
+                    on_2b=on_2b,
+                    on_3b=on_3b,
+                    inning="▲ 5th",
+                    matchup_title="SCOUTING REPORT BROADCAST",
+                    theme_mode=active_theme,
+                ),
+                unsafe_allow_html=True,
             )
 
             mat_col, insp_col = st.columns([1.55, 1.0], gap="medium")
@@ -732,9 +755,9 @@ else:
         badge_div_border = "#EF4444" if not is_light else "#DC2626"
         badge_div_color = "#FCA5A5" if not is_light else "#991B1B"
 
-        badge_agr_bg = "rgba(16, 185, 129, 0.15)" if not is_light else "#ECFDF5"
-        badge_agr_border = "#10B981" if not is_light else "#059669"
-        badge_agr_color = "#6EE7B7" if not is_light else "#064E3B"
+        badge_agr_bg = "rgba(2, 132, 199, 0.15)" if not is_light else "#E0F2FE"
+        badge_agr_border = "#0284C7" if not is_light else "#0284C7"
+        badge_agr_color = "#38BDF8" if not is_light else "#0369A1"
 
         st.markdown(
             _compact_html(
@@ -790,9 +813,9 @@ else:
 
             if is_div:
                 status_pill = (
-                    '<span style="background:rgba(245,158,11,0.14);color:#B45309;border:1px solid #F59E0B;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:\'JetBrains Mono\',monospace;">⚔️ DIVERGÊNCIA</span>'
+                    '<span style="background:rgba(245,158,11,0.14);color:#B45309;border:1px solid #F59E0B;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:\'JetBrains Mono\',monospace;">DIVERGÊNCIA</span>'
                     if is_light
-                    else '<span style="background:rgba(245,158,11,0.18);color:#F59E0B;border:1px solid #F59E0B;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:\'JetBrains Mono\',monospace;">⚔️ DIVERGÊNCIA</span>'
+                    else '<span style="background:rgba(245,158,11,0.18);color:#F59E0B;border:1px solid #F59E0B;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:\'JetBrains Mono\',monospace;">DIVERGÊNCIA</span>'
                 )
             else:
                 status_pill = (

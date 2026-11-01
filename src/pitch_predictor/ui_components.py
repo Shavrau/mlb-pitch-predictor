@@ -296,8 +296,13 @@ def render_strike_zone_svg(
         {chr(10).join(strike_cells_svg)}
         <rect x="52" y="42" width="135" height="135" fill="none" stroke="{outer_zone_stroke}" stroke-width="2.2" />
         {marker_svg}
-        <polygon points="85,216 155,216 142,226 120,233 98,226" fill="#E2E8F0" stroke="#64748B" stroke-width="1.4" />
-        <text x="120" y="242" text-anchor="middle" fill="{caption_color}" font-size="8.2" font-weight="700" font-family="JetBrains Mono, monospace">{caption_text}</text>
+        <ellipse cx="120" cy="225" rx="52" ry="12" fill="#C85A17" fill-opacity="0.22" stroke="#C85A17" stroke-width="0.8" stroke-dasharray="3,2" />
+        <polygon points="84,217 156,217 143,227 120,234 97,227" fill="rgba(0,0,0,0.45)" />
+        <polygon points="83,214 157,214 144,226 120,234 96,226" fill="#0A0B0E" stroke="#334155" stroke-width="1.2" />
+        <polygon points="85,215 155,215 142,225 120,232 98,225" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.0" />
+        <line x1="42" y1="210" x2="42" y2="236" stroke="#94A3B8" stroke-opacity="0.35" stroke-width="1.2" stroke-dasharray="3,2" />
+        <line x1="198" y1="210" x2="198" y2="236" stroke="#94A3B8" stroke-opacity="0.35" stroke-width="1.2" stroke-dasharray="3,2" />
+        <text x="120" y="243" text-anchor="middle" fill="{caption_color}" font-size="8.2" font-weight="700" font-family="JetBrains Mono, monospace">{caption_text}</text>
       </svg>
     </div>
     """
@@ -567,6 +572,10 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         alert_info_border = "#2563EB"
         alert_info_text = "#93C5FD"
 
+    pinstripe_css = ""
+    if resolved in ("diamond", "ballpark"):
+        pinstripe_css = "background-image: repeating-linear-gradient(to right, transparent, transparent 47px, rgba(248, 250, 252, 0.018) 48px, transparent 49px) !important;"
+
     raw_css = f"""
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
@@ -599,6 +608,7 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
       }}
       .stApp {{
         background-color: var(--pp-bg) !important;
+        {pinstripe_css}
         color: var(--pp-text) !important;
         font-family: 'Space Grotesk', system-ui, sans-serif;
       }}
@@ -1213,26 +1223,47 @@ def get_pitcher_headshot_src(pitcher_name: str) -> str:
 
 
 def render_pitcher_photo_html(pitcher_name: str, height_px: int = 138, theme_mode: str | None = None) -> str:
-    """Renderiza a foto oficial do arremessador da MLB com faixa cromática da franquia e adaptação dual-mode."""
+    """
+    Render the official MLB headshot framed in Topps Chrome / Statcast foil card style.
+    Features tactical chamfered corners, stencil jersey watermark, and Stalker radar top velo tag.
+    Fully reversible: in Dark Broadcast / Light Editorial modes, renders clean un-chamfered card.
+    """
     src = get_pitcher_headshot_src(pitcher_name)
     meta = MLB_PITCHERS.get(pitcher_name, MLB_PITCHERS["Paul Skenes"])
     team_hex = meta.get("team_primary_hex", "#F59E0B")
     team_abbr = meta.get("team_abbr", "MLB")
     jersey = meta.get("jersey_number", "#00")
+    top_spd = meta.get("top_speed", "100+ MPH")
     img_max_h = max(64, int(height_px) - 12)
 
-    is_light = resolve_ui_theme_mode(theme_mode) == "light"
-    card_bg = (
-        "var(--pp-surface, #F1F5F9)"
-        if is_light
-        else "linear-gradient(180deg,rgba(24,27,35,0.96) 0%,rgba(10,11,14,0.98) 100%)"
-    )
-    border_c = "var(--pp-border, #C2CFDD)" if is_light else "var(--pp-border, #222631)"
+    resolved = resolve_ui_theme_mode(theme_mode)
+    is_light = resolved == "light"
+    is_diamond = resolved in ("diamond", "ballpark")
+
+    if is_light:
+        card_bg = "var(--pp-surface, #F1F5F9)"
+        border_c = "var(--pp-border, #C2CFDD)"
+        clip_style = "border-radius:6px;"
+        decorations = ""
+    elif is_diamond:
+        card_bg = "linear-gradient(145deg, #161922 0%, #0A0B0E 100%)"
+        border_c = "#2C3446"
+        clip_style = "clip-path: polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px)); border-radius: 4px;"
+        decorations = f"""
+        <span style="position:absolute;bottom:2px;left:8px;font-family:'Barlow Condensed',sans-serif;font-size:42px;font-weight:900;color:{team_hex};opacity:0.12;line-height:1;pointer-events:none;user-select:none;">{jersey}</span>
+        <span style="position:absolute;top:5px;left:7px;background:#05070B;border:1px solid #262C3D;border-left:2px solid {team_hex};border-radius:3px;padding:1px 5px;font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:800;color:#F8FAFC;">{top_spd}</span>
+        """
+    else:
+        card_bg = "linear-gradient(180deg,rgba(24,27,35,0.96) 0%,rgba(10,11,14,0.98) 100%)"
+        border_c = "var(--pp-border, #222631)"
+        clip_style = "border-radius:6px;"
+        decorations = ""
 
     raw_html = f"""
-    <div style="background:{card_bg};border-radius:6px;border:1px solid {border_c};border-top:3px solid {team_hex};padding:4px;margin:2px auto 6px auto;height:{int(height_px)}px;box-sizing:border-box;position:relative;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;">
+    <div style="background:{card_bg};{clip_style}border:1px solid {border_c};border-top:3px solid {team_hex};padding:4px;margin:2px auto 6px auto;height:{int(height_px)}px;box-sizing:border-box;position:relative;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,0.35);">
       <span style="position:absolute;top:5px;right:7px;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:800;color:{team_hex};letter-spacing:0.04em;">{team_abbr} {jersey}</span>
-      <img src="{src}" alt="{pitcher_name}" style="max-height:{img_max_h}px;max-width:100%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.40));display:block;margin:0 auto;" />
+      {decorations}
+      <img src="{src}" alt="{pitcher_name}" style="max-height:{img_max_h}px;max-width:100%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.40));display:block;margin:0 auto;position:relative;z-index:2;" />
     </div>
     """
     return _compact_html(raw_html)
@@ -1590,6 +1621,173 @@ def render_dugout_clipboard_frame_html(
       </div>
       <div style="color:{text_c};font-size:13px;line-height:1.55;">
         {content_html}
+      </div>
+    </div>
+    """
+    return _compact_html(raw_html)
+
+
+
+def render_broadcast_scorebug_header_html(
+    pitcher_name: str = "Paul Skenes",
+    balls: int = 0,
+    strikes: int = 0,
+    outs: int = 0,
+    speed_mph: str = "101.8 MPH",
+    on_1b: int = 0,
+    on_2b: int = 0,
+    on_3b: int = 0,
+    inning: str = "▲ 1st",
+    matchup_title: str = "MLB STATCAST BROADCAST",
+    theme_mode: str | None = None,
+) -> str:
+    """
+    Render official MLB broadcast scorebug header (Apple TV+ / MLB Network style).
+    Displays Balls/Strikes/Outs electronic LED dots, Stalker radar gun speed box,
+    mini-diamond base runners, and pitcher identification.
+    Guaranteed CommonMark-safe single-line markup.
+    """
+    meta = MLB_PITCHERS.get(pitcher_name, MLB_PITCHERS["Paul Skenes"])
+    team_hex = meta.get("team_primary_hex", "#F59E0B")
+    jersey = meta.get("jersey_number", "#00")
+    p_throws = meta.get("p_throws", "R")
+
+    ball_dots = []
+    for b_idx in range(1, 4):
+        f = "#F59E0B" if balls >= b_idx else "rgba(148,163,184,0.25)"
+        ball_dots.append(f'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:{f};margin:0 1px;"></span>')
+    b_html = "".join(ball_dots)
+
+    strike_dots = []
+    for s_idx in range(1, 3):
+        f = "#EF4444" if strikes >= s_idx else "rgba(148,163,184,0.25)"
+        strike_dots.append(f'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:{f};margin:0 1px;"></span>')
+    s_html = "".join(strike_dots)
+
+    out_dots = []
+    for o_idx in range(1, 3):
+        f = "#DC2626" if outs >= o_idx else "rgba(148,163,184,0.25)"
+        out_dots.append(f'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:{f};margin:0 1px;"></span>')
+    o_html = "".join(out_dots)
+
+    c_1b = "#F59E0B" if int(on_1b) > 0 else "#334155"
+    c_2b = "#F59E0B" if int(on_2b) > 0 else "#334155"
+    c_3b = "#F59E0B" if int(on_3b) > 0 else "#334155"
+
+    resolved = resolve_ui_theme_mode(theme_mode)
+    if resolved == "light":
+        wrap_bg = "#FFFFFF"
+        border_c = "#CBD5E1"
+        inner_bg = "#F1F5F9"
+        text_primary = "#0F172A"
+        text_muted = "#475569"
+        radar_bg = "#E2E8F0"
+        radar_color = "#0369A1"
+    elif resolved in ("diamond", "ballpark"):
+        wrap_bg = "linear-gradient(90deg, #12141C 0%, #0A0C12 100%)"
+        border_c = "#262C3D"
+        inner_bg = "#07080B"
+        text_primary = "#F8FAFC"
+        text_muted = "#94A3B8"
+        radar_bg = "#05070B"
+        radar_color = "#F59E0B"
+    else:
+        wrap_bg = "#12141A"
+        border_c = "#222631"
+        inner_bg = "#0A0B0E"
+        text_primary = "#F1F5F9"
+        text_muted = "#94A3B8"
+        radar_bg = "#07080B"
+        radar_color = "#38BDF8"
+
+    raw_html = f"""
+    <div class="pp-scorebug-banner" style="background:{wrap_bg};border:1px solid {border_c};border-radius:8px;padding:8px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;box-shadow:0 4px 14px rgba(0,0,0,0.30);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="background:{inner_bg};border:1px solid {border_c};border-left:3px solid {team_hex};border-radius:4px;padding:3px 9px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:800;color:{text_muted};letter-spacing:0.06em;">{matchup_title}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:{text_primary};letter-spacing:0.02em;">{pitcher_name.upper()} <span style="color:{team_hex};font-size:12px;font-weight:700;">{jersey} • {p_throws}HP</span></div>
+        </div>
+      </div>
+      <div style="background:{radar_bg};border:1px solid {border_c};border-radius:4px;padding:3px 12px;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:7.5px;font-weight:800;color:{text_muted};letter-spacing:0.08em;">RADAR GUN</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:900;color:{radar_color};letter-spacing:0.04em;">{speed_mph}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="background:{inner_bg};border:1px solid {border_c};border-radius:4px;padding:4px 9px;display:flex;gap:8px;align-items:center;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;display:flex;align-items:center;gap:3px;"><span style="color:{text_muted};">B</span> {b_html}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;display:flex;align-items:center;gap:3px;"><span style="color:{text_muted};">S</span> {s_html}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;display:flex;align-items:center;gap:3px;"><span style="color:{text_muted};">O</span> {o_html}</div>
+        </div>
+        <svg viewBox="0 0 28 28" width="26" height="26" style="display:block;">
+          <polygon points="14,3 25,14 14,25 3,14" fill="none" stroke="#475569" stroke-width="1.2" />
+          <g transform="translate(14, 3.5) rotate(45)"><rect x="-2.5" y="-2.5" width="5" height="5" fill="{c_2b}" /></g>
+          <g transform="translate(3, 14) rotate(45)"><rect x="-2.5" y="-2.5" width="5" height="5" fill="{c_3b}" /></g>
+          <g transform="translate(25, 14) rotate(45)"><rect x="-2.5" y="-2.5" width="5" height="5" fill="{c_1b}" /></g>
+        </svg>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:{text_primary};letter-spacing:0.04em;">{inning}</span>
+      </div>
+    </div>
+    """
+    return _compact_html(raw_html)
+
+
+def render_topps_chrome_card_html(
+    pitcher_name: str,
+    theme_mode: str | None = None,
+) -> str:
+    """
+    Render collectible Topps Chrome athlete card with radar velo tag,
+    franchise styling, stencil watermark, and pitch repertoire pills.
+    Guaranteed CommonMark-safe single-line markup.
+    """
+    meta = MLB_PITCHERS.get(pitcher_name, MLB_PITCHERS["Paul Skenes"])
+    team_hex = meta.get("team_primary_hex", "#F59E0B")
+    team_full = meta.get("team_full", "Major League Baseball")
+    jersey = meta.get("jersey_number", "#00")
+    p_throws = meta.get("p_throws", "R")
+    top_spd = meta.get("top_speed", "100+ MPH")
+    role = meta.get("role", "Ace Pitcher")
+    arsenal = meta.get("arsenal", "4-Seam (FF) • Slider (SL)")
+    src = get_pitcher_headshot_src(pitcher_name)
+
+    resolved = resolve_ui_theme_mode(theme_mode)
+    if resolved == "light":
+        card_bg = "#FFFFFF"
+        border_c = "#CBD5E1"
+        inner_box = "#F1F5F9"
+        text_primary = "#0F172A"
+        text_muted = "#475569"
+    elif resolved in ("diamond", "ballpark"):
+        card_bg = "linear-gradient(145deg, #161922 0%, #0A0B0E 100%)"
+        border_c = "#2C3446"
+        inner_box = "#07080B"
+        text_primary = "#F8FAFC"
+        text_muted = "#94A3B8"
+    else:
+        card_bg = "linear-gradient(180deg, #181B24 0%, #0F1117 100%)"
+        border_c = "#222631"
+        inner_box = "#0A0B0E"
+        text_primary = "#F1F5F9"
+        text_muted = "#94A3B8"
+
+    raw_html = f"""
+    <div class="pp-topps-card" style="background:{card_bg};border:1.5px solid {border_c};border-top:3px solid {team_hex};border-radius:6px;padding:12px;position:relative;box-shadow:0 6px 18px rgba(0,0,0,0.40);overflow:hidden;box-sizing:border-box;">
+      <span style="position:absolute;bottom:8px;right:10px;font-family:'Barlow Condensed',sans-serif;font-size:62px;font-weight:900;color:{team_hex};opacity:0.08;line-height:1;pointer-events:none;user-select:none;">{jersey}</span>
+      <div style="background:{inner_box};border:1px solid {border_c};border-radius:4px;padding:3px 8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:800;color:{text_muted};letter-spacing:0.06em;">TOPPS CHROME • STATCAST</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:900;color:#F59E0B;letter-spacing:0.04em;">{top_spd}</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+        <img src="{src}" alt="{pitcher_name}" style="width:58px;height:58px;object-fit:cover;border-radius:50%;border:2px solid {team_hex};background:{inner_box};flex-shrink:0;" />
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:800;color:{team_hex};letter-spacing:0.04em;">{team_full.upper()}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:{text_primary};line-height:1.1;">{pitcher_name.upper()}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:{text_muted};font-weight:700;">{jersey} • {p_throws}HP • {role}</div>
+        </div>
+      </div>
+      <div style="background:{inner_box};border:1px solid {border_c};border-left:2px solid {team_hex};border-radius:4px;padding:4px 8px;font-size:10px;color:{text_primary};line-height:1.4;">
+        <strong style="color:{text_muted};font-size:8.5px;font-family:'JetBrains Mono',monospace;display:block;">ARSENAL:</strong>
+        {arsenal}
       </div>
     </div>
     """
