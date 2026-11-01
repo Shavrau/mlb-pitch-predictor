@@ -199,7 +199,7 @@ with st.container(border=True):
     st.markdown(arena_svg, unsafe_allow_html=True)
 
     st.caption(
-        "💡 **Física do Túnel:** Até o anel âmbar (*Ponto de Decisão a 23.8 pés*), ambos os arremessos viajam no interior do cilindro virtual de 4 polegadas. "
+        "**Física do Túnel:** Até o anel âmbar (*Ponto de Decisão a 23.8 pés*), ambos os arremessos viajam no interior do cilindro virtual de 4 polegadas. "
         "O olho humano leva cerca de 150 ms para disparar o comando de swing do cérebro para os braços — após o anel, o rebatedor já está comprometido com o golpe, "
         "enquanto a bola de quebra curva bruscamente em direção à luva."
     )

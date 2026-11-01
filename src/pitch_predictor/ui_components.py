@@ -102,8 +102,9 @@ PITCH_CATEGORY_STYLES: dict[str, dict[str, str]] = {
 
 def resolve_ui_theme_mode(mode: str | None = None) -> str:
     """
-    Resolve the active UI theme mode (`"ballpark"`, `"light"`, or `"dark"`).
-    Defaults to `"ballpark"` when selected or `"dark"` (Dark Broadcast `#0A0B0E`).
+    Resolve the active UI theme mode (`"diamond"`, `"light"`, or `"dark"`).
+    Defaults to `"diamond"` (Classic Diamond Onyx & Clay) or `"dark"` (Dark Broadcast).
+    Zero green colors: Corinthians & MLB authentic tribute (Onyx, Chalk White, Infield Clay & Rawlings Leather).
     """
     candidate = mode
     if candidate is None:
@@ -116,8 +117,8 @@ def resolve_ui_theme_mode(mode: str | None = None) -> str:
 
     if candidate:
         cand_str = str(candidate).strip().lower()
-        if "ballpark" in cand_str or "baseball" in cand_str:
-            return "ballpark"
+        if any(k in cand_str for k in ("diamond", "classic", "ballpark", "baseball")):
+            return "diamond"
         if "light" in cand_str:
             return "light"
     return "dark"
@@ -510,30 +511,31 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         alert_info_bg = "#EFF6FF"
         alert_info_border = "#BFDBFE"
         alert_info_text = "#1E3A8A"
-    elif resolved == "ballpark":
-        pp_bg = "#08120C"
-        pp_surface = "#0F1C14"
-        pp_surface_alt = "#16261C"
-        pp_border = "#243D2D"
+    elif resolved in ("diamond", "ballpark"):
+        # Classic Diamond Theme (Zero Green - Corinthians & MLB Authentic: Onyx, Infield Clay, Chalk White, Leather)
+        pp_bg = "#090A0E"
+        pp_surface = "#12141C"
+        pp_surface_alt = "#171B26"
+        pp_border = "#262C3D"
         pp_text = "#F8FAFC"
         pp_muted = "#94A3B8"
-        pp_sidebar_bg = "#060D09"
+        pp_sidebar_bg = "#07080B"
         color_scheme = "dark"
-        scroll_thumb = "#2F523C"
-        scroll_track = "#08120C"
+        scroll_thumb = "#3A4459"
+        scroll_track = "#090A0E"
         metric_label_color = "#E2E8F0"
-        metric_delta_pos_bg = "rgba(16, 185, 129, 0.18)"
-        metric_delta_pos_border = "rgba(16, 185, 129, 0.40)"
-        metric_delta_pos_color = "#6EE7B7"
-        metric_delta_pos_fill = "#34D399"
+        metric_delta_pos_bg = "rgba(2, 132, 199, 0.18)"
+        metric_delta_pos_border = "rgba(2, 132, 199, 0.40)"
+        metric_delta_pos_color = "#38BDF8"
+        metric_delta_pos_fill = "#0284C7"
         metric_delta_neg_bg = "rgba(220, 38, 38, 0.18)"
         metric_delta_neg_border = "rgba(220, 38, 38, 0.40)"
         metric_delta_neg_color = "#FCA5A5"
         metric_delta_neg_fill = "#F87171"
         slider_tick_color = "#94A3B8"
-        alert_success_bg = "rgba(27, 67, 50, 0.55)"
-        alert_success_border = "#2D6A4F"
-        alert_success_text = "#A7F3D0"
+        alert_success_bg = "rgba(2, 132, 199, 0.20)"
+        alert_success_border = "#0284C7"
+        alert_success_text = "#BAE6FD"
         alert_info_bg = "rgba(200, 90, 23, 0.22)"
         alert_info_border = "#C85A17"
         alert_info_text = "#FED7AA"
@@ -585,11 +587,12 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         --pitch-offspeed: #10B981;
         --base-occupied: #F59E0B;
         --strike-zone: #38BDF8;
-        --pp-grass: #1B4332;
         --pp-clay: #C85A17;
+        --pp-dirt: #B45309;
         --pp-seam: #DC2626;
         --pp-chalk: #F8FAFC;
         --pp-leather: #78350F;
+        --pp-onyx: #090A0E;
         --pp-scoreboard: #0F141C;
         scrollbar-width: thin;
         scrollbar-color: {scroll_thumb} {scroll_track};
@@ -1471,7 +1474,7 @@ def render_spin_axis_clock_svg(
 
     if "Fastball" in category or "4-Seam" in pitch_name:
         magnus_pct = "98% ATIVO"
-        magnus_color = "#10B981"
+        magnus_color = "#38BDF8"
     elif "Breaking" in category or "Slider" in pitch_name or "Curve" in pitch_name:
         magnus_pct = "88% ATIVO"
         magnus_color = "#3B82F6"
@@ -1488,14 +1491,14 @@ def render_spin_axis_clock_svg(
         text_primary = "#0F172A"
         text_muted = "#475569"
         panel_bg = "#F1F5F9"
-    elif resolved == "ballpark":
-        card_bg = "linear-gradient(135deg, #111C15 0%, #0B130E 100%)"
-        border_c = "#243D2D"
-        dial_fill = "#060D09"
-        dial_stroke = "#2F523C"
+    elif resolved in ("diamond", "ballpark"):
+        card_bg = "linear-gradient(135deg, #12141C 0%, #090A0E 100%)"
+        border_c = "#262C3D"
+        dial_fill = "#07080B"
+        dial_stroke = "#3A4459"
         text_primary = "#F8FAFC"
         text_muted = "#94A3B8"
-        panel_bg = "#16261C"
+        panel_bg = "#171B26"
     else:
         card_bg = "linear-gradient(135deg, #12151C 0%, #0A0B0E 100%)"
         border_c = "#222631"
@@ -1555,11 +1558,11 @@ def render_dugout_clipboard_frame_html(
         clip_bg = "linear-gradient(180deg, #94A3B8 0%, #64748B 100%)"
         clip_border = "#475569"
         text_c = "#0F172A"
-    elif resolved == "ballpark":
-        frame_bg = "linear-gradient(180deg, #111C15 0%, #0B130E 100%)"
-        border_c = "#2A4533"
-        header_border = "#1E3326"
-        title_color = "#F59E0B"
+    elif resolved in ("diamond", "ballpark"):
+        frame_bg = "linear-gradient(180deg, #13161F 0%, #090A0E 100%)"
+        border_c = "#2E364A"
+        header_border = "#1E2433"
+        title_color = "#D97706"
         stadium_color = "#94A3B8"
         clip_bg = "linear-gradient(180deg, #64748B 0%, #334155 100%)"
         clip_border = "#94A3B8"
@@ -1582,7 +1585,7 @@ def render_dugout_clipboard_frame_html(
         <div style="width:6px;height:6px;border-radius:50%;background:#D97706;border:1px solid #78350F;"></div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid {header_border};padding-bottom:8px;margin-bottom:14px;flex-wrap:wrap;gap:6px;">
-        <span style="color:{title_color};font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:800;letter-spacing:0.04em;">⚾ {title}</span>
+        <span style="color:{title_color};font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:800;letter-spacing:0.04em;">{title}</span>
         <span style="color:{stadium_color};font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:600;">{stadium}</span>
       </div>
       <div style="color:{text_c};font-size:13px;line-height:1.55;">

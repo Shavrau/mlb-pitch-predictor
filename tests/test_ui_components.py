@@ -332,31 +332,35 @@ def test_render_pitch_flight_arena_svg_renders_animated_trajectory_and_ghost_tun
 # ---------------------------------------------------------------------------
 
 
-def test_resolve_ui_theme_mode_supports_ballpark_dark_light() -> None:
-    """Verify resolve_ui_theme_mode resolves ballpark, light, and dark appropriately."""
+def test_resolve_ui_theme_mode_supports_diamond_dark_light() -> None:
+    """Verify resolve_ui_theme_mode resolves diamond (Classic Diamond), light, and dark appropriately."""
     from pitch_predictor.ui_components import resolve_ui_theme_mode
 
-    assert resolve_ui_theme_mode("ballpark") == "ballpark"
-    assert resolve_ui_theme_mode("⚾ Ballpark MLB") == "ballpark"
-    assert resolve_ui_theme_mode("baseball") == "ballpark"
+    assert resolve_ui_theme_mode("diamond") == "diamond"
+    assert resolve_ui_theme_mode("Classic Diamond") == "diamond"
+    assert resolve_ui_theme_mode("ballpark") == "diamond"
+    assert resolve_ui_theme_mode("baseball") == "diamond"
     assert resolve_ui_theme_mode("light") == "light"
     assert resolve_ui_theme_mode("Light Editorial") == "light"
     assert resolve_ui_theme_mode("dark") == "dark"
     assert resolve_ui_theme_mode("Dark Broadcast") == "dark"
-    assert resolve_ui_theme_mode(None) in ("ballpark", "dark", "light")
+    assert resolve_ui_theme_mode(None) in ("diamond", "dark", "light")
 
 
-def test_get_custom_css_ballpark_palette() -> None:
-    """Verify get_custom_css in ballpark mode injects authentic MLB colors and styles."""
+def test_get_custom_css_diamond_palette_zero_green() -> None:
+    """Verify get_custom_css in diamond mode injects authentic MLB colors with ZERO GREEN (Corinthians-safe)."""
     from pitch_predictor.ui_components import get_custom_css
 
-    css = get_custom_css(theme_mode="ballpark")
-    assert "--pp-grass: #1B4332;" in css
+    css = get_custom_css(theme_mode="diamond")
     assert "--pp-clay: #C85A17;" in css
     assert "--pp-seam: #DC2626;" in css
     assert "--pp-chalk: #F8FAFC;" in css
     assert "--pp-leather: #78350F;" in css
-    assert "--pp-bg: #08120C;" in css
+    assert "--pp-bg: #090A0E;" in css
+    # Strictly zero green colors:
+    assert "#1B4332" not in css, "Theme must contain zero turf green (#1B4332)"
+    assert "#08120C" not in css, "Theme must contain zero green tint (#08120C)"
+    assert "#243D2D" not in css, "Theme must contain zero green borders (#243D2D)"
     assert ".pp-seam-divider" in css
     assert ".pp-dugout-clipboard" in css
 

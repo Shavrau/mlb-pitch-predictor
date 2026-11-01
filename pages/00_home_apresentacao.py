@@ -450,7 +450,7 @@ with nav_c1, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 01 • ARCADE RETRO</div>", unsafe_allow_html=True)
     st.markdown(
         "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
-        "🎮 Minigame: Você vs. IA"
+        "Minigame: Você vs. IA"
         "</div>"
         "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
         "Duelo lance a lance no montinho. Escolha seu arremesso, mire na zona e engane a IA."
@@ -468,7 +468,7 @@ with nav_c2, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 02 • STATCAST INTEL</div>", unsafe_allow_html=True)
     st.markdown(
         "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
-        "📊 MLB Scouting Report"
+        "MLB Scouting Report"
         "</div>"
         "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
         "Matriz 4x3 de 12 contagens, plano tático de jogo e tendências situacionais."
@@ -486,7 +486,7 @@ with nav_c3, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 03 • VISÃO 3D</div>", unsafe_allow_html=True)
     st.markdown(
         "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
-        "🔬 Laboratório Biomecânico"
+        "Laboratório Biomecânico"
         "</div>"
         "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
         "Cinemática 3D com 33 marcos da entrega, detecção de pitch tipping e estudo SHAP."
@@ -504,7 +504,7 @@ with nav_c4, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 04 • PITCH TUNNELING</div>", unsafe_allow_html=True)
     st.markdown(
         "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
-        "🎭 Trajetória 3D"
+        "Trajetória 3D & Tunneling"
         "</div>"
         "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
         "Disfarce de túnel, ponto de decisão a 23.8 ft e eixos de rotação Statcast."
@@ -522,7 +522,7 @@ with nav_c5, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 05 • CLOUD GOVERNANCE</div>", unsafe_allow_html=True)
     st.markdown(
         "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
-        "⚡ Databricks MLOps"
+        "Databricks MLOps Hub"
         "</div>"
         "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
         "Monitoramento Serverless Serving, linhagem Unity Catalog e auditoria MLflow."
