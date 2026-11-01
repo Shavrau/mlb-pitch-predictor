@@ -23,7 +23,6 @@ Configures the global Streamlit layout, Dual Mode selector (Dark Broadcast `#0A0
 from __future__ import annotations
 
 import sys
-
 from pathlib import Path
 
 # Ensure src/ is on sys.path for Databricks Apps and container execution
@@ -72,12 +71,31 @@ with st.sidebar:
     else:
         st.session_state.ui_theme_mode = "diamond"
 
-    from pitch_predictor.ui_components import get_custom_css
+    if "ballpark_audio_enabled" not in st.session_state:
+        st.session_state.ballpark_audio_enabled = True
+
+    ballpark_audio = st.toggle(
+        "Som do Ballpark (Efeitos de Estádio)",
+        value=st.session_state.ballpark_audio_enabled,
+        key="ballpark_audio_toggle",
+        help="Sintetiza via Web Audio o estalo da luva de couro recebendo uma bola rápida de 102 mph ao acionar botões de ação.",
+    )
+    st.session_state.ballpark_audio_enabled = ballpark_audio
+
+    from pitch_predictor.ui_components import (
+        get_custom_css,
+        render_ballpark_audio_listener_html,
+    )
 
     st.markdown(
         get_custom_css(theme_mode=st.session_state.ui_theme_mode),
         unsafe_allow_html=True,
     )
+    if ballpark_audio:
+        st.markdown(
+            render_ballpark_audio_listener_html(enabled=True),
+            unsafe_allow_html=True,
+        )
 
     st.markdown(
         """

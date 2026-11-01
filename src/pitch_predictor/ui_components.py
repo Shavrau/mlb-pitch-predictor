@@ -33,13 +33,9 @@ Provides:
 from __future__ import annotations
 
 import base64
-
 import functools
-
 import math
-
 from pathlib import Path
-
 from typing import Any
 
 from pitch_predictor.scenarios import MLB_PITCHERS
@@ -815,6 +811,24 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         pitch_offspeed_var = "#0284C7"
 
+        panel_bg = "#FFFFFF"
+
+        panel_border = "#CBD5E1"
+
+        panel_shadow = (
+            "0 2px 8px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
+        )
+
+        metric_bg = "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)"
+
+        metric_border = "#CBD5E1"
+
+        metric_shadow = (
+            "0 2px 6px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
+        )
+
+        tab_bg_active = "rgba(2, 132, 199, 0.08)"
+
         pinstripe_css = """
 
         background-color: var(--pp-bg) !important;
@@ -887,6 +901,24 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         alert_info_text = "#FED7AA"
 
         pitch_offspeed_var = "#38BDF8"
+
+        panel_bg = "linear-gradient(180deg, #131622 0%, #0C0E15 100%)"
+
+        panel_border = "var(--pp-border)"
+
+        panel_shadow = (
+            "0 4px 16px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.04)"
+        )
+
+        metric_bg = "linear-gradient(180deg, #121520 0%, #0A0C13 100%)"
+
+        metric_border = "#23293A"
+
+        metric_shadow = (
+            "0 3px 12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03)"
+        )
+
+        tab_bg_active = "rgba(255, 255, 255, 0.05)"
 
         pinstripe_css = """
 
@@ -1057,15 +1089,97 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
       }}
 
+      /* Dugout Tactical Panels (st.container border=True) */
       div[data-testid="stVerticalBlockBorderWrapper"] {{
 
-        background-color: var(--pp-surface);
+        background: {panel_bg} !important;
 
-        border: 1px solid var(--pp-border) !important;
+        border: 1px solid {panel_border} !important;
+
+        border-top: 2.5px solid var(--pp-accent) !important;
 
         border-radius: 8px !important;
 
-        padding: 14px !important;
+        padding: 16px !important;
+
+        box-shadow: {panel_shadow} !important;
+
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+
+      }}
+
+      div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
+
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+
+      }}
+
+      /* Electronic Ballpark Scoreboard Tabs (st.tabs) */
+      div[data-baseweb="tab-list"] {{
+
+        background-color: transparent !important;
+
+        border-bottom: 1px solid var(--pp-border) !important;
+
+        gap: 6px !important;
+
+        padding-bottom: 0px !important;
+
+      }}
+
+      button[data-baseweb="tab"] {{
+
+        font-family: 'Barlow Condensed', 'Space Grotesk', sans-serif !important;
+
+        font-size: 14.5px !important;
+
+        font-weight: 700 !important;
+
+        letter-spacing: 0.05em !important;
+
+        text-transform: uppercase !important;
+
+        color: var(--pp-muted) !important;
+
+        background-color: transparent !important;
+
+        border-top-left-radius: 6px !important;
+
+        border-top-right-radius: 6px !important;
+
+        border: none !important;
+
+        border-bottom: 2.5px solid transparent !important;
+
+        padding: 8px 16px !important;
+
+        transition: all 0.15s ease !important;
+
+      }}
+
+      button[data-baseweb="tab"]:hover {{
+
+        color: var(--pp-text) !important;
+
+        background-color: rgba(255, 255, 255, 0.03) !important;
+
+      }}
+
+      button[data-baseweb="tab"][aria-selected="true"] {{
+
+        color: var(--pp-text) !important;
+
+        border-bottom: 2.5px solid var(--pp-accent) !important;
+
+        background-color: {tab_bg_active} !important;
+
+      }}
+
+      div[data-baseweb="tab-highlight"] {{
+
+        background-color: var(--pp-accent) !important;
+
+        height: 2.5px !important;
 
       }}
 
@@ -1145,15 +1259,20 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
       }}
 
+      /* Dugout Clipboards (st.expander) */
       div[data-testid="stExpander"] {{
 
         background-color: var(--pp-surface) !important;
 
         border: 1px solid var(--pp-border) !important;
 
+        border-left: 3.5px solid var(--pp-accent) !important;
+
         border-radius: 8px !important;
 
-        margin-bottom: 12px;
+        margin-bottom: 12px !important;
+
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
 
       }}
 
@@ -1177,9 +1296,15 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         color: var(--pp-text) !important;
 
-        font-weight: 700 !important;
+        font-family: 'Barlow Condensed', 'Space Grotesk', sans-serif !important;
 
-        font-size: 14.5px !important;
+        font-weight: 800 !important;
+
+        font-size: 15px !important;
+
+        letter-spacing: 0.04em !important;
+
+        text-transform: uppercase !important;
 
       }}
 
@@ -1201,17 +1326,22 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
       }}
 
+      /* Stalker Radar Gun Telemetry Boxes (st.metric) */
       div[data-testid="stMetric"] {{
 
-        background-color: var(--pp-surface) !important;
+        background: {metric_bg} !important;
 
-        border: 1px solid var(--pp-border) !important;
+        border: 1px solid {metric_border} !important;
+
+        border-left: 3.5px solid var(--pp-accent) !important;
 
         border-radius: 8px !important;
 
-        padding: 12px 14px !important;
+        padding: 12px 16px !important;
 
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        box-shadow: {metric_shadow} !important;
+
+        position: relative !important;
 
       }}
 
@@ -1227,13 +1357,15 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         color: {metric_label_color} !important;
 
-        font-size: 11.5px !important;
+        font-family: 'JetBrains Mono', monospace !important;
+
+        font-size: 10.5px !important;
 
         font-weight: 800 !important;
 
         text-transform: uppercase !important;
 
-        letter-spacing: 0.04em !important;
+        letter-spacing: 0.08em !important;
 
         opacity: 1 !important;
 
@@ -1247,9 +1379,15 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         color: var(--pp-text) !important;
 
-        font-size: 24px !important;
+        font-family: 'JetBrains Mono', monospace !important;
+
+        font-variant-numeric: tabular-nums !important;
+
+        font-size: 26px !important;
 
         font-weight: 800 !important;
+
+        letter-spacing: -0.02em !important;
 
       }}
 
@@ -2475,7 +2613,7 @@ def render_spin_axis_clock_svg(
 
             clock_angle_deg = (h * 30.0 + m * 0.5) % 360.0
 
-        except Exception:
+        except Exception:  # noqa: BLE001
             clock_angle_deg = 37.5
 
     cx, cy = 82, 88
@@ -3078,4 +3216,219 @@ def render_broadcast_station_bar_html(theme_mode: str | None = None) -> str:
 
     """
 
+    return _compact_html(raw_html)
+
+
+def render_ballpark_audio_listener_html(enabled: bool = True) -> str:
+    """
+    Render a zero-asset Web Audio API listener synthesizing realistic ballpark audio effects.
+
+    When enabled, primary button clicks produce an authentic, satisfying 102 mph leather catcher's
+    mitt pocket "POP" (fast pitch impact and leather vibration).
+
+    100% reversible via sidebar toggle. Pure client-side synthesis with 0 network latency.
+    """
+    if not enabled:
+        return ""
+
+    raw_html = """
+    <div id="pp-ballpark-audio-host" style="display:none;" aria-hidden="true">
+      <script>
+      (function() {
+        if (window.__ppAudioInitialized) return;
+        window.__ppAudioInitialized = true;
+
+        var audioCtx = null;
+        function getAudioContext() {
+          if (!audioCtx) {
+            var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+              audioCtx = new AudioContextClass();
+            }
+          }
+          if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          return audioCtx;
+        }
+
+        function playMittPop() {
+          try {
+            var ctx = getAudioContext();
+            if (!ctx) return;
+            var now = ctx.currentTime;
+
+            // 1. Kinetic thud of 102 mph baseball compressing the leather pocket
+            var osc = ctx.createOscillator();
+            var oscGain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(155, now);
+            osc.frequency.exponentialRampToValueAtTime(38, now + 0.055);
+
+            oscGain.gain.setValueAtTime(0.35, now);
+            oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+
+            osc.connect(oscGain);
+            oscGain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.07);
+
+            // 2. High-frequency leather slap burst
+            var bufferSize = Math.floor(ctx.sampleRate * 0.04);
+            var noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            var output = noiseBuffer.getChannelData(0);
+            for (var i = 0; i < bufferSize; i++) {
+              output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.25));
+            }
+
+            var whiteNoise = ctx.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+
+            var filter = ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(1900, now);
+            filter.Q.setValueAtTime(1.8, now);
+
+            var noiseGain = ctx.createGain();
+            noiseGain.gain.setValueAtTime(0.28, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+            whiteNoise.connect(filter);
+            filter.connect(noiseGain);
+            noiseGain.connect(ctx.destination);
+
+            whiteNoise.start(now);
+            whiteNoise.stop(now + 0.05);
+          } catch (e) {
+            // Audio context failure gracefully swallowed
+          }
+        }
+
+        function handleInteraction(e) {
+          var target = e.target;
+          if (!target) return;
+          var btn = target.closest('button');
+          if (btn) {
+            playMittPop();
+          }
+        }
+
+        document.addEventListener('click', handleInteraction, true);
+        try {
+          if (window.parent && window.parent.document && window.parent.document !== document) {
+            window.parent.document.addEventListener('click', handleInteraction, true);
+          }
+        } catch (err) {}
+      })();
+      </script>
+    </div>
+    """
+    return _compact_html(raw_html)
+
+
+def render_scouting_grades_card_html(
+    pitcher_name: str, theme_mode: str | None = None
+) -> str:
+    """
+    Render bespoke MLB 20-80 Scouting Scale & Stuff+ Index Card for Scouting Report.
+
+    Authentic scout grading (20: Descarte • 50: Média MLB • 80: Elite) combined with
+    advanced Statcast pitch-level Stuff+ metrics.
+    Zero green (Corinthians standard): uses Gold/Amber (#F59E0B), Floodlight Blue (#38BDF8/#0284C7),
+    Infield Clay (#C85A17), and Slate (#94A3B8).
+    CommonMark-safe single-line markup.
+    """
+    from pitch_predictor.scenarios import get_pitcher_profile
+
+    resolved = resolve_ui_theme_mode(theme_mode)
+    is_light = resolved == "light"
+
+    profile = get_pitcher_profile(pitcher_name)
+    grades = profile.get("scouting_grades", {})
+    team_hex = profile.get("team_primary_hex", "#38BDF8")
+    p_name = profile.get("name", pitcher_name)
+    overall_stuff = grades.get("overall_stuff", 125)
+
+    if is_light:
+        card_bg = "#FFFFFF"
+        border_c = "#CBD5E1"
+        text_primary = "#0F172A"
+        text_muted = "#475569"
+        row_bg = "#F8FAFC"
+        bar_track = "#E2E8F0"
+        shadow = "box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);"
+    else:
+        card_bg = "linear-gradient(180deg, #131622 0%, #0C0E15 100%)"
+        border_c = "#262C3D"
+        text_primary = "#F8FAFC"
+        text_muted = "#94A3B8"
+        row_bg = "rgba(255, 255, 255, 0.025)"
+        bar_track = "#1E2330"
+        shadow = "box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);"
+
+    def _grade_badge(grade_str: str, label_str: str) -> str:
+        g = int(grade_str) if str(grade_str).isdigit() else 50
+        if g >= 80:
+            bg = "rgba(245, 158, 11, 0.16)"
+            bd = "#F59E0B"
+            tc = "#F59E0B"
+        elif g >= 70:
+            bg = "rgba(2, 132, 199, 0.16)" if is_light else "rgba(56, 189, 248, 0.16)"
+            bd = "#0284C7" if is_light else "#38BDF8"
+            tc = "#0284C7" if is_light else "#38BDF8"
+        elif g >= 60:
+            bg = "rgba(200, 90, 23, 0.16)"
+            bd = "#C85A17"
+            tc = "#C85A17"
+        else:
+            bg = "rgba(148, 163, 184, 0.15)"
+            bd = "#94A3B8"
+            tc = "#94A3B8"
+        return f"<span style=\"background:{bg};border:1px solid {bd};color:{tc};font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;padding:2px 7px;border-radius:4px;letter-spacing:0.04em;\">{grade_str} • {label_str.upper()}</span>"
+
+    def _stuff_bar(stuff_val: int) -> str:
+        pct = max(10, min(100, int((stuff_val - 70) / (150 - 70) * 100)))
+        fill_color = (
+            "#F59E0B"
+            if stuff_val >= 135
+            else ("#0284C7" if is_light else "#38BDF8")
+            if stuff_val >= 115
+            else "#C85A17"
+        )
+        return f'<div style="background:{bar_track};width:100%;height:6px;border-radius:3px;overflow:hidden;position:relative;"><div style="background:{fill_color};width:{pct}%;height:100%;border-radius:3px;"></div></div>'
+
+    rows_html = []
+    for key in ("fastball", "secondary", "breaking", "command"):
+        item = grades.get(key)
+        if not item:
+            continue
+        badge = _grade_badge(item["grade"], item["label"])
+        bar = _stuff_bar(item["stuff_plus"])
+        whiff_txt = item.get("whiff_rate", "—")
+        rows_html.append(
+            f'<div style="background:{row_bg};border:1px solid {border_c};border-radius:6px;padding:9px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">'
+            f'<div style="min-width:180px;"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14.5px;font-weight:800;color:{text_primary};letter-spacing:0.03em;">{item["name"]}</div>'
+            f'<div style="margin-top:2px;">{badge}</div></div>'
+            f'<div style="min-width:120px;flex:1;max-width:200px;margin:0 12px;"><div style="display:flex;justify-content:space-between;font-family:\'JetBrains Mono\',monospace;font-size:9.5px;font-weight:800;color:{text_muted};margin-bottom:3px;"><span>STUFF+</span><span style="color:{text_primary};">{item["stuff_plus"]}</span></div>{bar}</div>'
+            f'<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:800;color:{text_primary};text-align:right;"><span style="font-size:9px;color:{text_muted};display:block;">WHIFF%</span>{whiff_txt}</div>'
+            f"</div>"
+        )
+
+    all_rows = "".join(rows_html)
+
+    raw_html = f"""
+    <div style="background:{card_bg};border:1px solid {border_c};border-top:3px solid {team_hex};border-radius:8px;padding:16px;margin:12px 0;{shadow}">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;border-bottom:1px solid {border_c};padding-bottom:10px;">
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:{text_primary};letter-spacing:0.04em;text-transform:uppercase;">GRADUAÇÃO DE OLHEIRO DA MLB • ESCALA 20-80 &amp; ÍNDICE STUFF+</div>
+          <div style="font-size:11.5px;color:{text_muted};margin-top:2px;">Dossiê Físico de Repertório • {p_name} ({profile.get("team", "")}) • 50 = Média MLB • 80 = Elite Hall of Fame</div>
+        </div>
+        <div style="background:{row_bg};border:1px solid {border_c};border-left:3px solid {team_hex};border-radius:6px;padding:6px 12px;text-align:right;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;color:{text_muted};letter-spacing:0.06em;">OVERALL STUFF+</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:{team_hex};font-variant-numeric:tabular-nums;">{overall_stuff}</div>
+        </div>
+      </div>
+      <div>{all_rows}</div>
+    </div>
+    """
     return _compact_html(raw_html)

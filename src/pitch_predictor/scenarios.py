@@ -100,6 +100,37 @@ MLB_PITCHERS: dict[str, dict[str, Any]] = {
             "trunk_tilt": 11.67,
             "stride_extension": 1.45,
         },
+        "scouting_grades": {
+            "fastball": {
+                "name": "4-Seam Fastball (102 mph)",
+                "grade": "80",
+                "label": "Elite",
+                "stuff_plus": 138,
+                "whiff_rate": "34.2%",
+            },
+            "secondary": {
+                "name": "Splinker / Sinker (94 mph)",
+                "grade": "70",
+                "label": "Plus-Plus",
+                "stuff_plus": 126,
+                "whiff_rate": "30.5%",
+            },
+            "breaking": {
+                "name": "Sweeping Slider (88 mph)",
+                "grade": "65",
+                "label": "Plus",
+                "stuff_plus": 118,
+                "whiff_rate": "38.1%",
+            },
+            "command": {
+                "name": "Controle de Zona (Command)",
+                "grade": "60",
+                "label": "Above Average",
+                "stuff_plus": 110,
+                "whiff_rate": "—",
+            },
+            "overall_stuff": 128,
+        },
         "description": "Fenômeno da MLB com bola rápida de 102 mph e arremesso híbrido splinker no topo da zona.",
     },
     "Corbin Burnes": {
@@ -124,6 +155,37 @@ MLB_PITCHERS: dict[str, dict[str, Any]] = {
             "release_height": 0.680,
             "trunk_tilt": 18.20,
             "stride_extension": 1.38,
+        },
+        "scouting_grades": {
+            "fastball": {
+                "name": "Cutter de Elite (95 mph)",
+                "grade": "70",
+                "label": "Plus-Plus",
+                "stuff_plus": 126,
+                "whiff_rate": "32.8%",
+            },
+            "secondary": {
+                "name": "Curveball 12-6 (82 mph)",
+                "grade": "75",
+                "label": "Plus-Plus",
+                "stuff_plus": 134,
+                "whiff_rate": "41.0%",
+            },
+            "breaking": {
+                "name": "Sweeper Devastador (85 mph)",
+                "grade": "80",
+                "label": "Elite",
+                "stuff_plus": 142,
+                "whiff_rate": "44.5%",
+            },
+            "command": {
+                "name": "Controle de Zona (Command)",
+                "grade": "60",
+                "label": "Above Average",
+                "stuff_plus": 108,
+                "whiff_rate": "—",
+            },
+            "overall_stuff": 127,
         },
         "description": "Vencedor do Cy Young com altíssimo spin rate (2800+ RPM), Cutter de elite e curvas devastadoras.",
     },
@@ -150,6 +212,37 @@ MLB_PITCHERS: dict[str, dict[str, Any]] = {
             "trunk_tilt": 15.30,
             "stride_extension": 1.40,
         },
+        "scouting_grades": {
+            "fastball": {
+                "name": "Heavy Sinker (93 mph)",
+                "grade": "60",
+                "label": "Above Average",
+                "stuff_plus": 109,
+                "whiff_rate": "19.5%",
+            },
+            "secondary": {
+                "name": "Changeup Paraquedas (87 mph)",
+                "grade": "80",
+                "label": "Elite",
+                "stuff_plus": 139,
+                "whiff_rate": "39.8%",
+            },
+            "breaking": {
+                "name": "Slider de Borda (83 mph)",
+                "grade": "60",
+                "label": "Above Average",
+                "stuff_plus": 112,
+                "whiff_rate": "31.2%",
+            },
+            "command": {
+                "name": "Comando Cirúrgico (Command)",
+                "grade": "70",
+                "label": "Plus-Plus",
+                "stuff_plus": 120,
+                "whiff_rate": "—",
+            },
+            "overall_stuff": 120,
+        },
         "description": "Líder em groundballs da MLB, mestre no disfarce de trajetória com Changeup que despenca na borda inferior.",
     },
     "Chris Sale": {
@@ -175,6 +268,37 @@ MLB_PITCHERS: dict[str, dict[str, Any]] = {
             "trunk_tilt": 24.10,
             "stride_extension": 1.50,
         },
+        "scouting_grades": {
+            "fastball": {
+                "name": "Crossfire Fastball (95 mph)",
+                "grade": "65",
+                "label": "Plus",
+                "stuff_plus": 116,
+                "whiff_rate": "28.4%",
+            },
+            "secondary": {
+                "name": "Wipeout Slider (81 mph)",
+                "grade": "80",
+                "label": "Elite",
+                "stuff_plus": 144,
+                "whiff_rate": "45.2%",
+            },
+            "breaking": {
+                "name": "Changeup Enganador (86 mph)",
+                "grade": "60",
+                "label": "Above Average",
+                "stuff_plus": 112,
+                "whiff_rate": "32.0%",
+            },
+            "command": {
+                "name": "Pintura de Cantos (Command)",
+                "grade": "65",
+                "label": "Plus",
+                "stuff_plus": 114,
+                "whiff_rate": "—",
+            },
+            "overall_stuff": 126,
+        },
         "description": "Cy Young da NL 2024, canhoto lendário de ângulo cruzado extremo e slider com quebra horizontal fulminante.",
     },
     "Yoshinobu Yamamoto": {
@@ -199,6 +323,37 @@ MLB_PITCHERS: dict[str, dict[str, Any]] = {
             "release_height": 0.650,
             "trunk_tilt": 16.50,
             "stride_extension": 1.44,
+        },
+        "scouting_grades": {
+            "fastball": {
+                "name": "Rising Fastball (96 mph)",
+                "grade": "65",
+                "label": "Plus",
+                "stuff_plus": 118,
+                "whiff_rate": "27.5%",
+            },
+            "secondary": {
+                "name": "Devastating Splitter (90 mph)",
+                "grade": "80",
+                "label": "Elite",
+                "stuff_plus": 141,
+                "whiff_rate": "43.8%",
+            },
+            "breaking": {
+                "name": "Rainbow Curve (78 mph)",
+                "grade": "70",
+                "label": "Plus-Plus",
+                "stuff_plus": 124,
+                "whiff_rate": "36.0%",
+            },
+            "command": {
+                "name": "Controle Tático (Command)",
+                "grade": "70",
+                "label": "Plus-Plus",
+                "stuff_plus": 118,
+                "whiff_rate": "—",
+            },
+            "overall_stuff": 128,
         },
         "description": "Craque dos Dodgers e astro japonês, famoso pela mecânica elástica inspirada no dardo, splitter devastador e curva arco-íris.",
     },
@@ -448,6 +603,8 @@ def advance_at_bat_state(
         next_state["at_bat_event"] = "In Play (Em Jogo)"
 
     else:
-        raise ValueError(f"Unsupported pitch outcome '{outcome}'. Use 'S', 'Foul', 'B', or 'X'.")
+        raise ValueError(
+            f"Unsupported pitch outcome '{outcome}'. Use 'S', 'Foul', 'B', or 'X'."
+        )
 
     return next_state

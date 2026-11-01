@@ -45,11 +45,11 @@ from pitch_predictor.ui_components import (
     get_custom_css,
     render_baseball_seams_divider_svg,
     render_broadcast_scorebug_header_html,
+    render_broadcast_station_bar_html,
     render_dugout_clipboard_frame_html,
     render_pitcher_photo_html,
+    render_scouting_grades_card_html,
     render_strike_zone_svg,
-    render_topps_chrome_card_html,
-    render_broadcast_station_bar_html,
     resolve_ui_theme_mode,
 )
 
@@ -62,10 +62,18 @@ SCOUT_BASE_OPTIONS = [
 
 ARCHETYPE_FRANCHISE_HEX: dict[str, str] = {
     "Média da Liga MLB (League Average)": "#38BDF8",
-    "Power Pitcher (Paul Skenes / Spencer Strider)": MLB_PITCHERS["Paul Skenes"]["team_primary_hex"],
-    "Breaking Specialist (Corbin Burnes / Sonny Gray)": MLB_PITCHERS["Corbin Burnes"]["team_primary_hex"],
-    "Offspeed Master (Logan Webb / Kevin Gausman)": MLB_PITCHERS["Logan Webb"]["team_primary_hex"],
-    "Lefty Crafty Ace (Chris Sale / Blake Snell)": MLB_PITCHERS["Chris Sale"]["team_primary_hex"],
+    "Power Pitcher (Paul Skenes / Spencer Strider)": MLB_PITCHERS["Paul Skenes"][
+        "team_primary_hex"
+    ],
+    "Breaking Specialist (Corbin Burnes / Sonny Gray)": MLB_PITCHERS["Corbin Burnes"][
+        "team_primary_hex"
+    ],
+    "Offspeed Master (Logan Webb / Kevin Gausman)": MLB_PITCHERS["Logan Webb"][
+        "team_primary_hex"
+    ],
+    "Lefty Crafty Ace (Chris Sale / Blake Snell)": MLB_PITCHERS["Chris Sale"][
+        "team_primary_hex"
+    ],
 }
 
 
@@ -85,7 +93,9 @@ def _archetype_to_pitcher_name(archetype: str) -> str:
 
 
 @st.cache_resource(show_spinner=False)
-def get_serving_client(endpoint_name: str = DEFAULT_ENDPOINT_NAME) -> PitchServingClient:
+def get_serving_client(
+    endpoint_name: str = DEFAULT_ENDPOINT_NAME,
+) -> PitchServingClient:
     """Return a cached instance of the Databricks Serverless Model Serving client."""
     return PitchServingClient(endpoint_name=endpoint_name)
 
@@ -96,39 +106,78 @@ SCOUT_ARCHETYPE_OPTIONS = list(PITCHER_ARCHETYPES.keys())
 def init_scout_state() -> None:
     """Initialize and validate session state keys for the Scouting Report page."""
     default_arch = "Breaking Specialist (Corbin Burnes / Sonny Gray)"
-    if "scout_view_mode" not in st.session_state or st.session_state.scout_view_mode not in (
-        "🎯 Dossiê Individual (Single Pitcher)",
-        "⚔️ Comparação Head-to-Head (2 Arremessadores)",
+    if (
+        "scout_view_mode" not in st.session_state
+        or st.session_state.scout_view_mode
+        not in (
+            "🎯 Dossiê Individual (Single Pitcher)",
+            "⚔️ Comparação Head-to-Head (2 Arremessadores)",
+        )
     ):
         st.session_state.scout_view_mode = "🎯 Dossiê Individual (Single Pitcher)"
 
-    if "scout_archetype" not in st.session_state or st.session_state.scout_archetype not in SCOUT_ARCHETYPE_OPTIONS:
+    if (
+        "scout_archetype" not in st.session_state
+        or st.session_state.scout_archetype not in SCOUT_ARCHETYPE_OPTIONS
+    ):
         st.session_state.scout_archetype = default_arch
-    if "scout_stand" not in st.session_state or st.session_state.scout_stand not in ("L", "R"):
+    if "scout_stand" not in st.session_state or st.session_state.scout_stand not in (
+        "L",
+        "R",
+    ):
         st.session_state.scout_stand = "L"
-    if "scout_base_state" not in st.session_state or st.session_state.scout_base_state not in SCOUT_BASE_OPTIONS:
+    if (
+        "scout_base_state" not in st.session_state
+        or st.session_state.scout_base_state not in SCOUT_BASE_OPTIONS
+    ):
         st.session_state.scout_base_state = SCOUT_BASE_OPTIONS[0]
-    if "scout_prev_cat" not in st.session_state or st.session_state.scout_prev_cat not in ("Fastball", "Breaking Ball", "Offspeed"):
+    if (
+        "scout_prev_cat" not in st.session_state
+        or st.session_state.scout_prev_cat
+        not in ("Fastball", "Breaking Ball", "Offspeed")
+    ):
         st.session_state.scout_prev_cat = "Fastball"
     if "scout_predictions_map" not in st.session_state:
         st.session_state.scout_predictions_map = None
     if "scout_batch_latency_ms" not in st.session_state:
         st.session_state.scout_batch_latency_ms = None
     if "scout_batch_source" not in st.session_state:
-        st.session_state.scout_batch_source = "Simulação Tática Instantânea (Pré-Carregada)"
+        st.session_state.scout_batch_source = (
+            "Simulação Tática Instantânea (Pré-Carregada)"
+        )
     if "scout_inspected_count" not in st.session_state:
         st.session_state.scout_inspected_count = "0-2"
 
     # Head-to-Head state keys
-    if "scout_h2h_pitcher_a" not in st.session_state or st.session_state.scout_h2h_pitcher_a not in SCOUT_ARCHETYPE_OPTIONS:
-        st.session_state.scout_h2h_pitcher_a = "Power Pitcher (Paul Skenes / Spencer Strider)"
-    if "scout_h2h_pitcher_b" not in st.session_state or st.session_state.scout_h2h_pitcher_b not in SCOUT_ARCHETYPE_OPTIONS:
-        st.session_state.scout_h2h_pitcher_b = "Offspeed Master (Logan Webb / Kevin Gausman)"
-    if "scout_h2h_stand" not in st.session_state or st.session_state.scout_h2h_stand not in ("L", "R"):
+    if (
+        "scout_h2h_pitcher_a" not in st.session_state
+        or st.session_state.scout_h2h_pitcher_a not in SCOUT_ARCHETYPE_OPTIONS
+    ):
+        st.session_state.scout_h2h_pitcher_a = (
+            "Power Pitcher (Paul Skenes / Spencer Strider)"
+        )
+    if (
+        "scout_h2h_pitcher_b" not in st.session_state
+        or st.session_state.scout_h2h_pitcher_b not in SCOUT_ARCHETYPE_OPTIONS
+    ):
+        st.session_state.scout_h2h_pitcher_b = (
+            "Offspeed Master (Logan Webb / Kevin Gausman)"
+        )
+    if (
+        "scout_h2h_stand" not in st.session_state
+        or st.session_state.scout_h2h_stand not in ("L", "R")
+    ):
         st.session_state.scout_h2h_stand = "L"
-    if "scout_h2h_base_state" not in st.session_state or st.session_state.scout_h2h_base_state not in SCOUT_BASE_OPTIONS:
+    if (
+        "scout_h2h_base_state" not in st.session_state
+        or st.session_state.scout_h2h_base_state not in SCOUT_BASE_OPTIONS
+    ):
         st.session_state.scout_h2h_base_state = SCOUT_BASE_OPTIONS[0]
-    if "scout_h2h_prev_cat" not in st.session_state or st.session_state.scout_h2h_prev_cat not in ("Fastball", "Breaking Ball", "Offspeed"):
+    if (
+        "scout_h2h_prev_cat" not in st.session_state
+        or st.session_state.scout_h2h_prev_cat
+        not in ("Fastball", "Breaking Ball", "Offspeed")
+    ):
         st.session_state.scout_h2h_prev_cat = "Fastball"
     if "scout_h2h_preds_a" not in st.session_state:
         st.session_state.scout_h2h_preds_a = None
@@ -159,11 +208,15 @@ def _render_compact_12_count_ribbon_html(
         c_key = f"{b}-{s}"
         cat = predictions_by_count.get(c_key, "Fastball")
         style = PITCH_CATEGORY_STYLES.get(cat, PITCH_CATEGORY_STYLES["Fastball"])
-        prim = style.get("secondary", style["primary"]) if is_light else style["primary"]
+        prim = (
+            style.get("secondary", style["primary"]) if is_light else style["primary"]
+        )
         code = style.get("code_badge", "FF").split("[")[-1].rstrip("]")
-        pill_border = "var(--pp-border,#C2CFDD)" if is_light else "var(--pp-border,#222631)"
+        pill_border = (
+            "var(--pp-border,#C2CFDD)" if is_light else "var(--pp-border,#222631)"
+        )
         pills.append(
-            f'<span style="display:inline-flex;align-items:center;gap:4px;background:var(--pp-surface-alt,#181B23);border:1px solid {pill_border};border-left:3px solid {prim};border-radius:4px;padding:2px 7px;font-family:\'JetBrains Mono\',monospace;font-variant-numeric:tabular-nums;font-size:10.5px;">'
+            f"<span style=\"display:inline-flex;align-items:center;gap:4px;background:var(--pp-surface-alt,#181B23);border:1px solid {pill_border};border-left:3px solid {prim};border-radius:4px;padding:2px 7px;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:10.5px;\">"
             f'<strong style="color:var(--pp-text,#F1F5F9);">{c_key}</strong>'
             f'<span style="color:{prim};font-weight:700;">{code}</span>'
             f"</span>"
@@ -180,8 +233,13 @@ def _render_compact_12_count_ribbon_html(
 init_scout_state()
 active_theme = resolve_ui_theme_mode()
 accent_hex = ARCHETYPE_FRANCHISE_HEX.get(st.session_state.scout_archetype, "#F59E0B")
-st.markdown(get_custom_css(theme_mode=active_theme, accent_hex=accent_hex), unsafe_allow_html=True)
-st.markdown(render_broadcast_station_bar_html(theme_mode=active_theme), unsafe_allow_html=True)
+st.markdown(
+    get_custom_css(theme_mode=active_theme, accent_hex=accent_hex),
+    unsafe_allow_html=True,
+)
+st.markdown(
+    render_broadcast_station_bar_html(theme_mode=active_theme), unsafe_allow_html=True
+)
 client = get_serving_client()
 
 # ---------------------------------------------------------------------------
@@ -298,9 +356,7 @@ if view_mode == "🎯 Dossiê Individual (Single Pitcher)":
                         for idx, (b, s) in enumerate(MLB_12_COUNTS)
                     }
                     st.session_state.scout_batch_latency_ms = batch_res["latency_ms"]
-                    st.session_state.scout_batch_source = (
-                        f"Databricks Serverless Endpoint ({batch_res['latency_ms']:.1f} ms para 12 contagens)"
-                    )
+                    st.session_state.scout_batch_source = f"Databricks Serverless Endpoint ({batch_res['latency_ms']:.1f} ms para 12 contagens)"
                 except Exception as exc:  # noqa: BLE001
                     st.error(
                         f"Erro ao consultar endpoint `{client.endpoint_name}` em lote: {exc}",
@@ -310,8 +366,8 @@ if view_mode == "🎯 Dossiê Individual (Single Pitcher)":
         if (
             not st.session_state.scout_predictions_map or not run_batch_clicked
         ) and st.session_state.scout_batch_latency_ms is None:
-            st.session_state.scout_predictions_map = simulate_tactical_12_counts_fallback(
-                batch_records
+            st.session_state.scout_predictions_map = (
+                simulate_tactical_12_counts_fallback(batch_records)
             )
 
     predictions_map: dict[str, str] = st.session_state.scout_predictions_map
@@ -390,7 +446,9 @@ if view_mode == "🎯 Dossiê Individual (Single Pitcher)":
                     risp_active=risp_active,
                 )
                 d_cat = detail["predicted_category"]
-                d_style = PITCH_CATEGORY_STYLES.get(d_cat, PITCH_CATEGORY_STYLES["Fastball"])
+                d_style = PITCH_CATEGORY_STYLES.get(
+                    d_cat, PITCH_CATEGORY_STYLES["Fastball"]
+                )
                 d_prim = d_style["primary"]
                 zones_str = " • ".join(detail["recommended_zones"])
                 first_zone_str = detail["recommended_zones"][0].split()[0].lstrip("Z")
@@ -401,14 +459,14 @@ if view_mode == "🎯 Dossiê Individual (Single Pitcher)":
                     f"""
                     <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3px solid {d_prim};border-radius:6px;padding:12px 14px;margin-bottom:8px;">
                       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:var(--pp-muted,#94A3B8);letter-spacing:0.05em;">INSPEÇÃO DE CONTAGEM • {detail['count_key']}</span>
-                        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:{d_prim};">{detail['code_badge']}</span>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:var(--pp-muted,#94A3B8);letter-spacing:0.05em;">INSPEÇÃO DE CONTAGEM • {detail["count_key"]}</span>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:{d_prim};">{detail["code_badge"]}</span>
                       </div>
-                      <div style="font-size:18px;font-weight:800;color:var(--pp-text,#F1F5F9);margin-bottom:4px;">{d_style['icon']} {d_cat} <span style="font-size:12px;color:var(--pp-muted,#94A3B8);font-weight:600;">({detail['leverage_pt']})</span></div>
+                      <div style="font-size:18px;font-weight:800;color:var(--pp-text,#F1F5F9);margin-bottom:4px;">{d_style["icon"]} {d_cat} <span style="font-size:12px;color:var(--pp-muted,#94A3B8);font-weight:600;">({detail["leverage_pt"]})</span></div>
                       <div style="font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:10.5px;color:var(--pp-muted,#94A3B8);margin-bottom:8px;">
-                        FB {probs['Fastball'] * 100:.0f}% • BRK {probs['Breaking Ball'] * 100:.0f}% • OFF {probs['Offspeed'] * 100:.0f}%
+                        FB {probs["Fastball"] * 100:.0f}% • BRK {probs["Breaking Ball"] * 100:.0f}% • OFF {probs["Offspeed"] * 100:.0f}%
                       </div>
-                      <div style="font-size:12px;color:var(--pp-text,#F1F5F9);line-height:1.42;margin-bottom:8px;">{detail['tactical_note']}</div>
+                      <div style="font-size:12px;color:var(--pp-text,#F1F5F9);line-height:1.42;margin-bottom:8px;">{detail["tactical_note"]}</div>
                       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:{d_prim};font-weight:700;">ALVOS: {zones_str}</div>
                     </div>
                     """
@@ -420,6 +478,12 @@ if view_mode == "🎯 Dossiê Individual (Single Pitcher)":
                 )
 
     _render_interactive_matrix_section()
+
+    p_canonical = _archetype_to_pitcher_name(selected_arch)
+    st.markdown(
+        render_scouting_grades_card_html(p_canonical, theme_mode=active_theme),
+        unsafe_allow_html=True,
+    )
 
     # ---------------------------------------------------------------------------
     # Section 2: AI Value Comparison — Radar Chart SVG + Quantitative Table
@@ -479,7 +543,10 @@ if view_mode == "🎯 Dossiê Individual (Single Pitcher)":
     # ---------------------------------------------------------------------------
     # Section 3: Batter Game Plan (3 Tactical Approach Cards)
     # ---------------------------------------------------------------------------
-    st.markdown(render_baseball_seams_divider_svg(width_px=750, theme_mode=active_theme), unsafe_allow_html=True)
+    st.markdown(
+        render_baseball_seams_divider_svg(width_px=750, theme_mode=active_theme),
+        unsafe_allow_html=True,
+    )
     with st.container(border=True):
         st.markdown(
             '<div class="section-header">03. Plano de Jogo do Rebatedor (Game Plan) — Abordagem por Fase da Contagem</div>',
@@ -576,7 +643,10 @@ else:
             pitcher_b_sel = st.selectbox(
                 "Arremessador B (Comparado)",
                 options=SCOUT_ARCHETYPE_OPTIONS,
-                index=b_default_idx if st.session_state.scout_h2h_pitcher_b == SCOUT_ARCHETYPE_OPTIONS[b_default_idx] else 0,
+                index=b_default_idx
+                if st.session_state.scout_h2h_pitcher_b
+                == SCOUT_ARCHETYPE_OPTIONS[b_default_idx]
+                else 0,
                 key="scout_h2h_pitcher_b",
             )
         with h2h_c3:
@@ -635,7 +705,9 @@ else:
         )
 
         if run_h2h_btn:
-            with st.spinner("Executando inferência simultânea para os dois arremessadores no Databricks Serverless..."):
+            with st.spinner(
+                "Executando inferência simultânea para os dois arremessadores no Databricks Serverless..."
+            ):
                 try:
                     res_a = client.predict_batch(batch_a)
                     res_b = client.predict_batch(batch_b)
@@ -647,13 +719,22 @@ else:
                         f"{b}-{s}": res_b["predictions"][idx]
                         for idx, (b, s) in enumerate(MLB_12_COUNTS)
                     }
-                    st.session_state.scout_h2h_latency_ms = res_a["latency_ms"] + res_b["latency_ms"]
+                    st.session_state.scout_h2h_latency_ms = (
+                        res_a["latency_ms"] + res_b["latency_ms"]
+                    )
                 except Exception as exc:  # noqa: BLE001
-                    st.error(f"Erro na inferência em lote Head-to-Head: {exc}", icon=":material/error:")
+                    st.error(
+                        f"Erro na inferência em lote Head-to-Head: {exc}",
+                        icon=":material/error:",
+                    )
 
         if not st.session_state.scout_h2h_preds_a or not run_h2h_btn:
-            st.session_state.scout_h2h_preds_a = simulate_tactical_12_counts_fallback(batch_a)
-            st.session_state.scout_h2h_preds_b = simulate_tactical_12_counts_fallback(batch_b)
+            st.session_state.scout_h2h_preds_a = simulate_tactical_12_counts_fallback(
+                batch_a
+            )
+            st.session_state.scout_h2h_preds_b = simulate_tactical_12_counts_fallback(
+                batch_b
+            )
 
     preds_a: dict[str, str] = st.session_state.scout_h2h_preds_a
     preds_b: dict[str, str] = st.session_state.scout_h2h_preds_b
@@ -707,10 +788,10 @@ else:
                     f"""
                     <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:4px solid {accent_a};border-radius:6px;padding:12px;margin-top:6px;">
                       <div style="font-size:15px;font-weight:800;color:var(--pp-text,#F1F5F9);margin-bottom:3px;">{name_a_clean}</div>
-                      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:{accent_a};font-weight:700;margin-bottom:6px;">{profile_a['p_throws']}HP • {profile_a['signature_arsenal']}</div>
-                      <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);line-height:1.4;margin-bottom:8px;">{profile_a['description']}</div>
+                      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:{accent_a};font-weight:700;margin-bottom:6px;">{profile_a["p_throws"]}HP • {profile_a["signature_arsenal"]}</div>
+                      <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);line-height:1.4;margin-bottom:8px;">{profile_a["description"]}</div>
                       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--pp-text,#F1F5F9);background:var(--pp-surface,#12141A);padding:4px 8px;border-radius:4px;border:1px solid var(--pp-border,#222631);">
-                        PRIORS BASE: FB {priors_a['pitcher_fb_prior'] * 100:.0f}% • BRK {priors_a['pitcher_bb_prior'] * 100:.0f}% • OFF {priors_a['pitcher_os_prior'] * 100:.0f}%
+                        PRIORS BASE: FB {priors_a["pitcher_fb_prior"] * 100:.0f}% • BRK {priors_a["pitcher_bb_prior"] * 100:.0f}% • OFF {priors_a["pitcher_os_prior"] * 100:.0f}%
                       </div>
                     </div>
                     """
@@ -733,10 +814,10 @@ else:
                     f"""
                     <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:4px solid {accent_b};border-radius:6px;padding:12px;margin-top:6px;">
                       <div style="font-size:15px;font-weight:800;color:var(--pp-text,#F1F5F9);margin-bottom:3px;">{name_b_clean}</div>
-                      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:{accent_b};font-weight:700;margin-bottom:6px;">{profile_b['p_throws']}HP • {profile_b['signature_arsenal']}</div>
-                      <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);line-height:1.4;margin-bottom:8px;">{profile_b['description']}</div>
+                      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:{accent_b};font-weight:700;margin-bottom:6px;">{profile_b["p_throws"]}HP • {profile_b["signature_arsenal"]}</div>
+                      <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);line-height:1.4;margin-bottom:8px;">{profile_b["description"]}</div>
                       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--pp-text,#F1F5F9);background:var(--pp-surface,#12141A);padding:4px 8px;border-radius:4px;border:1px solid var(--pp-border,#222631);">
-                        PRIORS BASE: FB {priors_b['pitcher_fb_prior'] * 100:.0f}% • BRK {priors_b['pitcher_bb_prior'] * 100:.0f}% • OFF {priors_b['pitcher_os_prior'] * 100:.0f}%
+                        PRIORS BASE: FB {priors_b["pitcher_fb_prior"] * 100:.0f}% • BRK {priors_b["pitcher_bb_prior"] * 100:.0f}% • OFF {priors_b["pitcher_os_prior"] * 100:.0f}%
                       </div>
                     </div>
                     """
@@ -758,7 +839,7 @@ else:
         badge_div_color = "#FCA5A5" if not is_light else "#991B1B"
 
         badge_agr_bg = "rgba(2, 132, 199, 0.15)" if not is_light else "#E0F2FE"
-        badge_agr_border = "#0284C7" if not is_light else "#0284C7"
+        badge_agr_border = "#0284C7"
         badge_agr_color = "#38BDF8" if not is_light else "#0369A1"
 
         st.markdown(
@@ -767,17 +848,17 @@ else:
                 <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
                   <div style="flex:1;min-width:180px;background:{badge_div_bg};border:1px solid {badge_div_border};border-radius:8px;padding:12px 16px;">
                     <span style="font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;color:{badge_div_color};letter-spacing:0.04em;">DIVERGÊNCIA TÁTICA</span>
-                    <div style="font-size:24px;font-weight:800;color:{badge_div_color};font-family:'JetBrains Mono',monospace;">{h2h_div['divergence_pct'] * 100:.1f}%</div>
-                    <span style="font-size:11px;color:{badge_div_color};opacity:0.9;">{h2h_div['divergence_counts']} de 12 contagens com chamadas opostas</span>
+                    <div style="font-size:24px;font-weight:800;color:{badge_div_color};font-family:'JetBrains Mono',monospace;">{h2h_div["divergence_pct"] * 100:.1f}%</div>
+                    <span style="font-size:11px;color:{badge_div_color};opacity:0.9;">{h2h_div["divergence_counts"]} de 12 contagens com chamadas opostas</span>
                   </div>
                   <div style="flex:1;min-width:180px;background:{badge_agr_bg};border:1px solid {badge_agr_border};border-radius:8px;padding:12px 16px;">
                     <span style="font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;color:{badge_agr_color};letter-spacing:0.04em;">CONSENSO DE DUELO</span>
-                    <div style="font-size:24px;font-weight:800;color:{badge_agr_color};font-family:'JetBrains Mono',monospace;">{h2h_div['agreement_pct'] * 100:.1f}%</div>
-                    <span style="font-size:11px;color:{badge_agr_color};opacity:0.9;">{h2h_div['agreement_counts']} de 12 contagens idênticas</span>
+                    <div style="font-size:24px;font-weight:800;color:{badge_agr_color};font-family:'JetBrains Mono',monospace;">{h2h_div["agreement_pct"] * 100:.1f}%</div>
+                    <span style="font-size:11px;color:{badge_agr_color};opacity:0.9;">{h2h_div["agreement_counts"]} de 12 contagens idênticas</span>
                   </div>
                 </div>
                 <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3px solid var(--pp-accent,#38BDF8);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--pp-text,#F1F5F9);line-height:1.45;">
-                  <strong>Análise do Modelo:</strong> {h2h_div['summary_text']}
+                  <strong>Análise do Modelo:</strong> {h2h_div["summary_text"]}
                 </div>
                 """
             ),
@@ -799,7 +880,9 @@ else:
 
         rows_markup: list[str] = []
         is_light = active_theme == "light"
-        border_c = "var(--pp-border, #C2CFDD)" if is_light else "var(--pp-border, #222631)"
+        border_c = (
+            "var(--pp-border, #C2CFDD)" if is_light else "var(--pp-border, #222631)"
+        )
 
         for item in h2h_div["contrasts"]:
             ck = item["count"]
@@ -810,20 +893,28 @@ else:
 
             style_a = PITCH_CATEGORY_STYLES.get(pa, PITCH_CATEGORY_STYLES["Fastball"])
             style_b = PITCH_CATEGORY_STYLES.get(pb, PITCH_CATEGORY_STYLES["Fastball"])
-            prim_a = style_a.get("secondary", style_a["primary"]) if is_light else style_a["primary"]
-            prim_b = style_b.get("secondary", style_b["primary"]) if is_light else style_b["primary"]
+            prim_a = (
+                style_a.get("secondary", style_a["primary"])
+                if is_light
+                else style_a["primary"]
+            )
+            prim_b = (
+                style_b.get("secondary", style_b["primary"])
+                if is_light
+                else style_b["primary"]
+            )
 
             if is_div:
                 status_pill = (
-                    '<span style="background:rgba(245,158,11,0.14);color:#B45309;border:1px solid #F59E0B;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:\'JetBrains Mono\',monospace;">DIVERGÊNCIA</span>'
+                    "<span style=\"background:rgba(245,158,11,0.14);color:#B45309;border:1px solid #F59E0B;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;\">DIVERGÊNCIA</span>"
                     if is_light
-                    else '<span style="background:rgba(245,158,11,0.18);color:#F59E0B;border:1px solid #F59E0B;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:\'JetBrains Mono\',monospace;">DIVERGÊNCIA</span>'
+                    else "<span style=\"background:rgba(245,158,11,0.18);color:#F59E0B;border:1px solid #F59E0B;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;\">DIVERGÊNCIA</span>"
                 )
             else:
                 status_pill = (
-                    '<span style="background:rgba(16,185,129,0.14);color:#065F46;border:1px solid #10B981;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:\'JetBrains Mono\',monospace;">🤝 CONSENSO</span>'
+                    "<span style=\"background:rgba(16,185,129,0.14);color:#065F46;border:1px solid #10B981;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;\">🤝 CONSENSO</span>"
                     if is_light
-                    else '<span style="background:rgba(16,185,129,0.18);color:#10B981;border:1px solid #10B981;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:\'JetBrains Mono\',monospace;">🤝 CONSENSO</span>'
+                    else "<span style=\"background:rgba(16,185,129,0.18);color:#10B981;border:1px solid #10B981;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;\">🤝 CONSENSO</span>"
                 )
 
             row_html = f"""
@@ -831,12 +922,12 @@ else:
               <td style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;color:var(--pp-text,#F1F5F9);">{ck}</td>
               <td style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--pp-muted,#94A3B8);">{lev}</td>
               <td style="padding:8px 10px;border-left:3px solid {prim_a};background:var(--pp-surface-alt,#181B23);">
-                <strong style="color:var(--pp-text,#F1F5F9);font-size:12.5px;">{style_a['icon']} {pa}</strong>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:{prim_a};display:block;font-weight:700;">{style_a.get('code_badge','')}</span>
+                <strong style="color:var(--pp-text,#F1F5F9);font-size:12.5px;">{style_a["icon"]} {pa}</strong>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:{prim_a};display:block;font-weight:700;">{style_a.get("code_badge", "")}</span>
               </td>
               <td style="padding:8px 10px;border-left:3px solid {prim_b};background:var(--pp-surface-alt,#181B23);">
-                <strong style="color:var(--pp-text,#F1F5F9);font-size:12.5px;">{style_b['icon']} {pb}</strong>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:{prim_b};display:block;font-weight:700;">{style_b.get('code_badge','')}</span>
+                <strong style="color:var(--pp-text,#F1F5F9);font-size:12.5px;">{style_b["icon"]} {pb}</strong>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:{prim_b};display:block;font-weight:700;">{style_b.get("code_badge", "")}</span>
               </td>
               <td style="padding:8px 10px;text-align:center;">{status_pill}</td>
             </tr>
@@ -891,7 +982,9 @@ else:
 
         with h2h_tbl_col:
             st.markdown("##### Comparativo Quantitativo de Repertório")
-            st.caption("Distribuição das 12 contagens projetadas para ambos os arremessadores vs. Média da MLB.")
+            st.caption(
+                "Distribuição das 12 contagens projetadas para ambos os arremessadores vs. Média da MLB."
+            )
             h2h_df = pd.DataFrame(
                 [
                     {
@@ -922,7 +1015,10 @@ else:
     # ---------------------------------------------------------------------------
     # Section 4: Comparative Batter Game Plan (A vs B)
     # ---------------------------------------------------------------------------
-    st.markdown(render_baseball_seams_divider_svg(width_px=750, theme_mode=active_theme), unsafe_allow_html=True)
+    st.markdown(
+        render_baseball_seams_divider_svg(width_px=750, theme_mode=active_theme),
+        unsafe_allow_html=True,
+    )
     with st.container(border=True):
         st.markdown(
             '<div class="section-header">04. Game Plan Comparativo: Como Ajustar o Swing ao Trocar de Arremessador</div>',
@@ -931,28 +1027,30 @@ else:
 
         comp_cards: list[str] = []
         is_light = active_theme == "light"
-        border_c = "var(--pp-border, #C2CFDD)" if is_light else "var(--pp-border, #222631)"
+        border_c = (
+            "var(--pp-border, #C2CFDD)" if is_light else "var(--pp-border, #222631)"
+        )
 
         for key in ("early_counts", "hitter_counts", "two_strike_protection"):
             phase = comp_plan[key]
             card_html = f"""
             <div style="background:var(--pp-surface,#12141A);border:1px solid {border_c};border-top:3px solid var(--pp-accent,#38BDF8);border-radius:8px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;">
               <div>
-                <div style="font-size:13.5px;font-weight:800;color:var(--pp-text,#F1F5F9);margin-bottom:8px;">{phase['title']}</div>
+                <div style="font-size:13.5px;font-weight:800;color:var(--pp-text,#F1F5F9);margin-bottom:8px;">{phase["title"]}</div>
                 <div style="display:flex;gap:6px;margin-bottom:10px;">
                   <span style="flex:1;background:var(--pp-surface-alt,#181B23);border-left:3px solid {accent_a};padding:6px 8px;border-radius:4px;font-size:11px;color:var(--pp-text,#F1F5F9);">
                     <strong style="color:{accent_a};display:block;font-size:9.5px;font-family:'JetBrains Mono',monospace;">{name_a_clean[:12]}</strong>
-                    {phase['dominant_a']}
+                    {phase["dominant_a"]}
                   </span>
                   <span style="flex:1;background:var(--pp-surface-alt,#181B23);border-left:3px solid {accent_b};padding:6px 8px;border-radius:4px;font-size:11px;color:var(--pp-text,#F1F5F9);">
                     <strong style="color:{accent_b};display:block;font-size:9.5px;font-family:'JetBrains Mono',monospace;">{name_b_clean[:12]}</strong>
-                    {phase['dominant_b']}
+                    {phase["dominant_b"]}
                   </span>
                 </div>
-                <p style="font-size:12px;color:var(--pp-text,#F1F5F9);opacity:0.9;line-height:1.45;margin-bottom:10px;">{phase['strategy']}</p>
+                <p style="font-size:12px;color:var(--pp-text,#F1F5F9);opacity:0.9;line-height:1.45;margin-bottom:10px;">{phase["strategy"]}</p>
               </div>
               <div style="background:var(--pp-surface-alt,#181B23);border:1px solid {border_c};border-left:3px solid #F59E0B;border-radius:4px;padding:6px 10px;font-size:10.5px;color:var(--pp-text,#F1F5F9);">
-                <strong style="font-family:'JetBrains Mono',monospace;color:#F59E0B;">[DISCIPLINA]</strong> {phase['chase_warning']}
+                <strong style="font-family:'JetBrains Mono',monospace;color:#F59E0B;">[DISCIPLINA]</strong> {phase["chase_warning"]}
               </div>
             </div>
             """
@@ -973,8 +1071,12 @@ else:
             '<div class="section-header">05. Exportação dos Cartões Imprimíveis de Dugout (A & B)</div>',
             unsafe_allow_html=True,
         )
-        plan_a_single = generate_batter_game_plan(pitcher_a_sel, preds_a, priors_a, h2h_stand, risp_active)
-        plan_b_single = generate_batter_game_plan(pitcher_b_sel, preds_b, priors_b, h2h_stand, risp_active)
+        plan_a_single = generate_batter_game_plan(
+            pitcher_a_sel, preds_a, priors_a, h2h_stand, risp_active
+        )
+        plan_b_single = generate_batter_game_plan(
+            pitcher_b_sel, preds_b, priors_b, h2h_stand, risp_active
+        )
 
         card_a_html = export_scouting_card_html(
             pitcher_name=pitcher_a_sel,

@@ -45,12 +45,10 @@ from pitch_predictor.scenarios import (
     TACTICAL_SCENARIOS,
     advance_at_bat_state,
 )
-
 from pitch_predictor.serving_client import (
     derive_tactical_features,
     validate_inference_record,
 )
-
 from pitch_predictor.ui_components import (
     STATCAST_ZONES,
     render_baseball_diamond_svg,
@@ -346,10 +344,12 @@ def test_all_html_and_svg_renderers_are_commonmark_safe_single_line() -> None:
     features = derive_tactical_features(_initial_at_bat_state(balls=1, strikes=2))
 
     from pitch_predictor.ui_components import (
+        render_ballpark_audio_listener_html,
         render_baseball_seams_divider_svg,
         render_broadcast_scorebug_header_html,
         render_broadcast_station_bar_html,
         render_dugout_clipboard_frame_html,
+        render_scouting_grades_card_html,
         render_spin_axis_clock_svg,
         render_topps_chrome_card_html,
     )
@@ -388,6 +388,10 @@ def test_all_html_and_svg_renderers_are_commonmark_safe_single_line() -> None:
         render_topps_chrome_card_html("Chris Sale", theme_mode="light"),
         render_broadcast_station_bar_html(),
         render_broadcast_station_bar_html(theme_mode="light"),
+        render_ballpark_audio_listener_html(enabled=True),
+        render_ballpark_audio_listener_html(enabled=False),
+        render_scouting_grades_card_html("Paul Skenes"),
+        render_scouting_grades_card_html("Chris Sale", theme_mode="light"),
         get_custom_css(),
         get_custom_css(theme_mode="ballpark"),
         get_custom_css(theme_mode="light"),
@@ -719,3 +723,34 @@ def test_render_broadcast_station_bar_html() -> None:
         assert chr(10) not in html
 
         assert "<!--" not in html
+
+
+def test_render_ballpark_audio_and_scouting_grades_card() -> None:
+    """Verify ballpark audio listener and 20-80 scouting card components."""
+    from pitch_predictor.ui_components import (
+        render_ballpark_audio_listener_html,
+        render_scouting_grades_card_html,
+    )
+
+    # Audio component
+    assert render_ballpark_audio_listener_html(enabled=False) == ""
+    audio_html = render_ballpark_audio_listener_html(enabled=True)
+    assert "AudioContext" in audio_html
+    assert "playMittPop" in audio_html
+    assert chr(10) not in audio_html
+
+    # Scouting card component
+    card_diamond = render_scouting_grades_card_html("Paul Skenes", theme_mode="diamond")
+    assert "GRADUAÇÃO DE OLHEIRO DA MLB" in card_diamond
+    assert "OVERALL STUFF+" in card_diamond
+    assert "Paul Skenes" in card_diamond
+    assert "138" in card_diamond  # Fastball stuff+
+    assert "#10B981" not in card_diamond, "Zero green in scouting card"
+    assert "#059669" not in card_diamond, "Zero green in scouting card"
+    assert chr(10) not in card_diamond
+
+    card_light = render_scouting_grades_card_html("Corbin Burnes", theme_mode="light")
+    assert "Corbin Burnes" in card_light
+    assert "142" in card_light  # Sweeper stuff+
+    assert "#10B981" not in card_light, "Zero green in scouting card"
+    assert chr(10) not in card_light
