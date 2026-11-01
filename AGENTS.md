@@ -13,12 +13,12 @@ Este documento é a referência técnica primária para agentes autônomos de IA
 Após homologação e implementação do **Pitch Tunneling 3D (Opção 1)** e do **Tema Autêntico Ballpark MLB com Reversibilidade (Opção 2)**:
 - **Suíte de Testes**: **256 testes automatizados** passando com 100% de sucesso (`pytest 9.1.1`).
 - **Entregáveis da Versão 2.4.0 Homologados**:
-  - **Identidade Visual Autêntica Ballpark MLB com Garantia de Reversibilidade (`ui_components.py`, `app.py`)**:
-    - **Reversibilidade Instantânea (1 Clique)**: O seletor de aparência na sidebar permite alternar instantaneamente entre `["⚾ Ballpark MLB", "Dark Broadcast", "Light Editorial"]`, permitindo voltar imediatamente à estética anterior sem alterar código.
-    - **Reversibilidade Git**: Tag `pre-ballpark-theme` fixada no commit `900184e` e tag `v2.4.0-ballpark-theme` no commit `0689287`.
-    - **Paleta de Ballpark**: `--pp-bg: #08120C` (noite de estádio / turf), `--pp-surface: #0F1C14` (dugout), `--pp-border: #243D2D` e acentos em `--pp-grass`, `--pp-clay`, `--pp-seam` e `--pp-chalk`.
+  - **Identidade Visual Classic Diamond (Zero Verde / Zero Emojis Desnecessários / Reversibilidade Total) (`ui_components.py`, `app.py`)**:
+    - **Zero Verde (Padrão Corinthians / MLB Classic Diamond)**: Fundo preto ônix de estádio (`#090A0E`), superfície em ardósia/carbono (`#12141C`), borda grafite (`#262C3D`), acentos autênticos de beisebol em argila de terra batida (`#C85A17`), costuras carmesim Rawlings (`#DC2626`), couro de luva (`#78350F`) e giz branco (`#F8FAFC`). Métricas e alertas positivos em azul floodlight elétrico (`#38BDF8` / `#0284C7`), com eliminação absoluta de tons verdes (`#1B4332`, `#08120C`, `#243D2D`).
+    - **Erradicação de Emojis Desnecessários**: Remoção de emojis decorativos dos seletores, títulos e headers, mantendo tipografia técnica e editorial de alto padrão broadcast.
+    - **Reversibilidade Instantânea (1 Clique)**: O seletor de aparência na sidebar permite alternar entre `["Classic Diamond", "Dark Broadcast", "Light Editorial"]`.
     - **Divisores com Costura Rawlings (`render_baseball_seams_divider_svg`)**: Pesponto em V vermelho carmesim (`#DC2626`) replicando as 108 costuras da bola oficial da MLB.
-    - **Relógio de Eixo de Rotação (`render_spin_axis_clock_svg`)**: Mostrador analógico de 12 horas indicando vetor de tilt, RPM e eficiência Magnus.
+    - **Relógio de Eixo de Rotação (`render_spin_axis_clock_svg`)**: Mostrador analógico de 12 horas indicando vetor de tilt, RPM e eficiência Magnus em cyan elétrico.
     - **Prancheta Tática de Dugout (`render_dugout_clipboard_frame_html`)**: Moldura com presilha metálica escovada e rebites para os Game Plans no Scouting Report.
   - **Módulo de Disfarce de Trajetória 3D (Pitch Tunneling & Commitment Point) (`pages/06_pitch_tunneling.py` e `src/pitch_predictor/tunneling_analytics.py`)**:
     - Simulação física de voo 3D de $y=54.5\text{ ft}$ a $y=1.4\text{ ft}$ calibrada pelo Statcast.
@@ -59,7 +59,7 @@ Após homologação e implementação do **Pitch Tunneling 3D (Opção 1)** e do
 - **Aplicação em Nuvem Operacional (Databricks Apps)**:
   - App `pitch-predictor-app-dev` em estado **`RUNNING` / `ACTIVE`**.
   - URL Corporativa Pública: **`https://pitch-predictor-app-dev-7474645845452998.aws.databricksapps.com`**.
-  - Deploy **`01f1d4b5a745172f9b4fdcc9ddc9d4d3`** ativo com **`SUCCEEDED`** e Streamlit `1.66.1`.
+  - Deploy **`01f1d60878ad1fcf93f499e6314840a2`** ativo com **`SUCCEEDED`** e Streamlit `1.66.1`.
 - **Revisão Geral de Escrita & Redação Esportiva**:
   - **Correções Gramaticais e Semânticas**: Correção da regência preposicional diante de sujeitos no infinitivo (*"antes de ele acontecer"*, *"tempo de o olho processar"*, *"antes de a bola deixar sua mão"*).
   - **Acentuação e Termos Técnicos**: Inclusão de acentos em relatórios gerados por modelos (*"afastando a hipótese de"*), substituição de termos de pôquer por esportivos (*"Sinais Físicos"* em vez de *"Tells Físicos"*).
