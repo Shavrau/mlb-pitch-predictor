@@ -10,6 +10,8 @@ sync:
     - __pycache__/**
     - .pytest_cache/**
     - .ruff_cache/**
+    - _backups/**
+    - scratch/**
     - "*.mp4"
 
 include:

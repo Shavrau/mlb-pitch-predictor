@@ -41,3 +41,5 @@ data/
 models/
 mlflow.db
 mlruns/
+_backups/
+scratch/
