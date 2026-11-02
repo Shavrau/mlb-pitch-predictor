@@ -354,9 +354,11 @@ for idx, (p_name, meta) in enumerate(MLB_PITCHERS.items()):
             unsafe_allow_html=True,
         )
         matched_key = next((k for k in FRIENDLY_PITCHER_STYLES if p_name in k), None)
+        j_num = meta.get("jersey_number", "").lstrip("#")
+        last_name = p_name.split()[-1]
         if matched_key:
             is_active_pitcher = st.session_state.home_pitcher_style == matched_key
-            label = "● No Montinho" if is_active_pitcher else f"Escalar {p_name.split()[-1]}"
+            label = f"● #{j_num} {last_name} (Ativo)" if is_active_pitcher else f"Escalar #{j_num} {last_name}"
             if st.button(
                 label,
                 key=f"btn_roster_pick_{idx}",

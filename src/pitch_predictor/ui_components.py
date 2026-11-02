@@ -3076,17 +3076,33 @@ def render_topps_chrome_card_html(
 
     team_hex = meta.get("team_primary_hex", "#F59E0B")
 
-    team_full = meta.get("team_full", "Major League Baseball")
+    team_full = meta.get("team", meta.get("team_full", "Major League Baseball"))
 
-    jersey = meta.get("jersey_number", "#00")
+    jersey_raw = meta.get("jersey_number", "#00")
+
+    jersey_num = jersey_raw.lstrip("#")
 
     p_throws = meta.get("p_throws", "R")
 
-    top_spd = meta.get("top_speed", "100+ MPH")
+    pitcher_top_speeds = {
+        "Paul Skenes": "102.4 MPH",
+        "Corbin Burnes": "98.6 MPH",
+        "Logan Webb": "94.2 MPH",
+        "Chris Sale": "96.5 MPH",
+        "Yoshinobu Yamamoto": "97.0 MPH",
+    }
+    top_spd = meta.get("top_speed", pitcher_top_speeds.get(pitcher_name, "100+ MPH"))
 
-    role = meta.get("role", "Ace Pitcher")
+    pitcher_roles = {
+        "Paul Skenes": "Power Ace",
+        "Corbin Burnes": "Breaking Specialist",
+        "Logan Webb": "Offspeed Master",
+        "Chris Sale": "Lefty Cy Young",
+        "Yoshinobu Yamamoto": "Splitter Ace",
+    }
+    role = meta.get("role", pitcher_roles.get(pitcher_name, "Ace Pitcher"))
 
-    arsenal = meta.get("arsenal", "4-Seam (FF) • Slider (SL)")
+    arsenal = meta.get("signature_arsenal", meta.get("arsenal", "4-Seam (FF) • Slider (SL)"))
 
     src = get_pitcher_headshot_src(pitcher_name)
 
@@ -3107,18 +3123,18 @@ def render_topps_chrome_card_html(
 
         radar_color = "#38BDF8"
 
-        watermark_color = "#0F172A"
+        watermark_color = team_hex
 
-        watermark_opac = "0.06"
+        watermark_opac = "0.15"
 
-        shadow_style = "box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);"
+        shadow_style = "box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95);"
 
     else:
-        card_bg = "linear-gradient(145deg, #161922 0%, #0A0B0E 100%)"
+        card_bg = "linear-gradient(145deg, #151824 0%, #0A0C13 100%)"
 
-        border_c = "#2C3446"
+        border_c = "rgba(255, 255, 255, 0.12)"
 
-        inner_box = "#07080B"
+        inner_box = "rgba(10, 12, 18, 0.85)"
 
         text_primary = "#F8FAFC"
 
@@ -3130,27 +3146,33 @@ def render_topps_chrome_card_html(
 
         watermark_color = team_hex
 
-        watermark_opac = "0.10"
+        watermark_opac = "0.22"
 
-        shadow_style = "box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);"
+        shadow_style = "box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);"
 
     clip_poly = "clip-path: polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px)); border-radius: 4px;"
 
     raw_html = f"""
 
-    <div class="pp-topps-card" style="background:{card_bg};{clip_poly}border:1.5px solid {border_c};border-top:3px solid {team_hex};padding:12px;position:relative;{shadow_style}overflow:hidden;box-sizing:border-box;">
+    <div class="pp-topps-card" style="background:{card_bg};{clip_poly}border:1.5px solid {border_c};border-top:3.5px solid {team_hex};padding:12px;position:relative;{shadow_style}overflow:hidden;box-sizing:border-box;">
 
-      <span style="position:absolute;bottom:8px;right:10px;font-family:'Barlow Condensed',sans-serif;font-size:62px;font-weight:900;color:{watermark_color};opacity:{watermark_opac};line-height:1;pointer-events:none;user-select:none;">{jersey}</span>
+      <span style="position:absolute;top:28px;right:10px;font-family:'Barlow Condensed',sans-serif;font-size:56px;font-weight:900;color:{watermark_color};opacity:{watermark_opac};line-height:1;pointer-events:none;user-select:none;z-index:0;">{jersey_num}</span>
 
-      <div style="background:{inner_box};border:1px solid {border_c};border-radius:4px;padding:3px 8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="background:{inner_box};border:1px solid {border_c};border-radius:4px;padding:3px 8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;position:relative;z-index:1;">
 
-        <span style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:800;color:{text_muted};letter-spacing:0.06em;">TOPPS CHROME • STATCAST</span>
+        <div style="display:flex;align-items:center;gap:5px;">
 
-        <span style="background:{radar_bg};color:{radar_color};padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:900;letter-spacing:0.04em;">{top_spd}</span>
+          <span style="background:{team_hex};color:#0A0B0E;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;padding:1px 5px;border-radius:3px;letter-spacing:0.02em;">#{jersey_num}</span>
+
+          <span style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:800;color:{text_muted};letter-spacing:0.06em;">TOPPS CHROME • STATCAST</span>
+
+        </div>
+
+        <span style="background:{radar_bg};color:{radar_color};padding:2px 7px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:900;letter-spacing:0.04em;">{top_spd}</span>
 
       </div>
 
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;position:relative;z-index:1;">
 
         <img src="{src}" alt="{pitcher_name}" style="width:58px;height:58px;object-fit:cover;border-radius:50%;border:2px solid {team_hex};background:{inner_box};flex-shrink:0;" />
 
@@ -3160,13 +3182,13 @@ def render_topps_chrome_card_html(
 
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:{text_primary};line-height:1.1;">{pitcher_name.upper()}</div>
 
-          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:{text_muted};font-weight:700;">{jersey} • {p_throws}HP • {role}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:{text_muted};font-weight:700;">#{jersey_num} • {p_throws}HP • {role}</div>
 
         </div>
 
       </div>
 
-      <div style="background:{inner_box};border:1px solid {border_c};border-left:2px solid {team_hex};border-radius:4px;padding:4px 8px;font-size:10px;color:{text_primary};line-height:1.4;">
+      <div style="background:{inner_box};border:1px solid {border_c};border-left:2.5px solid {team_hex};border-radius:4px;padding:5px 8px;font-size:10px;color:{text_primary};line-height:1.4;position:relative;z-index:1;">
 
         <strong style="color:{text_muted};font-size:8.5px;font-family:'JetBrains Mono',monospace;display:block;">ARSENAL:</strong>
 
