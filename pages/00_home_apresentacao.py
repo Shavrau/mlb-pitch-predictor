@@ -476,7 +476,7 @@ nav_c1, nav_c2, nav_c3, nav_c4, nav_c5 = st.columns(5, gap="small")
 with nav_c1, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 01 • ARCADE RETRO</div>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        "<div style='font-size:15px;font-weight:600;color:var(--pp-text);margin-bottom:6px;'>"
         "Minigame: Você vs. IA"
         "</div>"
         "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
@@ -494,7 +494,7 @@ with nav_c1, st.container(border=True):
 with nav_c2, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 02 • STATCAST INTEL</div>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        "<div style='font-size:15px;font-weight:600;color:var(--pp-text);margin-bottom:6px;'>"
         "MLB Scouting Report"
         "</div>"
         "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
@@ -512,7 +512,7 @@ with nav_c2, st.container(border=True):
 with nav_c3, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 03 • VISÃO 3D</div>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        "<div style='font-size:15px;font-weight:600;color:var(--pp-text);margin-bottom:6px;'>"
         "Laboratório Biomecânico"
         "</div>"
         "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
@@ -530,7 +530,7 @@ with nav_c3, st.container(border=True):
 with nav_c4, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 04 • PITCH TUNNELING</div>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        "<div style='font-size:15px;font-weight:600;color:var(--pp-text);margin-bottom:6px;'>"
         "Trajetória 3D & Tunneling"
         "</div>"
         "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"
@@ -548,7 +548,7 @@ with nav_c4, st.container(border=True):
 with nav_c5, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MÓDULO 05 • CLOUD GOVERNANCE</div>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
+        "<div style='font-size:15px;font-weight:600;color:var(--pp-text);margin-bottom:6px;'>"
         "Databricks MLOps Hub"
         "</div>"
         "<div style='font-size:12px;color:var(--pp-muted);line-height:1.45;min-height:54px;margin-bottom:10px;'>"

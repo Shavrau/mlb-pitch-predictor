@@ -100,9 +100,9 @@ with st.sidebar:
     st.markdown(
         """
 
-        <div style="background:var(--pp-surface);border:1px solid var(--pp-border);border-top:2px solid var(--pp-accent);border-radius:6px;padding:8px 10px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted);">
+        <div style="background:var(--pp-surface);border:1px solid var(--pp-border);border-radius:6px;padding:8px 10px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted);">
 
-          <div style="color:var(--pp-text);font-weight:800;letter-spacing:0.04em;margin-bottom:2px;">MLB STATCAST NETWORK</div>
+          <div style="color:var(--pp-text);font-weight:600;letter-spacing:0.02em;margin-bottom:2px;">MLB STATCAST NETWORK</div>
 
           <div>5 Astros • 33 Marcos 3D</div>
 

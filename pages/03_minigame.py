@@ -680,7 +680,7 @@ else:
     timing_html = f"""
     <div class="timing-meter-bar timing-hot">
         <span>TIMING DO REBATEDOR:</span>
-        <span>[{game.timing_meter}/3] NA ESPERA! — Alto risco de contato extra-base</span>
+        <span>[{game.timing_meter}/3] Na espera — Risco de contato extra-base</span>
     </div>
     """
 
@@ -1431,7 +1431,7 @@ else:
         )
 
         pitch_btn = st.button(
-            "ARREMESSAR CONTRA A IA!",
+            "ARREMESSAR CONTRA A IA",
             icon=":material/bolt:",
             type="primary",
             width="stretch",

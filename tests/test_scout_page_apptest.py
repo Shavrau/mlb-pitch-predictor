@@ -24,7 +24,7 @@ def test_scout_page_renders_single_pitcher_mode_without_exceptions() -> None:
     assert len(at.radio) >= 2
     view_mode_radio = at.radio(key="scout_view_mode")
     assert view_mode_radio is not None
-    assert view_mode_radio.value == "🎯 Dossiê Individual (Single Pitcher)"
+    assert view_mode_radio.value == "Dossiê Individual (Single Pitcher)"
 
     # Markdown content validation
     all_markdown = "\n".join(m.value for m in at.markdown)
@@ -43,7 +43,7 @@ def test_scout_page_renders_head_to_head_mode_without_exceptions() -> None:
 
     # Switch to Head-to-Head mode
     view_mode_radio = at.radio(key="scout_view_mode")
-    view_mode_radio.set_value("⚔️ Comparação Head-to-Head (2 Arremessadores)").run()
+    view_mode_radio.set_value("Comparação Head-to-Head (2 Arremessadores)").run()
     assert not at.exception, f"Head-to-Head mode raised an exception: {at.exception}"
 
     all_markdown = "\n".join(m.value for m in at.markdown)
@@ -64,7 +64,7 @@ def test_scout_page_head_to_head_switch_pitchers() -> None:
     assert not at.exception
 
     view_mode_radio = at.radio(key="scout_view_mode")
-    view_mode_radio.set_value("⚔️ Comparação Head-to-Head (2 Arremessadores)").run()
+    view_mode_radio.set_value("Comparação Head-to-Head (2 Arremessadores)").run()
     assert not at.exception
 
     pitcher_a_sel = at.selectbox(key="scout_h2h_pitcher_a")

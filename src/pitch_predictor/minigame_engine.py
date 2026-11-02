@@ -96,13 +96,13 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
         "name": "Paul Skenes",
         "team": "Pittsburgh Pirates",
         "p_throws": "R",
-        "tags": ["🚀 102 mph", "⚡ Topo da Zona", "🔥 RHP", "💪 Alta Potência"],
+        "tags": ["102 mph", "Topo da Zona", "RHP", "Alta Potência"],
         "description": "Potência pura e velocidade terminal inigualável no topo da zona de strike.",
         "priors": (0.64, 0.28, 0.08),
         "pitches": [
             {
                 "tier": "S",
-                "tier_label": "⭐ TIER S",
+                "tier_label": "TIER S",
                 "name": "4-Seam Fastball",
                 "code": "FF",
                 "category": "Fastball",
@@ -113,7 +113,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
             },
             {
                 "tier": "A",
-                "tier_label": "⚡ TIER A",
+                "tier_label": "TIER A",
                 "name": "Splinker",
                 "code": "FS",
                 "category": "Offspeed",
@@ -124,7 +124,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
             },
             {
                 "tier": "B",
-                "tier_label": "🎯 TIER B",
+                "tier_label": "TIER B",
                 "name": "Sweeper",
                 "code": "ST",
                 "category": "Breaking Ball",
@@ -140,13 +140,13 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
         "name": "Corbin Burnes",
         "team": "Baltimore Orioles",
         "p_throws": "R",
-        "tags": ["🌪️ 2800+ RPM", "🌀 Quebra Lateral", "🔥 RHP", "🏆 Cy Young"],
+        "tags": ["2800+ RPM", "Quebra Lateral", "RHP", "Cy Young"],
         "description": "Especialista em rotação extrema com Cutter cortante e curvas devastadoras.",
         "priors": (0.42, 0.46, 0.12),
         "pitches": [
             {
                 "tier": "S",
-                "tier_label": "⭐ TIER S",
+                "tier_label": "TIER S",
                 "name": "Cutter",
                 "code": "FC",
                 "category": "Fastball",
@@ -157,7 +157,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
             },
             {
                 "tier": "A",
-                "tier_label": "⚡ TIER A",
+                "tier_label": "TIER A",
                 "name": "Curveball",
                 "code": "CU",
                 "category": "Breaking Ball",
@@ -168,7 +168,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
             },
             {
                 "tier": "B",
-                "tier_label": "🎯 TIER B",
+                "tier_label": "TIER B",
                 "name": "Changeup",
                 "code": "CH",
                 "category": "Offspeed",
@@ -184,13 +184,13 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
         "name": "Logan Webb",
         "team": "San Francisco Giants",
         "p_throws": "R",
-        "tags": ["🎭 Disfarce de Trajetória", "📉 Groundballs", "🔥 RHP", "🎯 Controle Cirúrgico"],
+        "tags": ["Disfarce de Trajetória", "Groundballs", "RHP", "Controle Cirúrgico"],
         "description": "Mestre no disfarce de trajetória e líder da MLB em induzir groundballs.",
         "priors": (0.46, 0.22, 0.32),
         "pitches": [
             {
                 "tier": "S",
-                "tier_label": "⭐ TIER S",
+                "tier_label": "TIER S",
                 "name": "Changeup",
                 "code": "CH",
                 "category": "Offspeed",
@@ -201,7 +201,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
             },
             {
                 "tier": "A",
-                "tier_label": "⚡ TIER A",
+                "tier_label": "TIER A",
                 "name": "Sinker",
                 "code": "SI",
                 "category": "Fastball",
@@ -212,7 +212,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
             },
             {
                 "tier": "B",
-                "tier_label": "🎯 TIER B",
+                "tier_label": "TIER B",
                 "name": "Sweeper",
                 "code": "ST",
                 "category": "Breaking Ball",
@@ -228,13 +228,13 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
         "name": "Chris Sale",
         "team": "Atlanta Braves",
         "p_throws": "L",
-        "tags": ["🏹 Canhoto LHP", "📐 Slot Baixo (25°)", "❄️ Wipeout", "🏆 Cy Young NL"],
+        "tags": ["Canhoto LHP", "Slot Baixo (25°)", "Wipeout", "Cy Young NL"],
         "description": "Canhoto lendário com ângulo de soltura lateral cruzado e slider letal.",
         "priors": (0.48, 0.36, 0.16),
         "pitches": [
             {
                 "tier": "S",
-                "tier_label": "⭐ TIER S",
+                "tier_label": "TIER S",
                 "name": "Sweeping Slider",
                 "code": "SL",
                 "category": "Breaking Ball",
@@ -245,7 +245,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
             },
             {
                 "tier": "A",
-                "tier_label": "⚡ TIER A",
+                "tier_label": "TIER A",
                 "name": "4-Seam Fastball",
                 "code": "FF",
                 "category": "Fastball",
@@ -256,7 +256,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
             },
             {
                 "tier": "B",
-                "tier_label": "🎯 TIER B",
+                "tier_label": "TIER B",
                 "name": "Changeup",
                 "code": "CH",
                 "category": "Offspeed",
@@ -272,13 +272,13 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
         "name": "Yoshinobu Yamamoto",
         "team": "Los Angeles Dodgers",
         "p_throws": "R",
-        "tags": ["🎌 Dardo Japonês", "👻 Bola Fantasma", "🌈 Arco-Íris", "🔥 RHP"],
+        "tags": ["NPB Triple Crown", "Splitter Ghost", "Curva Arco-Íris", "RHP"],
         "description": "Superestrela japonesa com Splitter fantasma e mecânica compacta.",
         "priors": (0.44, 0.32, 0.24),
         "pitches": [
             {
                 "tier": "S",
-                "tier_label": "⭐ TIER S",
+                "tier_label": "TIER S",
                 "name": "Splitter",
                 "code": "FS",
                 "category": "Offspeed",
@@ -289,7 +289,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
             },
             {
                 "tier": "A",
-                "tier_label": "⚡ TIER A",
+                "tier_label": "TIER A",
                 "name": "Rainbow Curve",
                 "code": "CU",
                 "category": "Breaking Ball",
@@ -300,7 +300,7 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
             },
             {
                 "tier": "B",
-                "tier_label": "🎯 TIER B",
+                "tier_label": "TIER B",
                 "name": "4-Seam Fastball",
                 "code": "FF",
                 "category": "Fastball",
@@ -317,19 +317,19 @@ PITCHER_TIERS: dict[str, dict[str, Any]] = {
 QUICK_AIM_MAP: dict[str, dict[str, Any]] = {
     "Topo da Zona": {
         "zone": 2,
-        "label": "⬆️ Topo da Zona",
+        "label": "Topo da Zona",
         "desc": "Reta no alto / Zona de Strike 2",
         "is_in_zone": True,
     },
     "Fundo da Zona": {
         "zone": 8,
-        "label": "⬇️ Fundo da Zona",
+        "label": "Fundo da Zona",
         "desc": "Bola de efeito no pé / Zona de Strike 8",
         "is_in_zone": True,
     },
     "Fora da Zona (Chase)": {
         "zone": 14,
-        "label": "🎣 Fora da Zona (Chase)",
+        "label": "Fora da Zona (Chase)",
         "desc": "Isca no chão para induzir Whiff / Zona 14",
         "is_in_zone": False,
     },
@@ -490,7 +490,7 @@ def resolve_arcade_pitch(
                 outcome["result"] = "HOME_RUN"
                 outcome["runs"] = runs
                 outcome["message"] = (
-                    f"💥 HOME RUN DEVASTADOR! O rebatedor cronometrou seu arremesso repetido ({next_state.consecutive_same_pitch}x {user_type})! {runs} corrida(s)!"
+                    f"Home Run — O rebatedor cronometrou seu arremesso repetido ({next_state.consecutive_same_pitch}x {user_type}), anotando {runs} corrida(s)."
                 )
             elif user_zone == 5:
                 # Coração da zona (Meatball) -> Home Run certo
@@ -509,7 +509,7 @@ def resolve_arcade_pitch(
                 outcome["result"] = "HOME_RUN"
                 outcome["runs"] = runs
                 outcome["message"] = (
-                    f"💥 HOME RUN! A IA leu a mente na Zona 5 (Meatball)! {runs} corrida(s) anotada(s)!"
+                    f"Home Run — A IA antecipou o arremesso na Zona 5 (Meatball), gerando {runs} corrida(s)."
                 )
             else:
                 # Zonas periféricas 1..4, 6..9
@@ -528,7 +528,7 @@ def resolve_arcade_pitch(
                         next_state.score += 50
                         outcome["result"] = "FOUL"
                         outcome["message"] = (
-                            f"⚡ BOLA EM FOUL! A IA adivinhou {ai_prediction}, mas o arremesso Tier {pitch_tier} espirrou no taco!"
+                            f"Bola em foul — A IA antecipou {ai_prediction}, mas o arremesso Tier {pitch_tier} espirrou no taco."
                         )
                     elif rand_val < out_thresh:
                         # CONTATO FRACO (GROUNDOUT / FLYOUT) -> OUT!
@@ -539,7 +539,7 @@ def resolve_arcade_pitch(
                         next_state.current_batter_name = get_random_retro_batter()["name"]
                         outcome["result"] = "OUT"
                         outcome["message"] = (
-                            f"🧤 CONTATO FRACO (OUT)! A IA esperava {ai_prediction}, mas a qualidade Tier {pitch_tier} gerou um groundout fácil!"
+                            f"Contato fraco (Out) — A IA esperava {ai_prediction}, mas o arremesso Tier {pitch_tier} gerou um groundout defensivo."
                         )
 
                         if next_state.outs >= 3:
@@ -551,7 +551,7 @@ def resolve_arcade_pitch(
                             outcome["result"] = "INNING_CLEARED"
                             outcome["inning_cleared"] = True
                             outcome["message"] = (
-                                f"🏁 ENTRADA LIMPA! 3 OUTS! Bônus de +1.000 pts! (Total: {next_state.score} pts)"
+                                f"Entrada encerrada — 3 outs completados. Bônus de +1.000 pts (Total: {next_state.score} pts)."
                             )
                     else:
                         # REBATIDA VÁLIDA
@@ -570,8 +570,8 @@ def resolve_arcade_pitch(
                         outcome["result"] = "HIT"
                         outcome["runs"] = runs
                         outcome["message"] = (
-                            f"⚡ REBATIDA VÁLIDA! A IA adivinhou {ai_prediction} e bateu firme!"
-                            + (f" ({runs} corrida anotada!)" if runs > 0 else "")
+                            f"Rebatida válida — A IA antecipou {ai_prediction} e conectou firme."
+                            + (f" ({runs} corrida anotada)." if runs > 0 else "")
                         )
                 else:
                     # Modo determinístico puro
@@ -590,14 +590,14 @@ def resolve_arcade_pitch(
                     outcome["result"] = "HIT"
                     outcome["runs"] = runs
                     outcome["message"] = (
-                        f"⚡ REBATIDA VÁLIDA! A IA adivinhou {ai_prediction}!"
-                        + (f" ({runs} corrida anotada!)" if runs > 0 else "")
+                        f"Rebatida válida — A IA antecipou {ai_prediction}."
+                        + (f" ({runs} corrida anotada)." if runs > 0 else "")
                     )
 
             if next_state.lives <= 0:
                 next_state.lives = 0
                 next_state.game_over = True
-                outcome["message"] += " 💀 FIM DE JOGO!"
+                outcome["message"] += " Fim de jogo."
         else:
             # IA ERROU O ARREMESSO NA ZONA -> STRIKE!
             if next_state.strikes < 2:
@@ -605,7 +605,7 @@ def resolve_arcade_pitch(
                 next_state.score += 100
                 outcome["result"] = "STRIKE"
                 outcome["message"] = (
-                    f"🎯 STRIKE! A IA esperava {ai_prediction}, mas veio {user_category}! (+100 pts)"
+                    f"Strike chamado — A IA esperava {ai_prediction}, mas o arremesso foi {user_category} (+100 pts)."
                 )
             else:
                 # 3º Strike -> STRIKEOUT!
@@ -620,7 +620,7 @@ def resolve_arcade_pitch(
 
                 outcome["result"] = "STRIKEOUT"
                 outcome["message"] = (
-                    f"🔥 STRIKEOUT (K)! IA enganada na zona! (+{points} pts | Combo x{next_state.combo_multiplier})"
+                    f"Strikeout (K) — IA enganada na zona (+{points} pts | Combo x{next_state.combo_multiplier})."
                 )
 
                 if next_state.outs >= 3:
@@ -632,7 +632,7 @@ def resolve_arcade_pitch(
                     outcome["result"] = "INNING_CLEARED"
                     outcome["inning_cleared"] = True
                     outcome["message"] = (
-                        f"🏁 ENTRADA LIMPA! 3 OUTS! Bônus de +1.000 pts! (Total: {next_state.score} pts)"
+                        f"Entrada encerrada — 3 outs completados. Bônus de +1.000 pts (Total: {next_state.score} pts)."
                     )
     else:
         # FORA DA ZONA (ZONAS 11..14 / CHASE)
@@ -642,7 +642,7 @@ def resolve_arcade_pitch(
                 next_state.balls += 1
                 outcome["result"] = "BALL"
                 outcome["message"] = (
-                    f"👀 BOLA! A IA previu {ai_prediction} fora da zona e não foi atrás."
+                    f"Bola fora — A IA previu {ai_prediction} fora da zona e conteve o swing."
                 )
             else:
                 # 4ª Bola -> WALK!
@@ -666,13 +666,13 @@ def resolve_arcade_pitch(
                 outcome["result"] = "WALK"
                 outcome["runs"] = runs
                 outcome["message"] = (
-                    "🚶 BASE POR BOLAS (WALK)! A IA teve disciplina com 4 bolas."
-                    + (f" ({runs} corrida anotada!)" if runs > 0 else "")
+                    "Base por bolas (Walk) — A IA demonstrou disciplina com 4 bolas fora."
+                    + (f" ({runs} corrida anotada)." if runs > 0 else "")
                 )
                 if next_state.lives <= 0:
                     next_state.lives = 0
                     next_state.game_over = True
-                    outcome["message"] += " 💀 FIM DE JOGO!"
+                    outcome["message"] += " Fim de jogo."
         else:
             # IA foi enganada fora da zona -> WHIFF!
             if next_state.strikes < 2:
@@ -680,7 +680,7 @@ def resolve_arcade_pitch(
                 next_state.score += 150
                 outcome["result"] = "WHIFF"
                 outcome["message"] = (
-                    "🌪️ SWING NO VAZIO (WHIFF)! A IA foi atrás da bola fora! (+150 pts)"
+                    "Swing no vazio (Whiff) — A IA perseguiu a bola fora da zona (+150 pts)."
                 )
             else:
                 # 3º Strike -> STRIKEOUT por Whiff!
@@ -695,7 +695,7 @@ def resolve_arcade_pitch(
 
                 outcome["result"] = "STRIKEOUT"
                 outcome["message"] = (
-                    f"🔥 STRIKEOUT (K)! IA abanou no vazio! (+{points} pts | Combo x{next_state.combo_multiplier})"
+                    f"Strikeout (K) — IA perseguiu no vazio (+{points} pts | Combo x{next_state.combo_multiplier})."
                 )
 
                 if next_state.outs >= 3:
@@ -707,11 +707,11 @@ def resolve_arcade_pitch(
                     outcome["result"] = "INNING_CLEARED"
                     outcome["inning_cleared"] = True
                     outcome["message"] = (
-                        f"🏁 ENTRADA LIMPA! 3 OUTS! Bônus de +1.000 pts! (Total: {next_state.score} pts)"
+                        f"Entrada encerrada — 3 outs completados. Bônus de +1.000 pts (Total: {next_state.score} pts)."
                     )
 
     if timing_broken:
-        outcome["message"] = "🧊 Quebrou o timing do rebatedor! " + outcome["message"]
+        outcome["message"] = "Quebrou o timing do rebatedor. " + outcome["message"]
 
     next_state.high_score = max(next_state.high_score, next_state.score)
 

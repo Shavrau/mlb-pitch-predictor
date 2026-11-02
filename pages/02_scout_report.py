@@ -110,11 +110,11 @@ def init_scout_state() -> None:
         "scout_view_mode" not in st.session_state
         or st.session_state.scout_view_mode
         not in (
-            "🎯 Dossiê Individual (Single Pitcher)",
-            "⚔️ Comparação Head-to-Head (2 Arremessadores)",
+            "Dossiê Individual (Single Pitcher)",
+            "Comparação Head-to-Head (2 Arremessadores)",
         )
     ):
-        st.session_state.scout_view_mode = "🎯 Dossiê Individual (Single Pitcher)"
+        st.session_state.scout_view_mode = "Dossiê Individual (Single Pitcher)"
 
     if (
         "scout_archetype" not in st.session_state
@@ -266,8 +266,8 @@ st.markdown(
 view_mode = st.radio(
     "Modo de Análise do Scouting Report",
     options=[
-        "🎯 Dossiê Individual (Single Pitcher)",
-        "⚔️ Comparação Head-to-Head (2 Arremessadores)",
+        "Dossiê Individual (Single Pitcher)",
+        "Comparação Head-to-Head (2 Arremessadores)",
     ],
     horizontal=True,
     key="scout_view_mode",
@@ -280,7 +280,7 @@ prev_zone_map = {"Fastball": 5, "Breaking Ball": 14, "Offspeed": 8}
 # ===========================================================================
 # MODE 1: SINGLE PITCHER DOSSIER
 # ===========================================================================
-if view_mode == "🎯 Dossiê Individual (Single Pitcher)":
+if view_mode == "Dossiê Individual (Single Pitcher)":
     with st.container(border=True):
         st.markdown(
             '<div class="section-header">Parâmetros do Confronto • Varredura das 12 Contagens</div>',
@@ -906,15 +906,15 @@ else:
 
             if is_div:
                 status_pill = (
-                    "<span style=\"background:rgba(245,158,11,0.14);color:#B45309;border:1px solid #F59E0B;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;\">DIVERGÊNCIA</span>"
+                    "<span style=\"background:rgba(245,158,11,0.12);color:#B45309;border:1px solid rgba(245,158,11,0.35);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;\">DIVERGÊNCIA</span>"
                     if is_light
-                    else "<span style=\"background:rgba(245,158,11,0.18);color:#F59E0B;border:1px solid #F59E0B;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;\">DIVERGÊNCIA</span>"
+                    else "<span style=\"background:rgba(245,158,11,0.18);color:#F59E0B;border:1px solid rgba(245,158,11,0.40);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;\">DIVERGÊNCIA</span>"
                 )
             else:
                 status_pill = (
-                    "<span style=\"background:rgba(16,185,129,0.14);color:#065F46;border:1px solid #10B981;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;\">🤝 CONSENSO</span>"
+                    "<span style=\"background:rgba(2,132,199,0.12);color:#0369A1;border:1px solid rgba(2,132,199,0.35);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;\">CONSENSO</span>"
                     if is_light
-                    else "<span style=\"background:rgba(16,185,129,0.18);color:#10B981;border:1px solid #10B981;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;\">🤝 CONSENSO</span>"
+                    else "<span style=\"background:rgba(2,132,199,0.18);color:#38BDF8;border:1px solid rgba(2,132,199,0.40);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;\">CONSENSO</span>"
                 )
 
             row_html = f"""

@@ -107,7 +107,7 @@ with col_sync:
         f"border-radius:6px;text-align:center;margin-bottom:6px;'>{badge_label}</div>",
         unsafe_allow_html=True,
     )
-    if st.button("🔄 Sincronizar Telemetria", key="mlops_refresh_btn", width="stretch"):
+    if st.button("Sincronizar Telemetria", key="mlops_refresh_btn", width="stretch", icon=":material/sync:"):
         st.cache_data.clear()
         st.rerun()
 
@@ -122,7 +122,7 @@ kpi1, kpi2, kpi3, kpi4 = st.columns(4, gap="medium")
 with kpi1, st.container(border=True):
     st.markdown("<div class='pp-kicker'>SERVING ENDPOINT</div>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='font-size:22px;font-weight:800;color:#10B981;font-family:\"JetBrains Mono\",monospace;margin:2px 0;'>"
+        "<div style='font-size:22px;font-weight:700;color:#0284C7;font-family:\"JetBrains Mono\",monospace;margin:2px 0;'>"
         f"● {ep_info.get('status', 'READY')}"
         "</div>"
         "<div style='font-size:11px;color:var(--pp-muted);'>"
@@ -134,11 +134,11 @@ with kpi1, st.container(border=True):
 with kpi2, st.container(border=True):
     st.markdown("<div class='pp-kicker'>LATÊNCIA P90 (RTT)</div>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='font-size:22px;font-weight:800;color:var(--pp-text);font-family:\"JetBrains Mono\",monospace;margin:2px 0;'>"
+        "<div style='font-size:22px;font-weight:700;color:var(--pp-text);font-family:\"JetBrains Mono\",monospace;margin:2px 0;'>"
         "~22.8 ms"
         "</div>"
-        "<div style='font-size:11px;color:#38BDF8;font-weight:700;'>"
-        "⚡ Sub-400ms SLA (Reação no Bastão)"
+        "<div style='font-size:11px;color:#38BDF8;font-weight:600;'>"
+        "SLA Sub-400ms (Reação no Bastão)"
         "</div>",
         unsafe_allow_html=True,
     )
@@ -146,7 +146,7 @@ with kpi2, st.container(border=True):
 with kpi3, st.container(border=True):
     st.markdown("<div class='pp-kicker'>MODELO NO UNITY CATALOG</div>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='font-size:22px;font-weight:800;color:#8B5CF6;font-family:\"JetBrains Mono\",monospace;margin:2px 0;'>"
+        "<div style='font-size:22px;font-weight:700;color:#8B5CF6;font-family:\"JetBrains Mono\",monospace;margin:2px 0;'>"
         "v2 @prod"
         "</div>"
         "<div style='font-size:11px;color:var(--pp-muted);'>"
@@ -158,7 +158,7 @@ with kpi3, st.container(border=True):
 with kpi4, st.container(border=True):
     st.markdown("<div class='pp-kicker'>LAKEFLOW JOB (6 TASKS)</div>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='font-size:22px;font-weight:800;color:#0284C7;font-family:\"JetBrains Mono\",monospace;margin:2px 0;'>"
+        "<div style='font-size:22px;font-weight:700;color:#0284C7;font-family:\"JetBrains Mono\",monospace;margin:2px 0;'>"
         f"{job_info.get('status', 'SUCCESS')}"
         "</div>"
         f"<div style='font-size:11px;color:var(--pp-muted);font-family:\"JetBrains Mono\",monospace;'>"
@@ -175,10 +175,10 @@ st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
 
 tab_serving, tab_lineage, tab_mlflow, tab_jobs = st.tabs(
     [
-        "⚡ Serverless Serving & Live Probe",
-        "🏛️ Unity Catalog & Data Lineage",
-        "🧪 MLflow Registry & Explicabilidade SHAP",
-        "⚙️ Lakeflow Jobs & Orquestração",
+        "Serverless Serving & Live Probe",
+        "Unity Catalog & Data Lineage",
+        "MLflow Registry & Explicabilidade SHAP",
+        "Lakeflow Jobs & Orquestração",
     ]
 )
 
@@ -216,7 +216,7 @@ with tab_serving:
             st.dataframe(meta_df, hide_index=True, width="stretch")
 
             st.caption(
-                "💡 **Arquitetura Serverless**: Quando inativo, o endpoint escala para zero instâncias. "
+                "**Arquitetura Serverless**: Quando inativo, o endpoint escala para zero instâncias. "
                 "Ao receber uma requisição, o Databricks Model Serving aquece automaticamente a réplica "
                 "mantendo alta tolerância a falhas via backoff exponencial no `PitchServingClient`."
             )
@@ -227,8 +227,8 @@ with tab_serving:
             with st.container(border=True):
                 st.markdown("<div class='pp-kicker'>TESTE DE LATÊNCIA EM TEMPO REAL</div>", unsafe_allow_html=True)
                 st.markdown(
-                    "<div style='font-size:15px;font-weight:800;color:var(--pp-text);margin-bottom:6px;'>"
-                    "⚡ In-Flight Round-Trip Time (RTT) Probe"
+                    "<div style='font-size:15px;font-weight:700;color:var(--pp-text);margin-bottom:6px;'>"
+                    "In-Flight Round-Trip Time (RTT) Probe"
                     "</div>"
                     "<div style='font-size:12px;color:var(--pp-muted);margin-bottom:12px;'>"
                     "Dispare uma inferência multimodal real contra o Databricks Model Serving e audite o tempo de resposta."

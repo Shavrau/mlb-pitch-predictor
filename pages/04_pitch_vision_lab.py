@@ -646,7 +646,7 @@ def _resolve_safe_std(col: str) -> float:
 # 2. Pipeline Visual: Vídeo -> Print Base -> Modelo da Pose 3D (Hawk-Eye)
 # ---------------------------------------------------------------------------
 
-st.subheader("2. Pipeline de Visão Computacional: Vídeo ➔ Print Base ➔ Modelo da Pose 3D")
+st.subheader("2. Pipeline de Visão Computacional: Vídeo → Print Base → Modelo da Pose 3D")
 
 video_col, base_print_col, pose_col = st.columns(3, gap="medium")
 
@@ -1105,25 +1105,25 @@ with vision_pred_col, st.container(border=True):
 
     if bio_pred == selected_cat:
         if is_light:
-            b_bg = "#ECFDF5"
-            b_border = "#059669"
-            b_title_color = "#047857"
-            b_text_color = "#064E3B"
-            b_badge_bg = "#D1FAE5"
-            b_badge_border = "#A7F3D0"
+            b_bg = "#F0F9FF"
+            b_border = "#BAE6FD"
+            b_title_color = "#0369A1"
+            b_text_color = "#0C4A6E"
+            b_badge_bg = "#E0F2FE"
+            b_badge_border = "#7DD3FC"
         else:
-            b_bg = "rgba(6, 78, 59, 0.40)"
-            b_border = "#10B981"
-            b_title_color = "#34D399"
-            b_text_color = "#ECFDF5"
-            b_badge_bg = "rgba(16, 185, 129, 0.20)"
-            b_badge_border = "rgba(16, 185, 129, 0.40)"
+            b_bg = "rgba(2, 132, 199, 0.16)"
+            b_border = "#0284C7"
+            b_title_color = "#38BDF8"
+            b_text_color = "#F8FAFC"
+            b_badge_bg = "rgba(2, 132, 199, 0.20)"
+            b_badge_border = "rgba(56, 189, 248, 0.40)"
         st.markdown(
-            f"""<div style="background:{b_bg};border:1.5px solid {b_border};border-radius:8px;padding:12px 14px;margin:10px 0 12px 0;">
+            f"""<div style="background:{b_bg};border:1px solid {b_border};border-radius:8px;padding:12px 14px;margin:10px 0 12px 0;">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
-                <span style="font-size:16px;">✅</span>
-                <span style="font-size:13px;font-weight:800;color:{b_title_color};letter-spacing:0.02em;">LEITURA BIOMECÂNICA CONFIRMADA</span>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;background:{b_badge_bg};border:1px solid {b_badge_border};color:{b_title_color};padding:1px 6px;border-radius:4px;">{bio_conf * 100:.1f}%</span>
+                <span style="font-size:11px;color:{b_title_color};">●</span>
+                <span style="font-size:12.5px;font-weight:600;color:{b_title_color};letter-spacing:0.02em;">LEITURA BIOMECÂNICA CONFIRMADA</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;background:{b_badge_bg};border:1px solid {b_badge_border};color:{b_title_color};padding:1px 6px;border-radius:4px;">{bio_conf * 100:.1f}%</span>
               </div>
               <div style="font-size:12.5px;line-height:1.45;color:{b_text_color};">
                 O modelo de Visão Computacional previu <strong style="color:{b_title_color};">{bio_pred}</strong> exclusivamente pela cinemática 3D, acertando a categoria real (<strong>{selected_cat}</strong>).
@@ -1134,24 +1134,24 @@ with vision_pred_col, st.container(border=True):
     else:
         if is_light:
             b_bg = "#EFF6FF"
-            b_border = "#2563EB"
+            b_border = "#BFDBFE"
             b_title_color = "#1D4ED8"
             b_text_color = "#1E3A8A"
             b_badge_bg = "#DBEAFE"
-            b_badge_border = "#BFDBFE"
+            b_badge_border = "#93C5FD"
         else:
-            b_bg = "rgba(30, 58, 138, 0.40)"
-            b_border = "#3B82F6"
+            b_bg = "rgba(30, 58, 138, 0.30)"
+            b_border = "#2563EB"
             b_title_color = "#60A5FA"
             b_text_color = "#EFF6FF"
             b_badge_bg = "rgba(59, 130, 246, 0.20)"
             b_badge_border = "rgba(59, 130, 246, 0.40)"
         st.markdown(
-            f"""<div style="background:{b_bg};border:1.5px solid {b_border};border-radius:8px;padding:12px 14px;margin:10px 0 12px 0;">
+            f"""<div style="background:{b_bg};border:1px solid {b_border};border-radius:8px;padding:12px 14px;margin:10px 0 12px 0;">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
-                <span style="font-size:16px;">👁️</span>
-                <span style="font-size:13px;font-weight:800;color:{b_title_color};letter-spacing:0.02em;">DISFARCE CORPORAL EFICIENTE</span>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;background:{b_badge_bg};border:1px solid {b_badge_border};color:{b_title_color};padding:1px 6px;border-radius:4px;">{bio_conf * 100:.1f}%</span>
+                <span style="font-size:11px;color:{b_title_color};">●</span>
+                <span style="font-size:12.5px;font-weight:600;color:{b_title_color};letter-spacing:0.02em;">DISFARCE CORPORAL EFICIENTE</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;background:{b_badge_bg};border:1px solid {b_badge_border};color:{b_title_color};padding:1px 6px;border-radius:4px;">{bio_conf * 100:.1f}%</span>
               </div>
               <div style="font-size:12.5px;line-height:1.45;color:{b_text_color};">
                 A pose 3D apontou <strong style="color:{b_title_color};">{bio_pred}</strong>, enquanto o arremesso executado foi <strong>{selected_cat}</strong> — indicando excelente ocultação mecânica.

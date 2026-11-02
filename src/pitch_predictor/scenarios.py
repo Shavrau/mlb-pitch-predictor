@@ -382,7 +382,7 @@ def get_pitcher_names() -> list[str]:
 
 
 TACTICAL_SCENARIOS: dict[str, dict[str, Any]] = {
-    "⚾ Abertura de Duelo (0-0 First Pitch)": {
+    "Abertura de Duelo (0-0 First Pitch)": {
         "badge": "NEUTRAL • 0-0",
         "description": "Início do turno de rebatida na 1ª entrada sem corredores. O arremessador busca estabelecer o strike #1.",
         "inputs": {
@@ -407,7 +407,7 @@ TACTICAL_SCENARIOS: dict[str, dict[str, Any]] = {
             "pitcher_os_prior": 0.1404,
         },
     },
-    "🎯 Pitcher Ahead (0-2 Waste / Chase Setup)": {
+    "Arremessador em Vantagem (0-2 Setup)": {
         "badge": "PITCHER AHEAD • 0-2",
         "description": "Arremessador em vantagem máxima (0-2) após bola rápida no topo da zona de strike. Momento clássico de Slider/Curva fora da zona (zona 14).",
         "inputs": {
@@ -432,7 +432,7 @@ TACTICAL_SCENARIOS: dict[str, dict[str, Any]] = {
             "pitcher_os_prior": 0.1200,
         },
     },
-    "🔥 Contagem Cheia & Bases Lotadas (3-2 High Leverage)": {
+    "Contagem Cheia & Bases Lotadas (3-2 High Leverage)": {
         "badge": "FULL COUNT • BASES LOADED",
         "description": "Pressão máxima na 8ª entrada: 2 outs, contagem 3-2 e bases lotadas. O arremessador não pode ceder a base por bolas (Walk) e precisa atacar a zona.",
         "inputs": {
@@ -457,7 +457,7 @@ TACTICAL_SCENARIOS: dict[str, dict[str, Any]] = {
             "pitcher_os_prior": 0.0800,
         },
     },
-    "⚠️ Pitcher Behind com RISP (3-0 Green Light)": {
+    "Arremessador em Desvantagem com RISP (3-0 Green Light)": {
         "badge": "PITCHER BEHIND • 3-0",
         "description": "Contagem crítica 3-0 com corredor na 2ª base (posição de anotar corrida / RISP). Alta probabilidade de Bola Rápida para recuperar a zona de strike.",
         "inputs": {
@@ -482,7 +482,7 @@ TACTICAL_SCENARIOS: dict[str, dict[str, Any]] = {
             "pitcher_os_prior": 0.1404,
         },
     },
-    "🛑 Duelo de Mudança (1-1 Platoon Oposto & Corredor na 1B)": {
+    "Duelo de Mudança (1-1 Platoon Oposto & Corredor na 1B)": {
         "badge": "DOUBLE PLAY SETUP • 1-1",
         "description": "Corredor na 1ª base com 1 out e mão oposta (RHP vs LHB). Cenário clássico para Changeup/Splitter induzindo groundball para eliminação dupla (Double Play).",
         "inputs": {

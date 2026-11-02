@@ -1096,21 +1096,19 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         border: 1px solid {panel_border} !important;
 
-        border-top: 2.5px solid var(--pp-accent) !important;
-
         border-radius: 8px !important;
 
         padding: 16px !important;
 
         box-shadow: {panel_shadow} !important;
 
-        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+        transition: border-color 0.15s ease !important;
 
       }}
 
       div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
 
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+        border-color: rgba(255, 255, 255, 0.14) !important;
 
       }}
 
@@ -1133,11 +1131,11 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         font-size: 14.5px !important;
 
-        font-weight: 700 !important;
+        font-weight: 600 !important;
 
-        letter-spacing: 0.05em !important;
+        letter-spacing: 0.01em !important;
 
-        text-transform: uppercase !important;
+        text-transform: none !important;
 
         color: var(--pp-muted) !important;
 
@@ -1227,13 +1225,13 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         font-family: 'Barlow Condensed', 'Space Grotesk', sans-serif;
 
-        font-size: 14px;
+        font-size: 14.5px;
 
-        font-weight: 700;
+        font-weight: 600;
 
-        text-transform: uppercase;
+        text-transform: none;
 
-        letter-spacing: 0.06em;
+        letter-spacing: 0.01em;
 
         color: var(--pp-text);
 
@@ -1298,13 +1296,13 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         font-family: 'Barlow Condensed', 'Space Grotesk', sans-serif !important;
 
-        font-weight: 800 !important;
+        font-weight: 600 !important;
 
-        font-size: 15px !important;
+        font-size: 14.5px !important;
 
-        letter-spacing: 0.04em !important;
+        letter-spacing: 0.01em !important;
 
-        text-transform: uppercase !important;
+        text-transform: none !important;
 
       }}
 
@@ -1359,13 +1357,13 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         font-family: 'JetBrains Mono', monospace !important;
 
-        font-size: 10.5px !important;
+        font-size: 11px !important;
 
-        font-weight: 800 !important;
+        font-weight: 600 !important;
 
         text-transform: uppercase !important;
 
-        letter-spacing: 0.08em !important;
+        letter-spacing: 0.04em !important;
 
         opacity: 1 !important;
 
@@ -1385,9 +1383,9 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         font-size: 26px !important;
 
-        font-weight: 800 !important;
+        font-weight: 700 !important;
 
-        letter-spacing: -0.02em !important;
+        letter-spacing: -0.01em !important;
 
       }}
 
@@ -1731,21 +1729,21 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         border: 1px solid #78350F !important;
 
-        font-family: 'Barlow Condensed', 'Space Grotesk', sans-serif !important;
+        font-family: 'Space Grotesk', sans-serif !important;
 
-        font-size: 15px !important;
+        font-size: 14.5px !important;
 
-        font-weight: 800 !important;
+        font-weight: 600 !important;
 
-        letter-spacing: 0.05em !important;
+        letter-spacing: 0.01em !important;
 
-        text-transform: uppercase !important;
+        text-transform: none !important;
 
-        box-shadow: 0 3px 10px rgba(200, 90, 23, 0.35) !important;
+        box-shadow: 0 2px 6px rgba(200, 90, 23, 0.25) !important;
 
         border-radius: 6px !important;
 
-        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        transition: background 0.15s ease, border-color 0.15s ease !important;
 
       }}
 
@@ -1755,9 +1753,7 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         background: linear-gradient(135deg, #DE661E 0%, #B44A12 100%) !important;
 
-        box-shadow: 0 4px 14px rgba(200, 90, 23, 0.50) !important;
-
-        transform: translateY(-1px) !important;
+        box-shadow: 0 3px 10px rgba(200, 90, 23, 0.35) !important;
 
       }}
 
@@ -1773,7 +1769,7 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         border-radius: 6px !important;
 
-        font-weight: 700 !important;
+        font-weight: 600 !important;
 
       }}
 
@@ -1795,13 +1791,13 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         font-size: 10px;
 
-        font-weight: 800;
+        font-weight: 600;
 
         color: var(--pp-muted);
 
         text-transform: uppercase;
 
-        letter-spacing: 0.06em;
+        letter-spacing: 0.04em;
 
         margin-bottom: 4px;
 
