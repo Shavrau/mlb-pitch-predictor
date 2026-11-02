@@ -253,32 +253,53 @@ client = get_serving_client()
 # ===========================================================================
 hero_html = _compact_html(
     """
-    <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-top:3px solid var(--pp-accent,#38BDF8);border-radius:8px;padding:20px 24px;margin-bottom:16px;">
+    <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-top:3.5px solid var(--pp-accent,#38BDF8);border-radius:10px;padding:22px 26px;margin-bottom:16px;box-shadow:0 8px 32px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.06);">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
         <div>
-          <span style="background:var(--pp-surface-alt,#181B23);color:var(--pp-muted,#94A3B8);border:1px solid var(--pp-border,#222631);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;padding:3px 9px;border-radius:4px;letter-spacing:0.06em;text-transform:uppercase;">DATABRICKS SERVERLESS AI • MLB STATCAST TELEMETRY</span>
-          <h1 class="pp-display" style="font-size:26px;font-weight:800;color:var(--pp-text,#F1F5F9);margin:8px 0 4px 0;text-transform:uppercase;">MLB Pitch Predictor — Decodificando o Arremesso com Inteligência Artificial</h1>
-          <p style="font-size:14px;color:var(--pp-muted,#94A3B8);margin:0;">A bola cruza 18,44 metros a <strong style="color:var(--pp-text,#F1F5F9);font-family:'JetBrains Mono',monospace;">160 km/h</strong> em <strong style="color:var(--pp-text,#F1F5F9);font-family:'JetBrains Mono',monospace;">0.40 segundos</strong>. O modelo antecipa a chamada tática antes de ele acontecer.</p>
+          <span style="background:var(--pp-surface-alt,#181B23);color:var(--pp-muted,#94A3B8);border:1px solid var(--pp-border,#222631);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;padding:3px 10px;border-radius:4px;letter-spacing:0.06em;text-transform:uppercase;">DATABRICKS SERVERLESS AI • MLB STATCAST TELEMETRY</span>
+          <h1 class="pp-display" style="font-size:27px;font-weight:800;color:var(--pp-text,#F1F5F9);margin:8px 0 4px 0;text-transform:uppercase;letter-spacing:0.01em;">MLB Pitch Predictor — Decodificando o Arremesso com Inteligência Artificial</h1>
+          <p style="font-size:14px;color:var(--pp-muted,#94A3B8);margin:0;line-height:1.5;">A bola cruza 18,44 metros a <strong style="color:var(--pp-text,#F1F5F9);font-family:'JetBrains Mono',monospace;">160 km/h</strong> em <strong style="color:var(--pp-text,#F1F5F9);font-family:'JetBrains Mono',monospace;">0.40 segundos</strong>. O modelo antecipa a chamada tática e os desvios biomecânicos antes de a bola deixar a mão do arremessador.</p>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px;">
-        <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3px solid #EF4444;border-radius:6px;padding:11px 14px;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted,#94A3B8);font-weight:800;letter-spacing:0.05em;">DESAFIO DOS 400 MILISSEGUNDOS</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:21px;font-weight:800;color:#EF4444;margin:3px 0;">0.40 segundos</div>
-          <div style="width:100%;height:4px;background:var(--pp-border,#222631);border-radius:2px;margin:5px 0;"><div style="width:100%;height:100%;background:#EF4444;border-radius:2px;"></div></div>
-          <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);">Tempo total de voo da bola a 160 km/h</div>
-        </div>
-        <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3px solid #F59E0B;border-radius:6px;padding:11px 14px;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted,#94A3B8);font-weight:800;letter-spacing:0.05em;">JANELA NEURAL HUMANA</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:21px;font-weight:800;color:#F59E0B;margin:3px 0;">0.15 segundos</div>
-          <div style="width:100%;height:4px;background:var(--pp-border,#222631);border-radius:2px;margin:5px 0;"><div style="width:37.5%;height:100%;background:#F59E0B;border-radius:2px;"></div></div>
-          <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);">Tempo de o olho processar o movimento</div>
-        </div>
-        <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3px solid #38BDF8;border-radius:6px;padding:11px 14px;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted,#94A3B8);font-weight:800;letter-spacing:0.05em;">INFERÊNCIA PRÉ-ARREMESSO</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:21px;font-weight:800;color:#38BDF8;margin:3px 0;">24 Variáveis</div>
-          <div style="width:100%;height:4px;background:var(--pp-border,#222631);border-radius:2px;margin:5px 0;"><div style="width:12.5%;height:100%;background:#38BDF8;border-radius:2px;"></div></div>
-          <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);">Contexto Statcast + cinemática 3D (&lt;50 ms)</div>
+      <div style="margin-top:18px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted,#94A3B8);font-weight:800;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;">CRONOLOGIA DA FÍSICA DE VOO • DESAFIO DOS 400 MILISSEGUNDOS</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;">
+          <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3.5px solid #EF4444;border-radius:6px;padding:12px 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted,#94A3B8);font-weight:800;letter-spacing:0.04em;">01. SOLTURA</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:#EF4444;">0.00s • 54.5 ft</span>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:19px;font-weight:800;color:#EF4444;margin:4px 0;">160 km/h</div>
+            <div style="width:100%;height:4px;background:var(--pp-border,#222631);border-radius:2px;margin:6px 0;"><div style="width:100%;height:100%;background:#EF4444;border-radius:2px;"></div></div>
+            <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);line-height:1.35;">Soltura no montinho (Release Point a 102.4 mph)</div>
+          </div>
+          <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3.5px solid #F59E0B;border-radius:6px;padding:12px 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted,#94A3B8);font-weight:800;letter-spacing:0.04em;">02. JANELA NEURAL</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:#F59E0B;">0.15s • 41.2 ft</span>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:19px;font-weight:800;color:#F59E0B;margin:4px 0;">0.15 segundos</div>
+            <div style="width:100%;height:4px;background:var(--pp-border,#222631);border-radius:2px;margin:6px 0;"><div style="width:37.5%;height:100%;background:#F59E0B;border-radius:2px;"></div></div>
+            <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);line-height:1.35;">Tempo de o olho e córtex processarem a rotação</div>
+          </div>
+          <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3.5px solid #C85A17;border-radius:6px;padding:12px 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted,#94A3B8);font-weight:800;letter-spacing:0.04em;">03. COMMITMENT</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:#C85A17;">0.22s • 23.8 ft</span>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:19px;font-weight:800;color:#C85A17;margin:4px 0;">Ponto de Decisão</div>
+            <div style="width:100%;height:4px;background:var(--pp-border,#222631);border-radius:2px;margin:6px 0;"><div style="width:55%;height:100%;background:#C85A17;border-radius:2px;"></div></div>
+            <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);line-height:1.35;">O túnel de 4 pol. rompe; swing obrigatório</div>
+          </div>
+          <div style="background:var(--pp-surface-alt,#181B23);border:1px solid var(--pp-border,#222631);border-left:3.5px solid #38BDF8;border-radius:6px;padding:12px 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted,#94A3B8);font-weight:800;letter-spacing:0.04em;">04. CHEGADA</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:#38BDF8;">0.40s • 1.4 ft</span>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:19px;font-weight:800;color:#38BDF8;margin:4px 0;">0.40 segundos</div>
+            <div style="width:100%;height:4px;background:var(--pp-border,#222631);border-radius:2px;margin:6px 0;"><div style="width:100%;height:100%;background:#38BDF8;border-radius:2px;"></div></div>
+            <div style="font-size:11.5px;color:var(--pp-muted,#94A3B8);line-height:1.35;">Cruzamento da home plate e luva do receptor</div>
+          </div>
         </div>
       </div>
     </div>
@@ -292,31 +313,58 @@ st.markdown(hero_html, unsafe_allow_html=True)
 cards_pitches_html = _compact_html(
     """
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px;">
-      <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-top:3px solid #EF4444;border-radius:8px;padding:12px 15px;">
+      <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-top:3.5px solid #EF4444;border-radius:8px;padding:14px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.25);">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
-          <span style="font-size:14.5px;font-weight:800;color:var(--pp-text,#F1F5F9);">▲ Bola Rápida (Fastball)</span>
+          <span style="font-size:15px;font-weight:700;color:var(--pp-text,#F1F5F9);">▲ Bola Rápida (Fastball)</span>
           <span style="font-family:'JetBrains Mono',monospace;background:rgba(239,68,68,0.14);color:#EF4444;border:1px solid #EF4444;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;">FF/SI • ~160 km/h</span>
         </div>
-        <div style="font-size:12px;color:var(--pp-muted,#94A3B8);margin-top:6px;line-height:1.4;">Trajetória explosiva de alta sustentação vertical. Desafia o tempo de reação na zona.</div>
+        <div style="font-size:12px;color:var(--pp-muted,#94A3B8);margin-top:6px;line-height:1.45;">Trajetória explosiva de alta sustentação vertical. Desafia o tempo de reação na zona.</div>
       </div>
-      <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-top:3px solid #3B82F6;border-radius:8px;padding:12px 15px;">
+      <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-top:3.5px solid #3B82F6;border-radius:8px;padding:14px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.25);">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
-          <span style="font-size:14.5px;font-weight:800;color:var(--pp-text,#F1F5F9);">◆ Bola com Efeito (Breaking Ball)</span>
+          <span style="font-size:15px;font-weight:700;color:var(--pp-text,#F1F5F9);">◆ Bola com Efeito (Breaking Ball)</span>
           <span style="font-family:'JetBrains Mono',monospace;background:rgba(59,130,246,0.14);color:#3B82F6;border:1px solid #3B82F6;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;">SL/ST • ~135 km/h</span>
         </div>
-        <div style="font-size:12px;color:var(--pp-muted,#94A3B8);margin-top:6px;line-height:1.4;">Sliders, Sweepers e Curvas de alto giro (2800+ RPM) projetados para whiff nas bordas.</div>
+        <div style="font-size:12px;color:var(--pp-muted,#94A3B8);margin-top:6px;line-height:1.45;">Sliders, Sweepers e Curvas de alto giro (2800+ RPM) projetados para whiff nas bordas.</div>
       </div>
-      <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-top:3px solid #0284C7;border-radius:8px;padding:12px 15px;">
+      <div style="background:var(--pp-surface,#12141A);border:1px solid var(--pp-border,#222631);border-top:3.5px solid #0284C7;border-radius:8px;padding:14px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.25);">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
-          <span style="font-size:14.5px;font-weight:800;color:var(--pp-text,#F1F5F9);">● Mudança de Velocidade (Offspeed)</span>
+          <span style="font-size:15px;font-weight:700;color:var(--pp-text,#F1F5F9);">● Mudança de Velocidade (Offspeed)</span>
           <span style="font-family:'JetBrains Mono',monospace;background:rgba(2,132,199,0.18);color:#38BDF8;border:1px solid #0284C7;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;">CH/FS • ~125 km/h</span>
         </div>
-        <div style="font-size:12px;color:var(--pp-muted,#94A3B8);margin-top:6px;line-height:1.4;">Changeup e Splitter com disfarce de trajetória idêntico à bola rápida e queda tardia.</div>
+        <div style="font-size:12px;color:var(--pp-muted,#94A3B8);margin-top:6px;line-height:1.45;">Changeup e Splitter com disfarce de trajetória idêntico à bola rápida e queda tardia.</div>
       </div>
     </div>
     """
 )
 st.markdown(cards_pitches_html, unsafe_allow_html=True)
+
+# ===========================================================================
+# 2.5 ROSTER DE ELITE DA MLB — CARDS COLECIONÁVEIS TOPPS CHROME
+# ===========================================================================
+st.markdown(
+    '<div class="section-header">Roster de Elite da MLB • Cards Colecionáveis Topps Chrome</div>',
+    unsafe_allow_html=True,
+)
+roster_cols = st.columns(5, gap="small")
+for idx, (p_name, meta) in enumerate(MLB_PITCHERS.items()):
+    with roster_cols[idx]:
+        st.markdown(
+            render_topps_chrome_card_html(p_name, theme_mode=active_theme),
+            unsafe_allow_html=True,
+        )
+        matched_key = next((k for k in FRIENDLY_PITCHER_STYLES if p_name in k), None)
+        if matched_key:
+            is_active_pitcher = st.session_state.home_pitcher_style == matched_key
+            label = "● No Montinho" if is_active_pitcher else f"Escalar {p_name.split()[-1]}"
+            if st.button(
+                label,
+                key=f"btn_roster_pick_{idx}",
+                type="primary" if is_active_pitcher else "secondary",
+                width="stretch",
+            ):
+                st.session_state.home_pitcher_style = matched_key
+                st.rerun()
 
 
 # ===========================================================================

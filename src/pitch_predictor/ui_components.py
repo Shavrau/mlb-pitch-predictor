@@ -816,7 +816,7 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         panel_border = "#CBD5E1"
 
         panel_shadow = (
-            "0 2px 8px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
+            "0 1px 3px rgba(15, 23, 42, 0.04), 0 6px 20px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.95)"
         )
 
         metric_bg = "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)"
@@ -824,7 +824,7 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
         metric_border = "#CBD5E1"
 
         metric_shadow = (
-            "0 2px 6px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
+            "0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.95)"
         )
 
         tab_bg_active = "rgba(2, 132, 199, 0.08)"
@@ -902,20 +902,20 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         pitch_offspeed_var = "#38BDF8"
 
-        panel_bg = "linear-gradient(180deg, #131622 0%, #0C0E15 100%)"
+        panel_bg = "linear-gradient(180deg, #131622 0%, #0A0C13 100%)"
 
         panel_border = "var(--pp-border)"
 
         panel_shadow = (
-            "0 4px 16px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.04)"
+            "0 8px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08)"
         )
 
-        metric_bg = "linear-gradient(180deg, #121520 0%, #0A0C13 100%)"
+        metric_bg = "linear-gradient(180deg, #10131E 0%, #070910 100%)"
 
         metric_border = "#23293A"
 
         metric_shadow = (
-            "0 3px 12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03)"
+            "0 6px 20px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.06)"
         )
 
         tab_bg_active = "rgba(255, 255, 255, 0.05)"
@@ -926,7 +926,7 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         background-image: 
 
-          radial-gradient(ellipse 90% 45% at 50% -10%, rgba(56, 189, 248, 0.08) 0%, rgba(200, 90, 23, 0.035) 45%, transparent 75%),
+          radial-gradient(ellipse 100% 50% at 50% -10%, rgba(56, 189, 248, 0.11) 0%, rgba(200, 90, 23, 0.035) 45%, transparent 75%),
 
           repeating-linear-gradient(to right, transparent, transparent 47px, rgba(248, 250, 252, 0.022) 48px, transparent 49px) !important;
 
@@ -938,7 +938,7 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
     <style>
 
-      @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
       :root {{
 
@@ -1002,7 +1002,7 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         color: var(--pp-text) !important;
 
-        font-family: 'Space Grotesk', system-ui, sans-serif;
+        font-family: 'Plus Jakarta Sans', 'Space Grotesk', system-ui, sans-serif;
 
       }}
 
@@ -1096,19 +1096,19 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         border: 1px solid {panel_border} !important;
 
-        border-radius: 8px !important;
+        border-radius: 10px !important;
 
-        padding: 16px !important;
+        padding: 18px !important;
 
         box-shadow: {panel_shadow} !important;
 
-        transition: border-color 0.15s ease !important;
+        transition: border-color 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s cubic-bezier(0.22, 1, 0.36, 1) !important;
 
       }}
 
       div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
 
-        border-color: rgba(255, 255, 255, 0.14) !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
 
       }}
 
@@ -1335,11 +1335,19 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         border-radius: 8px !important;
 
-        padding: 12px 16px !important;
+        padding: 14px 18px !important;
 
         box-shadow: {metric_shadow} !important;
 
         position: relative !important;
+
+        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+
+      }}
+
+      div[data-testid="stMetric"]:hover {{
+
+        border-color: rgba(255, 255, 255, 0.18) !important;
 
       }}
 
@@ -1723,7 +1731,7 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
       div[data-testid="stBaseButton-primary"] button {{
 
-        background: linear-gradient(135deg, #C85A17 0%, #A2420F 100%) !important;
+        background: linear-gradient(135deg, #C85A17 0%, #9A3412 100%) !important;
 
         color: #F8FAFC !important;
 
@@ -1739,11 +1747,11 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         text-transform: none !important;
 
-        box-shadow: 0 2px 6px rgba(200, 90, 23, 0.25) !important;
+        box-shadow: 0 2px 8px rgba(200, 90, 23, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
 
-        border-radius: 6px !important;
+        border-radius: 8px !important;
 
-        transition: background 0.15s ease, border-color 0.15s ease !important;
+        transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1) !important;
 
       }}
 
@@ -1751,9 +1759,19 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
       div[data-testid="stBaseButton-primary"] button:hover {{
 
-        background: linear-gradient(135deg, #DE661E 0%, #B44A12 100%) !important;
+        background: linear-gradient(135deg, #DE661E 0%, #AC3D16 100%) !important;
 
-        box-shadow: 0 3px 10px rgba(200, 90, 23, 0.35) !important;
+        box-shadow: 0 4px 14px rgba(200, 90, 23, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.30) !important;
+
+      }}
+
+      button[kind="primary"]:active,
+
+      div[data-testid="stBaseButton-primary"] button:active {{
+
+        transform: translateY(1px) scale(0.995) !important;
+
+        box-shadow: 0 1px 4px rgba(200, 90, 23, 0.20) !important;
 
       }}
 
@@ -1767,9 +1785,33 @@ def get_custom_css(theme_mode: str | None = None, accent_hex: str = "#38BDF8") -
 
         color: var(--pp-text) !important;
 
-        border-radius: 6px !important;
+        border-radius: 8px !important;
 
         font-weight: 600 !important;
+
+        font-size: 14px !important;
+
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+
+        transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1) !important;
+
+      }}
+
+      button[kind="secondary"]:hover,
+
+      div[data-testid="stBaseButton-secondary"] button:hover {{
+
+        border-color: rgba(255, 255, 255, 0.22) !important;
+
+        background-color: var(--pp-surface-alt) !important;
+
+      }}
+
+      button[kind="secondary"]:active,
+
+      div[data-testid="stBaseButton-secondary"] button:active {{
+
+        transform: translateY(1px) scale(0.995) !important;
 
       }}
 

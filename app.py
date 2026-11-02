@@ -99,17 +99,11 @@ with st.sidebar:
 
     st.markdown(
         """
-
-        <div style="background:var(--pp-surface);border:1px solid var(--pp-border);border-radius:6px;padding:8px 10px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted);">
-
-          <div style="color:var(--pp-text);font-weight:600;letter-spacing:0.02em;margin-bottom:2px;">MLB STATCAST NETWORK</div>
-
-          <div>5 Astros • 33 Marcos 3D</div>
-
-          <div style="color:var(--pp-clay,#C85A17);font-weight:700;margin-top:3px;">● TELEMETRIA ATIVA</div>
-
+        <div style="background:var(--pp-surface);border:1px solid var(--pp-border);border-left:3px solid var(--pp-accent);border-radius:6px;padding:9px 12px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--pp-muted);box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+          <div style="color:var(--pp-text);font-weight:700;letter-spacing:0.04em;margin-bottom:2px;">MLB STATCAST NETWORK</div>
+          <div>5 Astros • 33 Marcos 3D • Serverless</div>
+          <div style="color:var(--pp-clay,#C85A17);font-weight:700;margin-top:4px;">● TELEMETRIA ATIVA</div>
         </div>
-
         """,
         unsafe_allow_html=True,
     )
