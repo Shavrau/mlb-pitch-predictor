@@ -90,7 +90,7 @@ Após homologação e implementação dos **Componentes Bespoke MLB Broadcast & 
 - **Aplicação em Nuvem Operacional (Databricks Apps)**:
   - App `pitch-predictor-app-dev` em estado **`RUNNING` / `ACTIVE`**.
   - URL Corporativa Pública: **`https://pitch-predictor-app-dev-7474645845452998.aws.databricksapps.com`**.
-  - Deploy **`01f1da01251c1b209aa54fffed142d2a`** ativo com **`SUCCEEDED`** e Streamlit `1.66.1`.
+  - Deploy **`01f1dd21877213c58b0dd7d753146a03`** ativo com **`SUCCEEDED`** e Streamlit `1.66.1`.
   - Calibração Biomecânica MLB homologada com 300 lances em 61 jogos distintos (Acurácia Out-of-Fold calibrada em 59.7% / F1 0.567, em harmonia com os 58.9% do MLOps Hub). Sincronização quadro a quadro das 4 fases cinemáticas (Leg Lift, Foot Plant, MER, Release) com a timeline Savitzky-Golay. Checkpoint de segurança arquivado na tag `checkpoint-pre-calibration-v2.6.0`.
 - **Revisão Geral de Escrita & Redação Esportiva**:
   - **Correções Gramaticais e Semânticas**: Correção da regência preposicional diante de sujeitos no infinitivo (*"antes de ele acontecer"*, *"tempo de o olho processar"*, *"antes de a bola deixar sua mão"*).
